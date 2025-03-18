@@ -75,19 +75,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\PC\\.nuget\\packages\\": {}
+    "C:\\Users\\vedov_q03fifw\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\PC\\Desktop\\Università\\Project Manajment\\Progetto-PM\\Backend\\Backend.csproj",
+      "projectUniqueName": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "C:\\Users\\PC\\Desktop\\Università\\Project Manajment\\Progetto-PM\\Backend\\Backend.csproj",
-      "packagesPath": "C:\\Users\\PC\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\PC\\Desktop\\Università\\Project Manajment\\Progetto-PM\\Backend\\obj\\",
+      "projectPath": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+      "packagesPath": "C:\\Users\\vedov_q03fifw\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\vedov_q03fifw\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"

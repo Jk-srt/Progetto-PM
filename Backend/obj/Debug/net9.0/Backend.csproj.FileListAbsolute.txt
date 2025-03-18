@@ -32,3 +32,37 @@ C:\Users\PC\Desktop\Università\Project Manajment\Progetto-PM\backend\obj\Debug\
 C:\Users\PC\Desktop\Università\Project Manajment\Progetto-PM\backend\obj\Debug\net9.0\Backend.pdb
 C:\Users\PC\Desktop\Università\Project Manajment\Progetto-PM\backend\obj\Debug\net9.0\Backend.genruntimeconfig.cache
 C:\Users\PC\Desktop\Università\Project Manajment\Progetto-PM\backend\obj\Debug\net9.0\ref\Backend.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.Development.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.staticwebassets.endpoints.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.exe
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.deps.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.runtimeconfig.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.pdb
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Microsoft.OpenApi.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.csproj.AssemblyReference.cache
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.AssemblyInfoInputs.cache
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.AssemblyInfo.cs
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.csproj.CoreCompileInputs.cache
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.sourcelink.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\scopedcss\bundle\Backend.styles.css
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets.build.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets.development.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets.build.endpoints.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets\msbuild.Backend.Microsoft.AspNetCore.StaticWebAssets.props
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets\msbuild.Backend.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets\msbuild.build.Backend.props
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.Backend.props
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.Backend.props
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\staticwebassets.pack.json
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.csproj.Up2Date
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\refint\Backend.dll
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.pdb
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.genruntimeconfig.cache
+C:\Users\vedov_q03fifw\OneDrive\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\ref\Backend.dll
