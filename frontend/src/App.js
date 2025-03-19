@@ -3,6 +3,8 @@ import './index.css';
 // Importazioni per i grafici
 import { Pie, Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement } from 'chart.js';
+// Importa i nuovi componenti
+import PortfolioAnalytics from './components/PortfolioAnalytics';
 
 // Registrazione dei componenti ChartJS necessari
 ChartJS.register(
@@ -451,6 +453,71 @@ const LLMAssistant = () => {
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview'); // 'overview', 'analytics', 'transactions'
+
+  const renderInvestmentContent = () => {
+    switch (activeInvestmentTab) {
+      case 'overview':
+        return <InvestmentsDetail />;
+      case 'analytics':
+        return <PortfolioAnalytics />;
+      case 'transactions':
+        return (
+          <div className="card">
+            <h3>Transazioni Investimenti</h3>
+            <p>Storico delle operazioni di acquisto e vendita</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Investimento</th>
+                  <th>Operazione</th>
+                  <th>Quantità</th>
+                  <th>Prezzo</th>
+                  <th>Totale</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>10/03/2025</td>
+                  <td>VWCE</td>
+                  <td>Acquisto</td>
+                  <td>5</td>
+                  <td>€102.45</td>
+                  <td>€512.25</td>
+                </tr>
+                <tr>
+                  <td>01/03/2025</td>
+                  <td>SWDA</td>
+                  <td>Acquisto</td>
+                  <td>10</td>
+                  <td>€83.75</td>
+                  <td>€837.50</td>
+                </tr>
+                <tr>
+                  <td>15/02/2025</td>
+                  <td>AGGH</td>
+                  <td>Acquisto</td>
+                  <td>15</td>
+                  <td>€52.30</td>
+                  <td>€784.50</td>
+                </tr>
+                <tr>
+                  <td>05/02/2025</td>
+                  <td>Intesa Sanpaolo</td>
+                  <td>Vendita</td>
+                  <td>50</td>
+                  <td>€3.35</td>
+                  <td>€167.50</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      default:
+        return <InvestmentsDetail />;
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -470,7 +537,42 @@ function App() {
           </div>
         );
       case 'investments':
-        return <InvestmentsDetail />;
+        return (
+          <>
+            <div className="investment-tabs">
+              <ul className="nav nav-tabs">
+                <li className="nav-item">
+                  <a 
+                    className={`nav-link ${activeInvestmentTab === 'overview' ? 'active' : ''}`}
+                    href="#overview"
+                    onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('overview')}}
+                  >
+                    Panoramica
+                  </a>
+                </li>
+                <li className="nav-item">
+                  <a 
+                    className={`nav-link ${activeInvestmentTab === 'analytics' ? 'active' : ''}`}
+                    href="#analytics"
+                    onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('analytics')}}
+                  >
+                    Analisi Andamento
+                  </a>
+                </li>
+                <li className="nav-item">
+                  <a 
+                    className={`nav-link ${activeInvestmentTab === 'transactions' ? 'active' : ''}`}
+                    href="#transactions"
+                    onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('transactions')}}
+                  >
+                    Transazioni
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {renderInvestmentContent()}
+          </>
+        );
       case 'news':
         return <FinancialNews />;
       case 'assistant':
