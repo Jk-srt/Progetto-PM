@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import NewsPage from './pages/NewsPage';
 import './index.css';
 // Importazioni per i grafici
 import { Pie, Line, Bar, Doughnut } from 'react-chartjs-2';
@@ -403,21 +404,10 @@ const TransactionsList = () => (
   </div>
 );
 
-const FinancialNews = () => (
-  <div className="card mt-1">
-    <h3>Notizie Finanziarie</h3>
-    <ul style={{ listStyleType: 'none' }}>
-      <li className="mb-1">
-        <strong>BCE mantiene i tassi d'interesse invariati</strong>
-        <p>La Banca Centrale Europea ha deciso di mantenere i tassi d'interesse attuali...</p>
-      </li>
-      <li className="mb-1">
-        <strong>Mercati azionari in rialzo</strong>
-        <p>I principali indici europei hanno chiuso la giornata in positivo...</p>
-      </li>
-    </ul>
-  </div>
-);
+// Soluzione 1: Funzione a corpo completo// Soluzione 2: Arrow function one-liner
+const FinancialNews = () => <NewsPage />;
+
+
 
 const LLMAssistant = () => {
   const [query, setQuery] = useState('');

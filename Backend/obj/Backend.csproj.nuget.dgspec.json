@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {}
+    "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {
+    "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+        "projectUniqueName": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
         "projectName": "Backend",
-        "projectPath": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
-        "packagesPath": "C:\\Users\\vedov_q03fifw\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\vedov_q03fifw\\OneDrive\\Desktop\\Progetto-PM\\Backend\\obj\\",
+        "projectPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+        "packagesPath": "C:\\Users\\feder\\.nuget\\packages\\",
+        "outputPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\vedov_q03fifw\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\feder\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -47,6 +47,14 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.3, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.3, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.3, )"
             }
           },
           "imports": [
@@ -68,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
