@@ -149,3 +149,6 @@ c:\Users\feder\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.pdb
 c:\Users\feder\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\Backend.genruntimeconfig.cache
 c:\Users\feder\Desktop\Progetto-PM\Backend\obj\Debug\net9.0\ref\Backend.dll
 c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\package-lock.json
+c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
