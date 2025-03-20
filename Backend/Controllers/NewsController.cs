@@ -30,7 +30,7 @@ public class NewsController : ControllerBase
         }
 
         var client = _httpClientFactory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.apitube.io/v1/news/everything?limit=10&category.name=finanza");
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.apitube.io/v1/news/everything?limit=10&category.name=finanza&source.country.code=it");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
         HttpResponseMessage response = await client.SendAsync(request);
