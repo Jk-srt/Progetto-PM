@@ -23,7 +23,7 @@ namespace Progetto_PM.Backend.Controllers
         [HttpPost]
         public async Task<IActionResult> GetFinancialAdvice([FromBody] QueryRequest request)
         {
-            var apiUrl = "https://api-inference.huggingface.co/models/gpt2";
+            var apiUrl = "https://router.huggingface.co/hf-inference/models/openai-community/gpt2";
 
             var payload = new
             {
