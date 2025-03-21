@@ -1,5 +1,6 @@
 import React, { useState,useEffect } from 'react';
 import NewsPage from './pages/NewsPage';
+import AssistantPage from './pages/AssistantPage';
 import './index.css';
 // Importazioni per i grafici
 import { Pie, Line, Bar, Doughnut } from 'react-chartjs-2';
@@ -407,39 +408,7 @@ const TransactionsList = () => (
 // Soluzione 1: Funzione a corpo completo// Soluzione 2: Arrow function one-liner
 const FinancialNews = () => <NewsPage />;
 
-
-
-const LLMAssistant = () => {
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Simulazione di risposta LLM
-    setResponse(`Ecco alcune informazioni sul tuo quesito "${query}". Gli investimenti in ETF rappresentano una strategia diversificata con commissioni contenute. Per la tua situazione finanziaria, potrebbe essere utile considerare...`);
-  };
-
-  return (
-    <div className="card mt-1">
-      <h3>Assistente Finanziario</h3>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Chiedi consigli finanziari..."
-        />
-        <button type="submit">Chiedi</button>
-      </form>
-      {response && (
-        <div className="mt-1">
-          <p><strong>Risposta:</strong></p>
-          <p>{response}</p>
-        </div>
-      )}
-    </div>
-  );
-};
+const LLMAssistant = () => <AssistantPage/>;
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
