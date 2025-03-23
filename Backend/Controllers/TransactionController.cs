@@ -16,6 +16,7 @@ namespace Backend.Controllers
             _context = context;
         }
 
+        // ✅ GET: Ottiene tutte le transazioni per un utente specifico
         [HttpGet]
         public async Task<IActionResult> GetTransactions([FromQuery] int userId)
         {
@@ -26,12 +27,21 @@ namespace Backend.Controllers
             return Ok(transactions);
         }
 
+        // ✅ POST: Crea una nuova transazione
         [HttpPost]
         public async Task<IActionResult> CreateTransaction([FromBody] Transaction transaction)
         {
+            // Controlla se UserId e CategoryId sono validi
+            if (transaction.UserId == 0 || transaction.CategoryId == 0)
+            {
+                return BadRequest(new { message = "UserId e CategoryId sono obbligatori" });
+            }
+
+            // Aggiunge la transazione al database
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.TransactionId }, transaction);
+
+            return CreatedAtAction(nameof(GetTransactions), new { userId = transaction.UserId }, transaction);
         }
     }
 }
