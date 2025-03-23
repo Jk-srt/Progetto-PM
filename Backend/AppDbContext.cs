@@ -11,6 +11,7 @@ namespace Backend.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Investment> Investments { get; set; }
+		public DbSet<Category> Categories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
