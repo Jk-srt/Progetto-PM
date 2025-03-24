@@ -1,101 +1,10 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "./components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
-
-export default function App() {
-    const [data, setData] = useState({ users: [], transactions: [], assets: [], investments: [], categories: [] });
-    const [activeTab, setActiveTab] = useState("users");
-
-    useEffect(() => {
-        Promise.all([
-            fetch("http://localhost:5000/api/users").then(res => res.json()),
-            fetch("http://localhost:5000/api/transactions").then(res => res.json()),
-            fetch("http://localhost:5000/api/assets").then(res => res.json()),
-            fetch("http://localhost:5000/api/investments").then(res => res.json()),
-            fetch("http://localhost:5000/api/categories").then(res => res.json()),
-        ])
-            .then(([users, transactions, assets, investments, categories]) => {
-                setData({ users, transactions, assets, investments, categories });
-            })
-            .catch(error => console.error("Errore nel recupero dei dati:", error));
-    }, []);
-
-    return (
-        <div className="p-6 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold text-center mb-6">Gestione Dati</h1>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="flex justify-center gap-4 mb-6">
-                    <TabsTrigger value="users">Utenti</TabsTrigger>
-                    <TabsTrigger value="transactions">Transazioni</TabsTrigger>
-                    <TabsTrigger value="assets">Asset</TabsTrigger>
-                    <TabsTrigger value="investments">Investimenti</TabsTrigger>
-                    <TabsTrigger value="categories">Categorie</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="users">
-                    {data.users.map(user => (
-                        <Card key={user.userid} className="mb-2">
-                            <CardContent>
-                                <p><strong>Nome:</strong> {user.nome}</p>
-                                <p><strong>Email:</strong> {user.email}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </TabsContent>
-
-                <TabsContent value="transactions">
-                    {data.transactions.map(transaction => (
-                        <Card key={transaction.transactionid} className="mb-2">
-                            <CardContent>
-                                <p><strong>Importo:</strong> {transaction.amount} {transaction.currency}</p>
-                                <p><strong>Data:</strong> {new Date(transaction.date).toLocaleDateString()}</p>
-                                <p><strong>Descrizione:</strong> {transaction.description}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </TabsContent>
-
-                <TabsContent value="assets">
-                    {data.assets.map(asset => (
-                        <Card key={asset.assetid} className="mb-2">
-                            <CardContent>
-                                <p><strong>Nome:</strong> {asset.nome}</p>
-                                <p><strong>Ticker:</strong> {asset.ticker}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </TabsContent>
-
-                <TabsContent value="investments">
-                    {data.investments.map(investment => (
-                        <Card key={investment.investmentid} className="mb-2">
-                            <CardContent>
-                                <p><strong>Quantità:</strong> {investment.quantity}</p>
-                                <p><strong>Prezzo Acquisto:</strong> {investment.purchaseprice} EUR</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </TabsContent>
-
-                <TabsContent value="categories">
-                    {data.categories.map(category => (
-                        <Card key={category.categoryid} className="mb-2">
-                            <CardContent>
-                                <p><strong>Nome:</strong> {category.name}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
-}
-
-/*
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import NewsPage from './pages/NewsPage';
 import AssistantPage from './pages/AssistantPage';
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
 import './index.css';
 // Importazioni per i grafici
 import { Pie, Line, Bar, Doughnut } from 'react-chartjs-2';
@@ -402,112 +311,112 @@ const InvestmentsDetail = () => (
             <h3>Dettaglio Investimenti</h3>
             <table>
                 <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Tipo</th>
-                    <th>Quantità</th>
-                    <th>Prezzo</th>
-                    <th>Valore</th>
-                    <th>Rend. YTD</th>
-                </tr>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Quantità</th>
+                        <th>Prezzo</th>
+                        <th>Valore</th>
+                        <th>Rend. YTD</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>VWCE</td>
-                    <td>ETF</td>
-                    <td>15</td>
-                    <td>€102.45</td>
-                    <td>€1,536.75</td>
-                    <td className="text-success">+5.8%</td>
-                </tr>
-                <tr>
-                    <td>SWDA</td>
-                    <td>ETF</td>
-                    <td>25</td>
-                    <td>€84.20</td>
-                    <td>€2,105.00</td>
-                    <td className="text-success">+4.2%</td>
-                </tr>
-                <tr>
-                    <td>AGGH</td>
-                    <td>ETF</td>
-                    <td>40</td>
-                    <td>€52.75</td>
-                    <td>€2,110.00</td>
-                    <td className="text-danger">-0.8%</td>
-                </tr>
-                <tr>
-                    <td>Intesa Sanpaolo</td>
-                    <td>Azione</td>
-                    <td>200</td>
-                    <td>€3.45</td>
-                    <td>€690.00</td>
-                    <td className="text-success">+12.4%</td>
-                </tr>
-                <tr>
-                    <td>Enel</td>
-                    <td>Azione</td>
-                    <td>150</td>
-                    <td>€6.78</td>
-                    <td>€1,017.00</td>
-                    <td className="text-success">+3.2%</td>
-                </tr>
+                    <tr>
+                        <td>VWCE</td>
+                        <td>ETF</td>
+                        <td>15</td>
+                        <td>€102.45</td>
+                        <td>€1,536.75</td>
+                        <td className="text-success">+5.8%</td>
+                    </tr>
+                    <tr>
+                        <td>SWDA</td>
+                        <td>ETF</td>
+                        <td>25</td>
+                        <td>€84.20</td>
+                        <td>€2,105.00</td>
+                        <td className="text-success">+4.2%</td>
+                    </tr>
+                    <tr>
+                        <td>AGGH</td>
+                        <td>ETF</td>
+                        <td>40</td>
+                        <td>€52.75</td>
+                        <td>€2,110.00</td>
+                        <td className="text-danger">-0.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Intesa Sanpaolo</td>
+                        <td>Azione</td>
+                        <td>200</td>
+                        <td>€3.45</td>
+                        <td>€690.00</td>
+                        <td className="text-success">+12.4%</td>
+                    </tr>
+                    <tr>
+                        <td>Enel</td>
+                        <td>Azione</td>
+                        <td>150</td>
+                        <td>€6.78</td>
+                        <td>€1,017.00</td>
+                        <td className="text-success">+3.2%</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 );
 
-const TransactionsList = () => (
+const TransactionsList = ({ transactions }) => (
     <div className="card mt-1">
         <h3>Transazioni Recenti</h3>
         <table>
             <thead>
-            <tr>
-                <th>Data</th>
-                <th>Descrizione</th>
-                <th>Categoria</th>
-                <th>Importo</th>
-            </tr>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrizione</th>
+                    <th>Categoria</th>
+                    <th>Importo</th>
+                </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>15/03/2025</td>
-                <td>Supermercato Esselunga</td>
-                <td>Alimentari</td>
-                <td className="text-danger">-€78.35</td>
-            </tr>
-            <tr>
-                <td>14/03/2025</td>
-                <td>Stipendio</td>
-                <td>Entrate</td>
-                <td className="text-success">+€1,800.00</td>
-            </tr>
-            <tr>
-                <td>12/03/2025</td>
-                <td>Ristorante Da Mario</td>
-                <td>Ristoranti</td>
-                <td className="text-danger">-€45.00</td>
-            </tr>
-            <tr>
-                <td>10/03/2025</td>
-                <td>Amazon</td>
-                <td>Shopping</td>
-                <td className="text-danger">-€29.99</td>
-            </tr>
+                {transactions.map(t => (
+                    <tr key={t.transactionid}>
+                        <td>{new Date(t.date).toLocaleDateString()}</td>
+                        <td>{t.description}</td>
+                        <td>{t.category || "N/A"}</td>
+                        <td className={t.amount < 0 ? "text-danger" : "text-success"}>
+                            {t.amount} {t.currency}
+                        </td>
+                    </tr>
+                ))}
             </tbody>
         </table>
     </div>
 );
 
-// Soluzione 1: Funzione a corpo completo// Soluzione 2: Arrow function one-liner
+// Soluzione 1: Funzione a corpo completo // Soluzione 2: Arrow function one-liner
 const FinancialNews = () => <NewsPage />;
-
-const LLMAssistant = () => <AssistantPage/>;
+const LLMAssistant = () => <AssistantPage />;
 
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview'); // 'overview', 'analytics', 'transactions'
+    const [data, setData] = useState({ users: [], transactions: [], assets: [], investments: [], categories: [] });
+
+    useEffect(() => {
+        Promise.all([
+            fetch("http://localhost:5000/api/users").then(res => res.json()),
+            fetch("http://localhost:5000/api/transactions").then(res => res.json()),
+            fetch("http://localhost:5000/api/assets").then(res => res.json()),
+            fetch("http://localhost:5000/api/investments").then(res => res.json()),
+            fetch("http://localhost:5000/api/categories").then(res => res.json()),
+        ])
+        .then(([users, transactions, assets, investments, categories]) => {
+            setData({ users, transactions, assets, investments, categories });
+        })
+        .catch(error => console.error("Errore nel recupero dei dati:", error));
+    }, []);
 
     const renderInvestmentContent = () => {
         switch (activeInvestmentTab) {
@@ -522,48 +431,48 @@ function App() {
                         <p>Storico delle operazioni di acquisto e vendita</p>
                         <table>
                             <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Investimento</th>
-                                <th>Operazione</th>
-                                <th>Quantità</th>
-                                <th>Prezzo</th>
-                                <th>Totale</th>
-                            </tr>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Investimento</th>
+                                    <th>Operazione</th>
+                                    <th>Quantità</th>
+                                    <th>Prezzo</th>
+                                    <th>Totale</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            <tr>
-                                <td>10/03/2025</td>
-                                <td>VWCE</td>
-                                <td>Acquisto</td>
-                                <td>5</td>
-                                <td>€102.45</td>
-                                <td>€512.25</td>
-                            </tr>
-                            <tr>
-                                <td>01/03/2025</td>
-                                <td>SWDA</td>
-                                <td>Acquisto</td>
-                                <td>10</td>
-                                <td>€83.75</td>
-                                <td>€837.50</td>
-                            </tr>
-                            <tr>
-                                <td>15/02/2025</td>
-                                <td>AGGH</td>
-                                <td>Acquisto</td>
-                                <td>15</td>
-                                <td>€52.30</td>
-                                <td>€784.50</td>
-                            </tr>
-                            <tr>
-                                <td>05/02/2025</td>
-                                <td>Intesa Sanpaolo</td>
-                                <td>Vendita</td>
-                                <td>50</td>
-                                <td>€3.35</td>
-                                <td>€167.50</td>
-                            </tr>
+                                <tr>
+                                    <td>10/03/2025</td>
+                                    <td>VWCE</td>
+                                    <td>Acquisto</td>
+                                    <td>5</td>
+                                    <td>€102.45</td>
+                                    <td>€512.25</td>
+                                </tr>
+                                <tr>
+                                    <td>01/03/2025</td>
+                                    <td>SWDA</td>
+                                    <td>Acquisto</td>
+                                    <td>10</td>
+                                    <td>€83.75</td>
+                                    <td>€837.50</td>
+                                </tr>
+                                <tr>
+                                    <td>15/02/2025</td>
+                                    <td>AGGH</td>
+                                    <td>Acquisto</td>
+                                    <td>15</td>
+                                    <td>€52.30</td>
+                                    <td>€784.50</td>
+                                </tr>
+                                <tr>
+                                    <td>05/02/2025</td>
+                                    <td>Intesa Sanpaolo</td>
+                                    <td>Vendita</td>
+                                    <td>50</td>
+                                    <td>€3.35</td>
+                                    <td>€167.50</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -579,7 +488,7 @@ function App() {
                 return (
                     <>
                         <Dashboard />
-                        <TransactionsList />
+                        <TransactionsList transactions={data.transactions} />
                     </>
                 );
             case 'transactions':
@@ -587,7 +496,15 @@ function App() {
                     <div className="card">
                         <h3>Gestione Transazioni</h3>
                         <p>Interfaccia completa per la gestione delle transazioni</p>
-                        //{ Qui andrebbe il componente completo per gestire le transazioni }
+                        {data.transactions.map(transaction => (
+                            <Card key={transaction.transactionid} className="mb-2">
+                                <CardContent>
+                                    <p><strong>Importo:</strong> {transaction.amount} {transaction.currency}</p>
+                                    <p><strong>Data:</strong> {new Date(transaction.date).toLocaleDateString()}</p>
+                                    <p><strong>Descrizione:</strong> {transaction.description}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 );
             case 'investments':
@@ -599,7 +516,7 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'overview' ? 'active' : ''}`}
                                         href="#overview"
-                                        onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('overview')}}
+                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('overview') }}
                                     >
                                         Panoramica
                                     </a>
@@ -608,7 +525,7 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'analytics' ? 'active' : ''}`}
                                         href="#analytics"
-                                        onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('analytics')}}
+                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('analytics') }}
                                     >
                                         Analisi Andamento
                                     </a>
@@ -617,7 +534,7 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'transactions' ? 'active' : ''}`}
                                         href="#transactions"
-                                        onClick={(e) => {e.preventDefault(); setActiveInvestmentTab('transactions')}}
+                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('transactions') }}
                                     >
                                         Transazioni
                                     </a>
@@ -646,7 +563,7 @@ function App() {
                             <li>
                                 <a
                                     href="#dashboard"
-                                    onClick={(e) => {e.preventDefault(); setActiveTab('dashboard')}}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard') }}
                                     className={activeTab === 'dashboard' ? 'active' : ''}
                                 >
                                     Dashboard
@@ -655,7 +572,7 @@ function App() {
                             <li>
                                 <a
                                     href="#transactions"
-                                    onClick={(e) => {e.preventDefault(); setActiveTab('transactions')}}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab('transactions') }}
                                     className={activeTab === 'transactions' ? 'active' : ''}
                                 >
                                     Transazioni
@@ -664,7 +581,7 @@ function App() {
                             <li>
                                 <a
                                     href="#investments"
-                                    onClick={(e) => {e.preventDefault(); setActiveTab('investments')}}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab('investments') }}
                                     className={activeTab === 'investments' ? 'active' : ''}
                                 >
                                     Investimenti
@@ -673,7 +590,7 @@ function App() {
                             <li>
                                 <a
                                     href="#news"
-                                    onClick={(e) => {e.preventDefault(); setActiveTab('news')}}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab('news') }}
                                     className={activeTab === 'news' ? 'active' : ''}
                                 >
                                     Notizie
@@ -682,7 +599,7 @@ function App() {
                             <li>
                                 <a
                                     href="#assistant"
-                                    onClick={(e) => {e.preventDefault(); setActiveTab('assistant')}}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab('assistant') }}
                                     className={activeTab === 'assistant' ? 'active' : ''}
                                 >
                                     Assistente
@@ -705,4 +622,3 @@ function App() {
 }
 
 export default App;
-*/
