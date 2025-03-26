@@ -283,9 +283,10 @@ const Dashboard = ({transactions,categories}) => {
 
     for (let i = 0; i < categories.length; i++) {
         data[i] = transactions
-            .filter(t => t.categoryId === categories[i].categoryId&&t.amount<0)
+            .filter(t => t.categoryId === categories[i].categoryId)
             .reduce((acc, t) => acc + t.amount, 0);
-    }
+    }data.splice(6, 1); // Rimuove l'elemento alla posizione 7
+    data.splice(2, 1);
     return (
         <div className="dashboard">
             <div className="card">
