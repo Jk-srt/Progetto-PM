@@ -37,20 +37,20 @@ ChartJS.register(
 );
 
 // Componente grafico a torta per la distribuzione delle spese
-const ExpensePieChart = ({ transactions , categories}) => {
+const ExpensePieChart = ({ appo , categories}) => {
     const data = {
-        labels: ['Alimentari', 'Trasporti', 'Utenze', 'Intrattenimento', 'Salute', 'Altro'],
+        labels: categories.map(c => c.name).filter(name => name !== "Entrate" && name !== "Stipendio"),
         datasets: [
             {
                 label: 'Spese mensili',
-                data: [450, 350, 300, 250, 200, 900],
+                data: appo.map(c => c),
                 backgroundColor: [
-                    '#FF6384',
-                    '#36A2EB',
-                    '#FFCE56',
-                    '#4BC0C0',
-                    '#9966FF',
-                    '#C9CBCF'
+                    '#A8DADC',
+                    '#457B9D',
+                    '#F4A261',
+                    '#2A9D8F',
+                    '#E9C46A',
+                    '#264653'
                 ],
                 borderWidth: 1,
             },
@@ -279,6 +279,13 @@ const Dashboard = ({transactions,categories}) => {
     const saldo = transactions.reduce((acc, transaction) => acc + transaction.amount, 0);
     const monthEntrance = transactions.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
     const monthExit = transactions.filter(t => t.amount < 0).reduce((acc, t) => acc + t.amount, 0);
+    const data = new Array(categories.length).fill(0);
+
+    for (let i = 0; i < categories.length; i++) {
+        data[i] = transactions
+            .filter(t => t.categoryId === categories[i].categoryId&&t.amount<0)
+            .reduce((acc, t) => acc + t.amount, 0);
+    }
     return (
         <div className="dashboard">
             <div className="card">
@@ -296,7 +303,7 @@ const Dashboard = ({transactions,categories}) => {
                     </p>
                 </div>
                 <div className="mt-1">
-                    <ExpensePieChart transactions={transactions} category={categories}/>
+                    <ExpensePieChart appo={data} categories={categories}/>
                 </div>
             </div>
             <div className="card">
