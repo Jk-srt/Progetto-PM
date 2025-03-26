@@ -25,11 +25,14 @@ namespace Progetto_PM.Backend.Controllers
         {
             var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKey}";
 
+            // Prefigura la domanda dell'utente con un contesto finanziario
+            var financialPrompt = $"Come consulente finanziario, rispondi alla seguente domanda: {request.Query}";
+
             var payload = new
             {
                 contents = new[]
                 {
-                    new { parts = new[] { new { text = request.Query } } }
+                    new { parts = new[] { new { text = financialPrompt } } }
                 }
             };
 
@@ -37,8 +40,6 @@ namespace Progetto_PM.Backend.Controllers
 
             var response = await _httpClient.PostAsync(apiUrl, content);
             var responseString = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"API Response: {responseString}");
 
             if (response.IsSuccessStatusCode)
             {
