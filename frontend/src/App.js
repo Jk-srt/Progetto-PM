@@ -300,7 +300,7 @@ const Dashboard = ({transactions,categories}) => {
                         <strong>Entrate mensili:</strong> <span className={monthEntrance < 0 ? "text-danger" : "text-success"}> €{monthEntrance}</span>
                     </p>
                     <p>
-                        <strong>Entrate mensili:</strong> <span className={monthExit < 0 ? "text-danger" : "text-success"}> €{monthExit}</span>
+                        <strong>Uscite mensili:</strong> <span className={monthExit < 0 ? "text-danger" : "text-success"}> €{monthExit}</span>
                     </p>
                 </div>
                 <div className="mt-1">
