@@ -367,29 +367,28 @@ const InvestmentsDetail = () => (
     </div>
 );
 
-const TransactionsList = ({ transactions }) => (
+const TransactionsList = ({ transactions, categories = [] }) => (
     <div className="card mt-1">
-        <h3>Transazioni Recenti</h3>
         <table>
             <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Descrizione</th>
-                    <th>Categoria</th>
-                    <th>Importo</th>
-                </tr>
+            <tr>
+                <th>Data</th>
+                <th>Descrizione</th>
+                <th>Categoria</th>
+                <th>Importo</th>
+            </tr>
             </thead>
             <tbody>
-                {transactions.map(t => (
-                    <tr key={t.transactionid}>
-                        <td>{new Date(t.date).toLocaleDateString()}</td>
-                        <td>{t.description}</td>
-                        <td>{t.category || "N/A"}</td>
-                        <td className={t.amount < 0 ? "text-danger" : "text-success"}>
-                            {t.amount} {t.currency}
-                        </td>
-                    </tr>
-                ))}
+            {transactions.map(t => (
+                <tr key={t.transactionid}>
+                    <td>{new Date(t.date).toLocaleDateString()}</td>
+                    <td>{t.description}</td>
+                    <td>{categories.find(c => c.categoryId === t.categoryId)?.name || "N/A"}</td>
+                    <td className={t.amount < 0 ? "text-danger" : "text-success"}>
+                        {t.amount} {t.currency}
+                    </td>
+                </tr>
+            ))}
             </tbody>
         </table>
     </div>
@@ -488,7 +487,7 @@ function App() {
                 return (
                     <>
                         <Dashboard />
-                        <TransactionsList transactions={data.transactions} />
+                        <TransactionsList transactions={data.transactions} categories={data.categories} />
                     </>
                 );
             case 'transactions':

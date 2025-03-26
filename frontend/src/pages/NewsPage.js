@@ -5,7 +5,7 @@ function NewsPage() {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5200/api/news/financial")
+    fetch("http://localhost:5000/api/news/financial")
       .then(response => response.json())
       .then(data => {
         console.log("Dati ricevuti:", data);

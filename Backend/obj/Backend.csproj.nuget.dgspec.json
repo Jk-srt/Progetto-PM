@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {}
+    "C:\\Users\\feder\\RiderProjects\\Progetto-PM\\Backend\\Backend.csproj": {}
   },
   "projects": {
-    "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {
+    "C:\\Users\\feder\\RiderProjects\\Progetto-PM\\Backend\\Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+        "projectUniqueName": "C:\\Users\\feder\\RiderProjects\\Progetto-PM\\Backend\\Backend.csproj",
         "projectName": "Backend",
-        "projectPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+        "projectPath": "C:\\Users\\feder\\RiderProjects\\Progetto-PM\\Backend\\Backend.csproj",
         "packagesPath": "C:\\Users\\feder\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
+        "outputPath": "C:\\Users\\feder\\RiderProjects\\Progetto-PM\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\feder\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -7,7 +7,7 @@ const AssistantPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:5200/api/assistant', {
+            const res = await fetch('http://localhost:5000/api/assistant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
