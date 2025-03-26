@@ -1,14 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import NewsPage from './pages/NewsPage';
 import AssistantPage from './pages/AssistantPage';
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
+import {Tabs, TabsList, TabsTrigger, TabsContent} from "@radix-ui/react-tabs";
 import './index.css';
 // Importazioni per i grafici
-import { Pie, Line, Bar, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement } from 'chart.js';
+import {Pie, Line, Bar, Doughnut} from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    BarElement
+} from 'chart.js';
 // Importa i nuovi componenti
 import PortfolioAnalytics from './components/PortfolioAnalytics';
 
@@ -26,7 +37,7 @@ ChartJS.register(
 );
 
 // Componente grafico a torta per la distribuzione delle spese
-const ExpensePieChart = () => {
+const ExpensePieChart = ({ transactions , categories}) => {
     const data = {
         labels: ['Alimentari', 'Trasporti', 'Utenze', 'Intrattenimento', 'Salute', 'Altro'],
         datasets: [
@@ -68,7 +79,6 @@ const ExpensePieChart = () => {
         </div>
     );
 };
-
 // Componente grafico a ciambella per l'allocazione del portafoglio
 const PortfolioAllocationChart = () => {
     const data = {
@@ -107,8 +117,8 @@ const PortfolioAllocationChart = () => {
     };
 
     return (
-        <div style={{ height: '250px' }}>
-            <Doughnut data={data} options={options} />
+        <div style={{height: '250px'}}>
+            <Doughnut data={data} options={options}/>
         </div>
     );
 };
@@ -155,13 +165,16 @@ const InvestmentPerformanceChart = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         let label = context.dataset.label || '';
                         if (label) {
                             label += ': ';
                         }
                         if (context.parsed.y !== null) {
-                            label += new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                            label += new Intl.NumberFormat('it-IT', {
+                                style: 'currency',
+                                currency: 'EUR'
+                            }).format(context.parsed.y);
                         }
                         return label;
                     }
@@ -171,8 +184,12 @@ const InvestmentPerformanceChart = () => {
         scales: {
             y: {
                 ticks: {
-                    callback: function(value) {
-                        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumSignificantDigits: 3 }).format(value);
+                    callback: function (value) {
+                        return new Intl.NumberFormat('it-IT', {
+                            style: 'currency',
+                            currency: 'EUR',
+                            maximumSignificantDigits: 3
+                        }).format(value);
                     }
                 }
             }
@@ -180,8 +197,8 @@ const InvestmentPerformanceChart = () => {
     };
 
     return (
-        <div style={{ height: '300px' }}>
-            <Line data={data} options={options} />
+        <div style={{height: '300px'}}>
+            <Line data={data} options={options}/>
         </div>
     );
 };
@@ -226,7 +243,7 @@ const ReturnComparisonChart = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         let label = context.dataset.label || '';
                         if (label) {
                             label += ': ';
@@ -242,7 +259,7 @@ const ReturnComparisonChart = () => {
         scales: {
             y: {
                 ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                         return value + '%';
                     }
                 }
@@ -251,46 +268,59 @@ const ReturnComparisonChart = () => {
     };
 
     return (
-        <div style={{ height: '300px' }}>
-            <Bar data={data} options={options} />
+        <div style={{height: '300px'}}>
+            <Bar data={data} options={options}/>
         </div>
     );
 };
 
 // Componente Dashboard migliorato con grafici
-const Dashboard = () => (
-    <div className="dashboard">
-        <div className="card">
-            <h3>Panoramica</h3>
-            <div className="mt-1">
-                <p><strong>Saldo attuale:</strong> €4,250.00</p>
-                <p><strong>Entrate mensili:</strong> <span className="text-success">€3,200.00</span></p>
-                <p><strong>Uscite mensili:</strong> <span className="text-danger">€2,450.00</span></p>
+const Dashboard = ({transactions,categories}) => {
+    const saldo = transactions.reduce((acc, transaction) => acc + transaction.amount, 0);
+    const monthEntrance = transactions.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
+    const monthExit = transactions.filter(t => t.amount < 0).reduce((acc, t) => acc + t.amount, 0);
+    return (
+        <div className="dashboard">
+            <div className="card">
+                <h3>Panoramica</h3>
+                <div className="mt-1">
+                    <p>
+                        <strong>Saldo attuale:</strong>
+                        <span className={saldo < 0 ? "text-danger" : "text-success"}> €{saldo}</span>
+                    </p>
+                    <p>
+                        <strong>Entrate mensili:</strong> <span className={monthEntrance < 0 ? "text-danger" : "text-success"}> €{monthEntrance}</span>
+                    </p>
+                    <p>
+                        <strong>Entrate mensili:</strong> <span className={monthExit < 0 ? "text-danger" : "text-success"}> €{monthExit}</span>
+                    </p>
+                </div>
+                <div className="mt-1">
+                    <ExpensePieChart transactions={transactions} category={categories}/>
+                </div>
             </div>
-            <div className="mt-1">
-                <ExpensePieChart />
+            <div className="card">
+                <h3>Investimenti</h3>
+                <div className="mt-1">
+                    <p><strong>Valore totale:</strong> €12,450.00</p>
+                    <p><strong>Rendimento:</strong> <span className="text-success">+4.2%</span></p>
+                </div>
+                <div className="mt-1">
+                    <PortfolioAllocationChart/>
+                </div>
+            </div>
+            <div className="card">
+                <h3>Budget</h3>
+                <div className="mt-1">
+                    <p><strong>Spesa alimentare:</strong> 75% utilizzato</p>
+                    <p><strong>Trasporti:</strong> 50% utilizzato</p>
+                    <p><strong>Intrattenimento:</strong> 90% utilizzato</p>
+                </div>
             </div>
         </div>
-        <div className="card">
-            <h3>Investimenti</h3>
-            <div className="mt-1">
-                <p><strong>Valore totale:</strong> €12,450.00</p>
-                <p><strong>Rendimento:</strong> <span className="text-success">+4.2%</span></p>
-            </div>
-            <div className="mt-1">
-                <PortfolioAllocationChart />
-            </div>
-        </div>
-        <div className="card">
-            <h3>Budget</h3>
-            <div className="mt-1">
-                <p><strong>Spesa alimentare:</strong> 75% utilizzato</p>
-                <p><strong>Trasporti:</strong> 50% utilizzato</p>
-                <p><strong>Intrattenimento:</strong> 90% utilizzato</p>
-            </div>
-        </div>
-    </div>
-);
+    );
+};
+
 
 // Componente per visualizzazione dettagliata degli investimenti (simile a Morningstar)
 const InvestmentsDetail = () => (
@@ -298,76 +328,76 @@ const InvestmentsDetail = () => (
         <div className="card">
             <h3>Andamento Portafoglio</h3>
             <div className="mt-1">
-                <InvestmentPerformanceChart />
+                <InvestmentPerformanceChart/>
             </div>
         </div>
         <div className="card mt-1">
             <h3>Confronto Rendimenti</h3>
             <div className="mt-1">
-                <ReturnComparisonChart />
+                <ReturnComparisonChart/>
             </div>
         </div>
         <div className="card mt-1">
             <h3>Dettaglio Investimenti</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Tipo</th>
-                        <th>Quantità</th>
-                        <th>Prezzo</th>
-                        <th>Valore</th>
-                        <th>Rend. YTD</th>
-                    </tr>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Quantità</th>
+                    <th>Prezzo</th>
+                    <th>Valore</th>
+                    <th>Rend. YTD</th>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>VWCE</td>
-                        <td>ETF</td>
-                        <td>15</td>
-                        <td>€102.45</td>
-                        <td>€1,536.75</td>
-                        <td className="text-success">+5.8%</td>
-                    </tr>
-                    <tr>
-                        <td>SWDA</td>
-                        <td>ETF</td>
-                        <td>25</td>
-                        <td>€84.20</td>
-                        <td>€2,105.00</td>
-                        <td className="text-success">+4.2%</td>
-                    </tr>
-                    <tr>
-                        <td>AGGH</td>
-                        <td>ETF</td>
-                        <td>40</td>
-                        <td>€52.75</td>
-                        <td>€2,110.00</td>
-                        <td className="text-danger">-0.8%</td>
-                    </tr>
-                    <tr>
-                        <td>Intesa Sanpaolo</td>
-                        <td>Azione</td>
-                        <td>200</td>
-                        <td>€3.45</td>
-                        <td>€690.00</td>
-                        <td className="text-success">+12.4%</td>
-                    </tr>
-                    <tr>
-                        <td>Enel</td>
-                        <td>Azione</td>
-                        <td>150</td>
-                        <td>€6.78</td>
-                        <td>€1,017.00</td>
-                        <td className="text-success">+3.2%</td>
-                    </tr>
+                <tr>
+                    <td>VWCE</td>
+                    <td>ETF</td>
+                    <td>15</td>
+                    <td>€102.45</td>
+                    <td>€1,536.75</td>
+                    <td className="text-success">+5.8%</td>
+                </tr>
+                <tr>
+                    <td>SWDA</td>
+                    <td>ETF</td>
+                    <td>25</td>
+                    <td>€84.20</td>
+                    <td>€2,105.00</td>
+                    <td className="text-success">+4.2%</td>
+                </tr>
+                <tr>
+                    <td>AGGH</td>
+                    <td>ETF</td>
+                    <td>40</td>
+                    <td>€52.75</td>
+                    <td>€2,110.00</td>
+                    <td className="text-danger">-0.8%</td>
+                </tr>
+                <tr>
+                    <td>Intesa Sanpaolo</td>
+                    <td>Azione</td>
+                    <td>200</td>
+                    <td>€3.45</td>
+                    <td>€690.00</td>
+                    <td className="text-success">+12.4%</td>
+                </tr>
+                <tr>
+                    <td>Enel</td>
+                    <td>Azione</td>
+                    <td>150</td>
+                    <td>€6.78</td>
+                    <td>€1,017.00</td>
+                    <td className="text-success">+3.2%</td>
+                </tr>
                 </tbody>
             </table>
         </div>
     </div>
 );
 
-const TransactionsList = ({ transactions, categories = [] }) => (
+const TransactionsList = ({transactions, categories = []}) => (
     <div className="card mt-1">
         <table>
             <thead>
@@ -395,13 +425,13 @@ const TransactionsList = ({ transactions, categories = [] }) => (
 );
 
 // Soluzione 1: Funzione a corpo completo // Soluzione 2: Arrow function one-liner
-const FinancialNews = () => <NewsPage />;
-const LLMAssistant = () => <AssistantPage />;
+const FinancialNews = () => <NewsPage/>;
+const LLMAssistant = () => <AssistantPage/>;
 
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview'); // 'overview', 'analytics', 'transactions'
-    const [data, setData] = useState({ users: [], transactions: [], assets: [], investments: [], categories: [] });
+    const [data, setData] = useState({users: [], transactions: [], assets: [], investments: [], categories: []});
 
     useEffect(() => {
         Promise.all([
@@ -411,18 +441,18 @@ function App() {
             fetch("http://localhost:5000/api/investments").then(res => res.json()),
             fetch("http://localhost:5000/api/categories").then(res => res.json()),
         ])
-        .then(([users, transactions, assets, investments, categories]) => {
-            setData({ users, transactions, assets, investments, categories });
-        })
-        .catch(error => console.error("Errore nel recupero dei dati:", error));
+            .then(([users, transactions, assets, investments, categories]) => {
+                setData({users, transactions, assets, investments, categories});
+            })
+            .catch(error => console.error("Errore nel recupero dei dati:", error));
     }, []);
 
     const renderInvestmentContent = () => {
         switch (activeInvestmentTab) {
             case 'overview':
-                return <InvestmentsDetail />;
+                return <InvestmentsDetail/>;
             case 'analytics':
-                return <PortfolioAnalytics />;
+                return <PortfolioAnalytics/>;
             case 'transactions':
                 return (
                     <div className="card">
@@ -430,54 +460,54 @@ function App() {
                         <p>Storico delle operazioni di acquisto e vendita</p>
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Investimento</th>
-                                    <th>Operazione</th>
-                                    <th>Quantità</th>
-                                    <th>Prezzo</th>
-                                    <th>Totale</th>
-                                </tr>
+                            <tr>
+                                <th>Data</th>
+                                <th>Investimento</th>
+                                <th>Operazione</th>
+                                <th>Quantità</th>
+                                <th>Prezzo</th>
+                                <th>Totale</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>10/03/2025</td>
-                                    <td>VWCE</td>
-                                    <td>Acquisto</td>
-                                    <td>5</td>
-                                    <td>€102.45</td>
-                                    <td>€512.25</td>
-                                </tr>
-                                <tr>
-                                    <td>01/03/2025</td>
-                                    <td>SWDA</td>
-                                    <td>Acquisto</td>
-                                    <td>10</td>
-                                    <td>€83.75</td>
-                                    <td>€837.50</td>
-                                </tr>
-                                <tr>
-                                    <td>15/02/2025</td>
-                                    <td>AGGH</td>
-                                    <td>Acquisto</td>
-                                    <td>15</td>
-                                    <td>€52.30</td>
-                                    <td>€784.50</td>
-                                </tr>
-                                <tr>
-                                    <td>05/02/2025</td>
-                                    <td>Intesa Sanpaolo</td>
-                                    <td>Vendita</td>
-                                    <td>50</td>
-                                    <td>€3.35</td>
-                                    <td>€167.50</td>
-                                </tr>
+                            <tr>
+                                <td>10/03/2025</td>
+                                <td>VWCE</td>
+                                <td>Acquisto</td>
+                                <td>5</td>
+                                <td>€102.45</td>
+                                <td>€512.25</td>
+                            </tr>
+                            <tr>
+                                <td>01/03/2025</td>
+                                <td>SWDA</td>
+                                <td>Acquisto</td>
+                                <td>10</td>
+                                <td>€83.75</td>
+                                <td>€837.50</td>
+                            </tr>
+                            <tr>
+                                <td>15/02/2025</td>
+                                <td>AGGH</td>
+                                <td>Acquisto</td>
+                                <td>15</td>
+                                <td>€52.30</td>
+                                <td>€784.50</td>
+                            </tr>
+                            <tr>
+                                <td>05/02/2025</td>
+                                <td>Intesa Sanpaolo</td>
+                                <td>Vendita</td>
+                                <td>50</td>
+                                <td>€3.35</td>
+                                <td>€167.50</td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
                 );
             default:
-                return <InvestmentsDetail />;
+                return <InvestmentsDetail/>;
         }
     };
 
@@ -486,8 +516,8 @@ function App() {
             case 'dashboard':
                 return (
                     <>
-                        <Dashboard />
-                        <TransactionsList transactions={data.transactions} categories={data.categories} />
+                        <Dashboard transactions={data.transactions} categories={data.categories}/>
+                        <TransactionsList transactions={data.transactions} categories={data.categories}/>
                     </>
                 );
             case 'transactions':
@@ -515,7 +545,10 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'overview' ? 'active' : ''}`}
                                         href="#overview"
-                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('overview') }}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setActiveInvestmentTab('overview')
+                                        }}
                                     >
                                         Panoramica
                                     </a>
@@ -524,7 +557,10 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'analytics' ? 'active' : ''}`}
                                         href="#analytics"
-                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('analytics') }}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setActiveInvestmentTab('analytics')
+                                        }}
                                     >
                                         Analisi Andamento
                                     </a>
@@ -533,7 +569,10 @@ function App() {
                                     <a
                                         className={`nav-link ${activeInvestmentTab === 'transactions' ? 'active' : ''}`}
                                         href="#transactions"
-                                        onClick={(e) => { e.preventDefault(); setActiveInvestmentTab('transactions') }}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setActiveInvestmentTab('transactions')
+                                        }}
                                     >
                                         Transazioni
                                     </a>
@@ -544,11 +583,11 @@ function App() {
                     </>
                 );
             case 'news':
-                return <FinancialNews />;
+                return <FinancialNews/>;
             case 'assistant':
-                return <LLMAssistant />;
+                return <LLMAssistant/>;
             default:
-                return <Dashboard />;
+                return <Dashboard/>;
         }
     };
 
@@ -562,7 +601,10 @@ function App() {
                             <li>
                                 <a
                                     href="#dashboard"
-                                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard') }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab('dashboard')
+                                    }}
                                     className={activeTab === 'dashboard' ? 'active' : ''}
                                 >
                                     Dashboard
@@ -571,7 +613,10 @@ function App() {
                             <li>
                                 <a
                                     href="#transactions"
-                                    onClick={(e) => { e.preventDefault(); setActiveTab('transactions') }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab('transactions')
+                                    }}
                                     className={activeTab === 'transactions' ? 'active' : ''}
                                 >
                                     Transazioni
@@ -580,7 +625,10 @@ function App() {
                             <li>
                                 <a
                                     href="#investments"
-                                    onClick={(e) => { e.preventDefault(); setActiveTab('investments') }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab('investments')
+                                    }}
                                     className={activeTab === 'investments' ? 'active' : ''}
                                 >
                                     Investimenti
@@ -589,7 +637,10 @@ function App() {
                             <li>
                                 <a
                                     href="#news"
-                                    onClick={(e) => { e.preventDefault(); setActiveTab('news') }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab('news')
+                                    }}
                                     className={activeTab === 'news' ? 'active' : ''}
                                 >
                                     Notizie
@@ -598,7 +649,10 @@ function App() {
                             <li>
                                 <a
                                     href="#assistant"
-                                    onClick={(e) => { e.preventDefault(); setActiveTab('assistant') }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab('assistant')
+                                    }}
                                     className={activeTab === 'assistant' ? 'active' : ''}
                                 >
                                     Assistente
