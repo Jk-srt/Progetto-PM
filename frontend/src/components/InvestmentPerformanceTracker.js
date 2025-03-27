@@ -1,84 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
   Legend,
   TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { it } from 'date-fns/locale';
-import { getInvestmentData } from '../utils/mockInvestmentData';
+import { fetchHistoricalData } from '../services/FinnhubService';
 
-// Registrazione dei componenti necessari di ChartJS
 ChartJS.register(
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
   Legend,
   TimeScale
 );
 
+const timeRanges = {
+  '1M': { label: '1 Mese', days: 30 },
+  '3M': { label: '3 Mesi', days: 90 },
+  '1Y': { label: '1 Anno', days: 365 },
+  '5Y': { label: '5 Anni', days: 1825 },
+  'MAX': { label: 'Massimo', days: 365 * 10 } // 10 anni
+};
+
 const InvestmentPerformanceTracker = ({ investmentId, investmentName }) => {
-  const [performanceData, setPerformanceData] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [selectedRange, setSelectedRange] = useState('1Y');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('1Y'); // Default: 1 anno
+
+  const fetchData = async (range) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchHistoricalData(investmentId, range);
+      setChartData({
+        labels: data.labels,
+        datasets: [{
+          label: investmentName || investmentId,
+          data: data.values,
+          borderColor: '#1e3a8a',
+          backgroundColor: 'rgba(30, 58, 138, 0.1)',
+          borderWidth: 2,
+          tension: 0.1,
+          fill: true
+        }]
+      });
+    } catch (err) {
+      console.error('Errore nel recupero dei dati:', err);
+      setError('Impossibile caricare i dati storici. Riprova più tardi.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Funzione per recuperare i dati da Yahoo Finance
-    const fetchInvestmentData = async () => {
-      setLoading(true);
-      try {
-        // Utilizza la funzione dal servizio per ottenere dati YF o simulati
-        const data = await getInvestmentData(investmentId, timeRange);
-        setPerformanceData(data);
-        setError(null);
-      } catch (err) {
-        console.error("Errore nel recupero dei dati di performance:", err);
-        setError("Impossibile caricare i dati. Riprova più tardi.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const controller = new AbortController();
+    fetchData(selectedRange);
+    return () => controller.abort();
+  }, [investmentId, selectedRange]);
 
-    fetchInvestmentData();
-  }, [investmentId, timeRange]);
-
-  // Configurazione del grafico
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'top',
-      },
+      legend: { position: 'top' },
       title: {
         display: true,
-        text: `Andamento storico: ${investmentName || investmentId}`,
-        font: {
-          size: 16
-        }
+        text: `Andamento Storico: ${investmentName || investmentId}`,
+        font: { size: 16 }
       },
       tooltip: {
+        mode: 'index',
+        intersect: false,
         callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-            }
-            return label;
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y || 0;
+            return `${label}: €${value.toFixed(2)}`;
           }
         }
       }
@@ -87,106 +97,58 @@ const InvestmentPerformanceTracker = ({ investmentId, investmentName }) => {
       x: {
         type: 'time',
         time: {
-          unit: timeRange === '1M' ? 'day' : 
-                timeRange === '3M' ? 'week' : 
-                timeRange === '1Y' ? 'month' : 'quarter'
+          unit: selectedRange === '1M' ? 'day' : 
+                selectedRange === '3M' ? 'week' : 
+                selectedRange === '1Y' ? 'month' : 'year',
+          tooltipFormat: 'dd/MM/yyyy'
         },
-        title: {
-          display: true,
-          text: 'Data'
-        },
-        adapters: {
-          date: {
-            locale: it,
-          },
-        },
+        adapters: { date: { locale: it } },
+        title: { display: true, text: 'Data' }
       },
       y: {
-        title: {
-          display: true,
-          text: 'Valore (€)'
-        },
-        ticks: {
-          callback: function(value) {
-            return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumSignificantDigits: 3 }).format(value);
-          }
-        }
+        title: { display: true, text: 'Valore (€)' },
+        ticks: { callback: (value) => `€${value.toFixed(2)}` }
       }
     }
-  };
-
-  // Stili per i bottoni del selettore di intervallo temporale
-  const buttonStyle = (isActive) => ({
-    margin: '0 5px',
-    padding: '5px 10px',
-    backgroundColor: isActive ? '#1e3a8a' : 'white',
-    color: isActive ? 'white' : '#1e3a8a',
-    border: `1px solid #1e3a8a`,
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px'
-  });
+  }), [selectedRange, investmentName, investmentId]);
 
   return (
-    <div className="card">
-      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>{investmentName || "Andamento dell'Investimento"}</h3>
+    <div className="performance-tracker">
+      <div className="tracker-header">
+        <h3>{investmentName || investmentId}</h3>
         <div className="time-range-selector">
-          <button 
-            style={buttonStyle(timeRange === '1M')}
-            onClick={() => setTimeRange('1M')}
-          >
-            1M
-          </button>
-          <button 
-            style={buttonStyle(timeRange === '3M')}
-            onClick={() => setTimeRange('3M')}
-          >
-            3M
-          </button>
-          <button 
-            style={buttonStyle(timeRange === '1Y')}
-            onClick={() => setTimeRange('1Y')}
-          >
-            1A
-          </button>
-          <button 
-            style={buttonStyle(timeRange === '5Y')}
-            onClick={() => setTimeRange('5Y')}
-          >
-            5A
-          </button>
-          <button 
-            style={buttonStyle(timeRange === 'MAX')}
-            onClick={() => setTimeRange('MAX')}
-          >
-            MAX
-          </button>
+          {Object.entries(timeRanges).map(([key, { label }]) => (
+            <button
+              key={key}
+              className={`range-button ${selectedRange === key ? 'active' : ''}`}
+              onClick={() => setSelectedRange(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
-      <div className="card-body" style={{ height: '400px', padding: '20px' }}>
+
+      <div className="chart-container">
         {loading && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <p>Caricamento dati in corso...</p>
+          <div className="loading-overlay">
+            <div className="spinner" />
+            <p>Caricamento dati...</p>
           </div>
         )}
-        
+
         {error && (
-          <div style={{ padding: '20px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px' }}>
-            {error}
+          <div className="error-message">
+            ⚠️ {error}
           </div>
         )}
-        
-        {performanceData && !loading && !error && (
-          <Line 
-            data={performanceData} 
-            options={chartOptions} 
-            height={350}
-          />
+
+        {!loading && !error && chartData && (
+          <Line data={chartData} options={chartOptions} />
         )}
       </div>
     </div>
   );
 };
 
-export default InvestmentPerformanceTracker;
+export default React.memo(InvestmentPerformanceTracker);

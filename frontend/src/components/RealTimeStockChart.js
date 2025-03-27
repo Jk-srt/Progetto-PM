@@ -1,9 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
-import { fetchRealTimeData } from '../services/YahooFinanceService';
-import { YahooFinanceSocket } from '../services/YahooFinanceWebSocket';
-
-// Registrazione dei componenti necessari di ChartJS
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,6 +13,7 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { it } from 'date-fns/locale';
+import { fetchRealTimePrice } from '../services/FinnhubService';
 
 ChartJS.register(
   CategoryScale,
@@ -30,127 +27,67 @@ ChartJS.register(
 );
 
 const RealTimeStockChart = ({ symbol, investmentName }) => {
-  const [chartData, setChartData] = useState(null);
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [{
+      label: symbol,
+      data: [],
+      borderColor: '#1e3a8a',
+      backgroundColor: 'rgba(30, 58, 138, 0.1)',
+      borderWidth: 2,
+      tension: 0.1,
+      fill: true
+    }]
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [updateMode, setUpdateMode] = useState('polling'); // 'polling' o 'websocket'
-  
-  const socketRef = useRef(null);
-  const pollingIntervalRef = useRef(null);
-  
-  // Funzione per aggiungere un nuovo punto dati al grafico
-  const updateChartData = (newData) => {
-    if (!newData || !newData.price) return;
-    
-    setChartData(prevData => {
-      if (!prevData || !prevData.labels || !prevData.datasets) return prevData;
-      
-      // Crea copie profonde per evitare modifiche dirette allo stato
-      const newLabels = [...prevData.labels, new Date()];
-      const newDatasets = prevData.datasets.map(dataset => ({
-        ...dataset,
-        data: [...dataset.data, newData.price]
-      }));
-      
-      // Limita a 100 punti per mantenere le prestazioni
-      if (newLabels.length > 100) {
-        newLabels.shift();
-        newDatasets.forEach(dataset => dataset.data.shift());
-      }
-      
-      return {
-        labels: newLabels,
-        datasets: newDatasets
-      };
-    });
-  };
-  
-  // Gestione WebSocket
-  const setupWebSocket = () => {
-    socketRef.current = new YahooFinanceSocket([symbol], (data) => {
-      if (data.symbol === symbol) {
-        updateChartData(data);
-      }
-    });
-    socketRef.current.connect();
-  };
-  
-  // Gestione Polling
-  const setupPolling = () => {
-    // Intervallo iniziale a 10 secondi
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const data = await fetchRealTimeData(symbol, '1m');
-        if (data && data.datasets && data.datasets[0].data.length > 0) {
-          const latestPrice = data.datasets[0].data[data.datasets[0].data.length - 1];
-          updateChartData({ price: latestPrice });
-        }
-      } catch (err) {
-        console.error('Errore nel polling:', err);
-      }
-    }, 10000);
-  };
-  
-  // Caricamento iniziale e impostazione degli aggiornamenti
+  const intervalRef = useRef(null);
+
   useEffect(() => {
-    const loadInitialData = async () => {
-      setLoading(true);
-      setError(null);
-      
+    const updateChart = async () => {
       try {
-        const data = await fetchRealTimeData(symbol, '1m');
-        setChartData(data);
+        const price = await fetchRealTimePrice(symbol);
+        const now = new Date();
         
-        // Avvia gli aggiornamenti in tempo reale
-        if (updateMode === 'websocket') {
-          setupWebSocket();
-        } else {
-          setupPolling();
-        }
+        setChartData(prevData => {
+          const newLabels = [...prevData.labels, now];
+          const newData = [...prevData.datasets[0].data, price];
+          
+          // Mantieni solo gli ultimi 60 punti dati (15 minuti con aggiornamenti ogni 15 secondi)
+          if (newLabels.length > 60) {
+            newLabels.shift();
+            newData.shift();
+          }
+          
+          return {
+            labels: newLabels,
+            datasets: [{
+              ...prevData.datasets[0],
+              data: newData
+            }]
+          };
+        });
+        
+        setLoading(false);
+        setError(null);
       } catch (err) {
-        console.error('Errore nel caricamento dei dati iniziali:', err);
-        setError('Impossibile caricare i dati in tempo reale. Riprova più tardi.');
-      } finally {
+        console.error('Errore nell\'aggiornamento del prezzo:', err);
+        setError('Impossibile aggiornare il prezzo. Riprova più tardi.');
         setLoading(false);
       }
     };
-    
-    loadInitialData();
-    
-    // Pulizia al dismount
+
+    // Aggiorna immediatamente e poi ogni 15 secondi
+    updateChart();
+    intervalRef.current = setInterval(updateChart, 15000);
+
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
-  }, [symbol, updateMode]);
-  
-  // Cambia modalità di aggiornamento
-  useEffect(() => {
-    // Pulisci connessioni esistenti
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-    
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-    
-    // Imposta nuova modalità se abbiamo già dati caricati
-    if (chartData) {
-      if (updateMode === 'websocket') {
-        setupWebSocket();
-      } else {
-        setupPolling();
-      }
-    }
-  }, [updateMode]);
-  
+  }, [symbol]);
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -159,6 +96,7 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
         type: 'time',
         time: {
           unit: 'minute',
+          stepSize: 1,
           displayFormats: {
             minute: 'HH:mm'
           }
@@ -176,13 +114,14 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
       y: {
         title: {
           display: true,
-          text: 'Prezzo'
+          text: 'Prezzo (€)'
         },
         ticks: {
           callback: function(value) {
             return new Intl.NumberFormat('it-IT', { 
               style: 'currency', 
               currency: 'EUR',
+              minimumFractionDigits: 2,
               maximumFractionDigits: 2
             }).format(value);
           }
@@ -213,6 +152,7 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
               label += new Intl.NumberFormat('it-IT', { 
                 style: 'currency', 
                 currency: 'EUR',
+                minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               }).format(context.parsed.y);
             }
@@ -222,60 +162,59 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
       },
     },
     interaction: {
-      mode: 'index',
+      mode: 'nearest',
+      axis: 'x',
       intersect: false
     },
-    animation: false // Disabilita animazioni per performance con aggiornamenti frequenti
+    animation: {
+      duration: 0 // Disabilita le animazioni per prestazioni migliori
+    }
   };
-  
+
   return (
     <div className="card">
-      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>{investmentName || symbol} - Tempo Reale</h3>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setUpdateMode('polling')}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: updateMode === 'polling' ? '#1e3a8a' : 'white',
-              color: updateMode === 'polling' ? 'white' : '#1e3a8a',
-              border: '1px solid #1e3a8a',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Polling (10s)
-          </button>
-          <button
-            onClick={() => setUpdateMode('websocket')}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: updateMode === 'websocket' ? '#1e3a8a' : 'white',
-              color: updateMode === 'websocket' ? 'white' : '#1e3a8a',
-              border: '1px solid #1e3a8a',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            WebSocket (5s)
-          </button>
-        </div>
+      <div className="card-header" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        padding: '1rem',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <h3 style={{ margin: 0 }}>{investmentName || symbol} - Tempo Reale</h3>
       </div>
-      <div className="card-body" style={{ height: '400px', padding: '20px' }}>
+      
+      <div className="card-body" style={{ 
+        height: '500px', 
+        padding: '1rem',
+        position: 'relative'
+      }}>
         {loading && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <p>Caricamento dati in corso...</p>
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center'
+          }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Caricamento...</span>
+            </div>
+            <p className="mt-2 text-muted">Caricamento dati in tempo reale...</p>
           </div>
         )}
-        
+
         {error && (
-          <div style={{ padding: '20px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px' }}>
+          <div className="alert alert-danger" role="alert" style={{ margin: '1rem' }}>
             {error}
           </div>
         )}
-        
-        {chartData && !loading && !error && (
-          <Line data={chartData} options={chartOptions} height={350} />
+
+        {!loading && !error && chartData.labels.length > 0 && (
+          <Line 
+            data={chartData} 
+            options={chartOptions}
+            height={450}
+          />
         )}
       </div>
     </div>
