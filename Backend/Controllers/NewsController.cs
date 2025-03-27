@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -11,13 +10,13 @@ public class NewsController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _apiKey;
-    private readonly ILogger<NewsController> _logger; // 🔹 Logger per debug
+    private readonly ILogger<NewsController> _logger;
 
     public NewsController(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<NewsController> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _apiKey = configuration["ApiKeys:NewsApiKey"]; // ✅ Prende la chiave API da appsettings.json
-        _logger = logger; // 🔹 Inizializza il logger
+        _apiKey = configuration["ApiKeys:FinnhubApiKey"];
+        _logger = logger;
     }
 
     [HttpGet("financial")]
@@ -30,15 +29,20 @@ public class NewsController : ControllerBase
         }
 
         var client = _httpClientFactory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.apitube.io/v1/news/everything?limit=10&category.name=finanza&source.country.code=it");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://finnhub.io/api/v1/news?category=general&token={_apiKey}");
 
-        HttpResponseMessage response = await client.SendAsync(request);
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.SendAsync(request);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError($"Request error: {ex.Message}");
+            return StatusCode(500, "Error making request to Finnhub API.");
+        }
+
         var responseBody = await response.Content.ReadAsStringAsync();
-
-        // 🔹 Stampa nel terminale
-        _logger.LogInformation($"API Response: {responseBody}");
-        Console.WriteLine($"API Response: {responseBody}");
 
         if (response.IsSuccessStatusCode)
         {

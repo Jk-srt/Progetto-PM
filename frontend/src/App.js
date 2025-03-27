@@ -37,13 +37,13 @@ ChartJS.register(
 );
 
 // Componente grafico a torta per la distribuzione delle spese
-const ExpensePieChart = ({ appo , categories}) => {
+const ExpensePieChart = ({ appo}) => {
     const data = {
-        labels: categories.map(c => c.name).filter(name => name !== "Entrate" && name !== "Stipendio"),
+        labels: Array.from(appo.keys()),
         datasets: [
             {
                 label: 'Spese mensili',
-                data: appo.map(c => c),
+                data: Array.from(appo.values()),
                 backgroundColor: [
                     '#A8DADC',
                     '#457B9D',
@@ -279,14 +279,14 @@ const Dashboard = ({transactions,categories}) => {
     const saldo = transactions.reduce((acc, transaction) => acc + transaction.amount, 0);
     const monthEntrance = transactions.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
     const monthExit = transactions.filter(t => t.amount < 0).reduce((acc, t) => acc + t.amount, 0);
-    const data = new Array(categories.length).fill(0);
-
+    const data = new Map();
     for (let i = 0; i < categories.length; i++) {
-        data[i] = transactions
+        data.set(categories[i].name, transactions
             .filter(t => t.categoryId === categories[i].categoryId)
-            .reduce((acc, t) => acc + t.amount, 0);
-    }data.splice(6, 1); // Rimuove l'elemento alla posizione 7
-    data.splice(2, 1);
+            .reduce((acc, t) => acc + t.amount, 0));
+    }
+    data.delete("Entrate");
+    data.delete("Stipendio");
     return (
         <div className="dashboard">
             <div className="card">
@@ -304,7 +304,7 @@ const Dashboard = ({transactions,categories}) => {
                     </p>
                 </div>
                 <div className="mt-1">
-                    <ExpensePieChart appo={data} categories={categories}/>
+                    <ExpensePieChart appo={data}/>
                 </div>
             </div>
             <div className="card">
