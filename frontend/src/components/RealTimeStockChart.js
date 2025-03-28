@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -15,6 +15,7 @@ import 'chartjs-adapter-date-fns';
 import { it } from 'date-fns/locale';
 import { fetchRealTimePrice } from '../services/FinnhubService';
 
+// Registrazione dei componenti necessari di ChartJS
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -26,7 +27,23 @@ ChartJS.register(
   TimeScale
 );
 
+// Creazione di uno stile CSS per l'animazione di spinning
+const createSpinningAnimation = () => {
+  if (!document.querySelector('#spin-animation')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'spin-animation';
+    styleElement.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+};
+
 const RealTimeStockChart = ({ symbol, investmentName }) => {
+  // Stato per i dati e l'UI
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [{
@@ -39,106 +56,90 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
       fill: true
     }]
   });
+  
+  const [currentPrice, setCurrentPrice] = useState(null);
+  const [priceChange, setPriceChange] = useState(null);
+  const [percentChange, setPercentChange] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSimulated, setIsSimulated] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState(15000); // 15 secondi di default
+  
+  // Ref per il polling
   const intervalRef = useRef(null);
-
+  
+  // Effetto per l'animazione
   useEffect(() => {
-    const updateChart = async () => {
+    createSpinningAnimation();
+  }, []);
+  
+  // Effetto per il polling dei dati
+  useEffect(() => {
+    // Funzione per aggiornare i dati in tempo reale
+    const updateRealTimeData = async () => {
       try {
-        const price = await fetchRealTimePrice(symbol);
-        const now = new Date();
+        const data = await fetchRealTimePrice(symbol);
         
+        // Aggiorna i dati sul prezzo corrente
+        setCurrentPrice(data.price);
+        setPriceChange(data.change);
+        setPercentChange(data.percentChange);
+        setIsSimulated(data.isSimulated || false);
+        
+        const now = new Date();
+
+        // Aggiorna il grafico
         setChartData(prevData => {
           const newLabels = [...prevData.labels, now];
-          const newData = [...prevData.datasets[0].data, price];
+          const newPrices = [...prevData.datasets[0].data, data.price];
           
-          // Mantieni solo gli ultimi 60 punti dati (15 minuti con aggiornamenti ogni 15 secondi)
-          if (newLabels.length > 60) {
-            newLabels.shift();
-            newData.shift();
-          }
+          // Mantieni solo gli ultimi 30 punti per prestazioni ottimali
+          const maxPoints = 30;
+          const sliceStart = newLabels.length > maxPoints ? newLabels.length - maxPoints : 0;
           
           return {
-            labels: newLabels,
+            labels: newLabels.slice(sliceStart),
             datasets: [{
               ...prevData.datasets[0],
-              data: newData
+              data: newPrices.slice(sliceStart)
             }]
           };
         });
         
+        // Imposta loading a false dopo il primo caricamento
         setLoading(false);
         setError(null);
       } catch (err) {
-        console.error('Errore nell\'aggiornamento del prezzo:', err);
-        setError('Impossibile aggiornare il prezzo. Riprova più tardi.');
-        setLoading(false);
+        console.error('Errore nell\'aggiornamento dei dati:', err);
+        
+        // Non impostare un errore se ci sono già dati visualizzati
+        if (loading) {
+          setError('Impossibile caricare i dati in tempo reale. Utilizzando dati simulati.');
+          setLoading(false);
+        }
       }
     };
-
-    // Aggiorna immediatamente e poi ogni 15 secondi
-    updateChart();
-    intervalRef.current = setInterval(updateChart, 15000);
-
+    
+    // Carica i dati iniziali
+    updateRealTimeData();
+    
+    // Imposta il polling
+    intervalRef.current = setInterval(updateRealTimeData, pollingInterval);
+    
+    // Cleanup all'unmount
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [symbol]);
-
-  const chartOptions = {
+  }, [symbol, pollingInterval]);
+  
+  // Opzioni del grafico memorizzate
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'minute',
-          stepSize: 1,
-          displayFormats: {
-            minute: 'HH:mm'
-          }
-        },
-        title: {
-          display: true,
-          text: 'Orario'
-        },
-        adapters: {
-          date: {
-            locale: it,
-          },
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Prezzo (€)'
-        },
-        ticks: {
-          callback: function(value) {
-            return new Intl.NumberFormat('it-IT', { 
-              style: 'currency', 
-              currency: 'EUR',
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            }).format(value);
-          }
-        }
-      }
-    },
+    animation: false, // Disabilita le animazioni per prestazioni con aggiornamenti frequenti
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: `Andamento in tempo reale: ${investmentName || symbol}`,
-        font: {
-          size: 16
-        }
-      },
       tooltip: {
         mode: 'index',
         intersect: false,
@@ -160,16 +161,64 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
           }
         }
       },
+      legend: {
+        display: false // Nascondi la legenda che è già visibile nell'header
+      },
+      title: {
+        display: true,
+        text: `Andamento in tempo reale: ${investmentName || symbol}`,
+        font: {
+          size: 16
+        }
+      },
+    },
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'minute',
+          displayFormats: {
+            minute: 'HH:mm:ss'
+          },
+          tooltipFormat: 'HH:mm:ss'
+        },
+        title: {
+          display: true,
+          text: 'Orario'
+        },
+        adapters: {
+          date: {
+            locale: it,
+          },
+        },
+        ticks: {
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 6
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Prezzo (€)'
+        },
+        ticks: {
+          callback: function(value) {
+            return new Intl.NumberFormat('it-IT', { 
+              style: 'currency', 
+              currency: 'EUR',
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }).format(value);
+          }
+        }
+      }
     },
     interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    },
-    animation: {
-      duration: 0 // Disabilita le animazioni per prestazioni migliori
+      mode: 'index',
+      intersect: false,
     }
-  };
+  }), [symbol, investmentName]);
 
   return (
     <div className="card">
@@ -177,44 +226,114 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        padding: '1rem',
-        backgroundColor: '#f8f9fa'
+        padding: '16px',
+        borderBottom: '1px solid #eaeaea'
       }}>
-        <h3 style={{ margin: 0 }}>{investmentName || symbol} - Tempo Reale</h3>
+        <div>
+          <h3 style={{ margin: 0 }}>
+            {investmentName || symbol}
+            {currentPrice && !loading && (
+              <span style={{ marginLeft: '10px' }}>
+                <span style={{ fontWeight: 'bold' }}>
+                  {new Intl.NumberFormat('it-IT', { 
+                    style: 'currency', 
+                    currency: 'EUR',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }).format(currentPrice)}
+                </span>
+                {priceChange !== null && (
+                  <span style={{ 
+                    color: priceChange >= 0 ? '#10b981' : '#ef4444',
+                    marginLeft: '8px',
+                    fontSize: '0.9em'
+                  }}>
+                    {priceChange >= 0 ? '▲' : '▼'} 
+                    {new Intl.NumberFormat('it-IT', { 
+                      style: 'currency', 
+                      currency: 'EUR',
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }).format(Math.abs(priceChange))} 
+                    ({percentChange >= 0 ? '+' : ''}
+                    {percentChange.toFixed(2)}%)
+                  </span>
+                )}
+              </span>
+            )}
+          </h3>
+          {isSimulated && (
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#f59e0b', 
+              marginTop: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <span style={{ fontSize: '16px' }}>⚠️</span>
+              <span>Dati simulati (API non disponibile)</span>
+            </div>
+          )}
+        </div>
+        <div>
+          <select 
+            value={pollingInterval} 
+            onChange={(e) => setPollingInterval(parseInt(e.target.value))}
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              border: '1px solid #cbd5e1',
+              backgroundColor: '#f8fafc'
+            }}
+          >
+            <option value={5000}>Aggiorna: 5 secondi</option>
+            <option value={15000}>Aggiorna: 15 secondi</option>
+            <option value={30000}>Aggiorna: 30 secondi</option>
+            <option value={60000}>Aggiorna: 1 minuto</option>
+          </select>
+        </div>
       </div>
       
-      <div className="card-body" style={{ 
-        height: '500px', 
-        padding: '1rem',
-        position: 'relative'
-      }}>
+      <div className="card-body" style={{ height: '500px', padding: '16px', position: 'relative' }}>
         {loading && (
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            textAlign: 'center'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
           }}>
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Caricamento...</span>
-            </div>
-            <p className="mt-2 text-muted">Caricamento dati in tempo reale...</p>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #f3f4f6',
+              borderTop: '4px solid #1e3a8a',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <span>Caricamento dati in corso...</span>
           </div>
         )}
-
+        
         {error && (
-          <div className="alert alert-danger" role="alert" style={{ margin: '1rem' }}>
-            {error}
+          <div style={{
+            padding: '16px',
+            backgroundColor: '#fee2e2',
+            color: '#b91c1c',
+            borderRadius: '4px',
+            margin: '16px 0'
+          }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>Errore:</p>
+            <p style={{ margin: '8px 0 0 0' }}>{error}</p>
           </div>
         )}
-
-        {!loading && !error && chartData.labels.length > 0 && (
-          <Line 
-            data={chartData} 
-            options={chartOptions}
-            height={450}
-          />
+        
+        {!loading && chartData.labels.length > 0 && (
+          <Line data={chartData} options={chartOptions} />
         )}
       </div>
     </div>
