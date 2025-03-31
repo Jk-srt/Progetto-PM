@@ -1,8 +1,12 @@
 using Backend.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore; // ✅ Aggiungi
+using Microsoft.AspNetCore.Identity; // ✅ Aggiungi
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Data
-{
+namespace Backend.Data;
+
+//public class AppDbContext : IdentityDbContext<IdentityUser> // ✅ Modifica ereditarietà
+//{ potrebbe servire per autenticazione con Identity Server quando si vuole fare il login
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
@@ -29,4 +33,4 @@ namespace Backend.Data
                 ;
         }
     }
-}
+
