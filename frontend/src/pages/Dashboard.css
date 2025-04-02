@@ -1,0 +1,33 @@
+/* Dashboard.css */
+.dashboard-container {
+    padding: 20px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin: 20px 0;
+}
+
+.transactions-table, .investment-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transactions-table th, 
+.transactions-table td,
+.investment-table th,
+.investment-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.transactions-table th {
+    background-color: #f5f5f5;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
