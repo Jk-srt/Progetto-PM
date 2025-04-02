@@ -8,18 +8,22 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import NewsPage from './pages/NewsPage';
 import AssistantPage from './pages/AssistantPage';
-import PortfolioAnalytics from './components/PortfolioAnalytics';
-import InvestmentsDetail from './components/InvestmentsDetail';
-import TransactionsList from './components/TransactionsList';
 
 const theme = createTheme({
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#90caf9',
+    primary: { main: '#90caf9' },
+    secondary: { main: '#f48fb1' },
+    background: {
+      default: '#121212',
+      paper: '#1e1e1e',
     },
-    secondary: {
-      main: '#f48fb1',
+  },
+  typography: {
+    fontFamily: 'Roboto, Arial, sans-serif',
+    h4: {
+      fontWeight: 600,
+      letterSpacing: '0.5px',
     },
   },
 });
@@ -33,15 +37,11 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />}>
-                <Route index element={<PortfolioAnalytics />} />
-                <Route path="investments" element={<InvestmentsDetail />} />
-                <Route path="transactions" element={<TransactionsList />} />
-              </Route>
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/assistant" element={<AssistantPage />} />
             </Route>
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </AuthProvider>
       </ThemeProvider>

@@ -1,4 +1,4 @@
-/* Dashboard.css */
+/* src/pages/DashboardCSS.css */
 .dashboard-container {
     padding: 20px;
 }
@@ -8,12 +8,13 @@
     margin: 20px 0;
 }
 
-.transactions-table, .investment-table {
+.transactions-table, 
+.investment-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.transactions-table th, 
+.transactions-table th,
 .transactions-table td,
 .investment-table th,
 .investment-table td {

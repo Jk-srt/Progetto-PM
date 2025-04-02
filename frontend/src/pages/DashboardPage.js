@@ -1,34 +1,31 @@
-// Modifica gli import
 import React, { useState, useEffect } from 'react';
-import { Pie, Line } from 'react-chartjs-2'; // Rimuovi Bar
-// Rimuovi: import { Link } from 'react-router-dom';
-// Modifica i percorsi degli import
+import {
+  Card,
+  CardContent,
+  Grid,
+  Tabs,
+  Tab,
+  Box,
+  Paper,
+  Typography
+} from '@mui/material';
+import { Pie, Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
-import './Dashboard.css'; // Modifica il percorso del CSS
-import { 
-    Card, 
-    CardContent, 
-    Grid, 
-    Tabs, 
-    Tab, 
-    Box, 
-    Paper, 
-    Typography 
-  } from '@mui/material'; // Importa tutti i componenti MUI
-  import { 
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    BarElement,
-    ArcElement,
-    Title,
-    Tooltip,
-    Legend 
-  } from 'chart.js';
+import './DashboardCSS.css';
 
 ChartJS.register(
   CategoryScale,
@@ -42,20 +39,15 @@ ChartJS.register(
   Legend
 );
 
-const Dashboard = () => {
-    console.log('Dashboard');
+const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview');
   const [data, setData] = useState({
-    users: [],
     transactions: [],
-    assets: [],
-    investments: [],
-    categories: []
+    investments: []
   });
   const [loading, setLoading] = useState(true);
 
-  // Dati esempio per i grafici
   const portfolioAllocationData = {
     labels: ['Azioni', 'Obbligazioni', 'ETF', 'Cripto'],
     datasets: [{
@@ -77,15 +69,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [users, transactions, assets, investments, categories] = await Promise.all([
-          fetch("/api/users").then(res => res.json()),
+        const [transactions, investments] = await Promise.all([
           fetch("/api/transactions").then(res => res.json()),
-          fetch("/api/assets").then(res => res.json()),
-          fetch("/api/investments").then(res => res.json()),
-          fetch("/api/categories").then(res => res.json())
+          fetch("/api/investments").then(res => res.json())
         ]);
         
-        setData({ users, transactions, assets, investments, categories });
+        setData({ transactions, investments });
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -256,4 +245,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardPage;
