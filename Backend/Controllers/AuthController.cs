@@ -20,47 +20,38 @@ namespace Backend.Controllers
             _context = context;
         }
 
-        // 📌 FIREBASE LOGIN
         [HttpPost("firebase")]
         public async Task<IActionResult> FirebaseLogin()
         {
+            System.Console.WriteLine("Dentro al metodo FirebaseLogin");
             try
             {
-                // Estrae il token dall'header Authorization
                 var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                
                 if (string.IsNullOrEmpty(token))
                 {
                     return BadRequest("Token non fornito");
                 }
 
-                // Verifica il token Firebase
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
                 string firebaseUid = decodedToken.Uid;
                 string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
-                string nome = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "Utente";
 
-                // Controlla se l'utente esiste nel database
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
 
                 if (user == null)
                 {
-                    // Crea un nuovo utente
                     user = new User
                     {
                         FirebaseUid = firebaseUid,
                         Email = email,
-                        Nome = nome,
                         CreatedAt = DateTime.UtcNow,
                         LastLogin = DateTime.UtcNow,
                         IsActive = true
                     };
-                    
-                    _context.Users.Add(user);
+                    await _context.Users.AddAsync(user);
                 }
                 else
                 {
-                    // Aggiorna l'utente esistente
                     user.LastLogin = DateTime.UtcNow;
                     if (email != null && user.Email != email)
                     {
@@ -70,11 +61,11 @@ namespace Backend.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Ok(new { 
+                return Ok(new 
+                {
                     userId = user.UserId,
-                    nome = user.Nome,
                     email = user.Email,
-                    message = "Login effettuato con successo" 
+                    message = "Login effettuato con successo"
                 });
             }
             catch (FirebaseAuthException ex)
@@ -87,13 +78,10 @@ namespace Backend.Controllers
             }
         }
 
-        // Logout
         [Authorize]
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            // Firebase gestisce l'invalidazione del token lato client
-            // Possiamo usare questo metodo per eseguire operazioni di pulizia lato server
             return Ok(new { message = "Logout eseguito" });
         }
     }
