@@ -1,76 +1,55 @@
 using Backend.Data;
-using Backend.Services;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configura il database SQL Server
+// Configurazione Firebase Admin SDK
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile("firebase-service-account.json") // Sostituire con il percorso del file JSON di servizio Firebase
+});
+
+// Configurazione del database Neon (Entity Framework Core)
 builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()
-    )
-);
+    options.UseNpgsql(builder.Configuration.GetConnectionString("NeonConnection")));
 
-// Configura i servizi
-builder.Services.AddScoped<FinancialDataService>();
-builder.Services.AddHttpClient(); // ✅ Registra HttpClient per Dependency Injection
-builder.Services.AddControllers();
-
-// Configura l'autenticazione JWT
-var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrEmpty(jwtKey))
-{
-    throw new ArgumentNullException("Jwt:Key", "La chiave JWT non è configurata correttamente nel file appsettings.json.");
-}
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Configurazione dell'autenticazione JWT per Firebase
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-    };
-});
+        options.Authority = "https://securetoken.google.com/your-project-id"; // Sostituire con il proprio project ID di Firebase
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "https://securetoken.google.com/your-project-id", // Sostituire con il proprio project ID di Firebase
+            ValidateAudience = true,
+            ValidAudience = "your-project-id", // Sostituire con il proprio project ID di Firebase
+            ValidateLifetime = true
+        };
+    });
 
-// Abilita CORS (opzionale, se React è su un altro dominio)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy => policy.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
-});
-
-// Abilita Swagger (opzionale)
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Aggiunta dei controller
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Configurazione della pipeline HTTP
+if (!app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // ✅ Abilita CORS
-app.UseAuthentication(); // ✅ Abilita autenticazione
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication(); // Necessario per gestire l'autenticazione JWT
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers(); // Mappa i controller API
 
 app.Run();

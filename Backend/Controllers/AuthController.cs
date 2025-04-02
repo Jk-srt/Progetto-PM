@@ -1,8 +1,11 @@
+using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
+using FirebaseAdmin.Auth;
+using Backend.Models;
+using Backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Controllers
 {
@@ -10,60 +13,88 @@ namespace Backend.Controllers
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly JwtService _jwtService;
+        private readonly AppDbContext _context;
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtService jwtService)
+        public AuthController(AppDbContext context)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _jwtService = jwtService;
+            _context = context;
         }
 
-        // 📌 REGISTRAZIONE
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        // 📌 FIREBASE LOGIN
+        [HttpPost("firebase")]
+        public async Task<IActionResult> FirebaseLogin()
         {
-            var user = new IdentityUser { UserName = model.Email, Email = model.Email };
-            var result = await _userManager.CreateAsync(user, model.Password);
+            try
+            {
+                // Estrae il token dall'header Authorization
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest("Token non fornito");
+                }
 
-            if (!result.Succeeded) return BadRequest(result.Errors);
+                // Verifica il token Firebase
+                var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
+                string firebaseUid = decodedToken.Uid;
+                string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
+                string nome = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "Utente";
 
-            return Ok(new { message = "Registrazione completata!" });
+                // Controlla se l'utente esiste nel database
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
+
+                if (user == null)
+                {
+                    // Crea un nuovo utente
+                    user = new User
+                    {
+                        FirebaseUid = firebaseUid,
+                        Email = email,
+                        Nome = nome,
+                        CreatedAt = DateTime.UtcNow,
+                        LastLogin = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    
+                    _context.Users.Add(user);
+                }
+                else
+                {
+                    // Aggiorna l'utente esistente
+                    user.LastLogin = DateTime.UtcNow;
+                    if (email != null && user.Email != email)
+                    {
+                        user.Email = email;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { 
+                    userId = user.UserId,
+                    nome = user.Nome,
+                    email = user.Email,
+                    message = "Login effettuato con successo" 
+                });
+            }
+            catch (FirebaseAuthException ex)
+            {
+                return Unauthorized(new { message = $"Token non valido: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Si è verificato un errore: {ex.Message}" });
+            }
         }
 
-        // 📌 LOGIN
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null || !(await _userManager.CheckPasswordAsync(user, model.Password)))
-                return Unauthorized("Email o password errati");
-
-            var token = _jwtService.GenerateToken(user.Id, user.Email);
-            return Ok(new { token });
-        }
-
-        // 📌 LOGOUT
+        // Logout
         [Authorize]
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
-            await _signInManager.SignOutAsync();
-            return Ok(new { message = "Logout eseguito!" });
+            // Firebase gestisce l'invalidazione del token lato client
+            // Possiamo usare questo metodo per eseguire operazioni di pulizia lato server
+            return Ok(new { message = "Logout eseguito" });
         }
-    }
-
-    public class RegisterModel
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class LoginModel
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
     }
 }
