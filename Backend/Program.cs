@@ -9,17 +9,12 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurazione Firebase con validazione
+// Configurazione Firebase
 var firebaseProjectId = builder.Configuration["Firebase:ProjectId"] 
     ?? throw new InvalidOperationException("Firebase ProjectId non configurato");
 
 var firebaseCredentialPath = builder.Configuration["Firebase:CredentialPath"]
     ?? "firebase-service-account.json";
-
-if (!File.Exists(firebaseCredentialPath))
-{
-    throw new FileNotFoundException($"File credentials Firebase non trovato: {firebaseCredentialPath}");
-}
 
 FirebaseApp.Create(new AppOptions 
 {
@@ -27,7 +22,7 @@ FirebaseApp.Create(new AppOptions
     ProjectId = firebaseProjectId
 });
 
-// 2. Configurazione database con opzioni avanzate
+// Configurazione database
 builder.Services.AddDbContext<AppDbContext>(options => 
 {
     var connectionString = builder.Configuration.GetConnectionString("NeonConnection") 
@@ -38,7 +33,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
 });
 
-// 3. Autenticazione JWT migliorata
+// Configurazione autenticazione
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
@@ -53,10 +48,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
-        options.SaveToken = true;
     });
 
-// 4. CORS più restrittivo
+// Configurazione CORS aggiornata
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentPolicy", policy =>
@@ -76,7 +70,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Configurazione Swagger/OpenAPI
+// Configurazione Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -92,45 +86,27 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configurazione ambiente di sviluppo
+// Middleware pipeline
+app.UseRouting();
+
+// Ordine corretto middleware
+app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("DevelopmentPolicy");
-}
-else
-{
-    app.UseCors("ProductionPolicy");
-    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next(context);
-    }
-    catch (FileNotFoundException ex)
-    {
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync($"Errore di configurazione: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync($"Errore interno: {ex.Message}");
-    }
-});
 
 app.MapControllers();
+
 app.Run();
