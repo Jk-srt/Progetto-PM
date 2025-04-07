@@ -15,6 +15,16 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Transaction>()
+        .HasOne(t => t.User)
+        .WithMany()
+        .HasForeignKey(t => t.UserId);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.Category)
+            .WithMany()
+            .HasForeignKey(t => t.CategoryId);
+            
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();

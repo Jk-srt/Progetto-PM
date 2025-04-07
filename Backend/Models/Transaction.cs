@@ -27,8 +27,8 @@ public class Transaction
     public int CategoryId { get; set; }
     
     // Navigation Properties
-    public User User { get; set; }
-    public Category Category { get; set; }
+    public User? User { get; set; }
+    public Category? Category { get; set; }
 }
 public enum TransactionType
 {
