@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }) => {
             if (!response.ok) {
                 throw new Error(responseData.message || 'Errore nella registrazione');
             }
+            localStorage.setItem('userId', responseData.userId); // Salva l'ID utente nel localStorage
 
             console.log('Utente registrato/aggiornato:', responseData);
             navigate('/dashboard');

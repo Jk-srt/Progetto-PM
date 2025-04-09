@@ -47,7 +47,9 @@ const DashboardPage = () => {
     investments: []
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
+  // Dati grafici
   const portfolioAllocationData = {
     labels: ['Azioni', 'Obbligazioni', 'ETF', 'Cripto'],
     datasets: [{
@@ -66,42 +68,66 @@ const DashboardPage = () => {
     }]
   };
 
+  // Fetch dati iniziali
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [transactions, investments] = await Promise.all([
-          fetch("/api/transactions").then(res => res.json()),
-          fetch("/api/investments").then(res => res.json())
-        ]);
-        
-        setData({ transactions, investments });
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
+  const fetchData = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        throw new Error('User ID not found in localStorage');
       }
-    };
+      console.log("User ID:", userId); // Debug: verifica l'ID utente
 
-    fetchData();
-  }, []);
+      const [transactions, investments] = await Promise.all([
+        fetch('http://localhost:5000/api/transactions', {
+          headers: {
+            'userId': userId
+          }
+        }).then(res => res.json()),
+        fetch('http://localhost:5000/api/investments', {
+          headers: {
+            'userId': userId
+          }
+        }).then(res => res.json())
+      ]);
+      console.log("Transactions:", transactions); // Debug: verifica le transazioni
+      console.log("Investments:", investments); // Debug: verifica gli investimenti
 
+      setData({ transactions, investments });
+      setLoading(false);
+    } catch (error) {
+      console.error("Errore nel caricamento dati:", error);
+      setError(true);
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
+
+  // Render contenuto investimenti
   const renderInvestmentContent = () => {
     switch (activeInvestmentTab) {
       case 'overview':
         return (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card elevation={3}>
                 <CardContent>
-                  <Typography variant="h6">Allocazione Portafoglio</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Allocazione Portafoglio
+                  </Typography>
                   <Pie data={portfolioAllocationData} />
                 </CardContent>
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card elevation={3}>
                 <CardContent>
-                  <Typography variant="h6">Performance</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Performance Storiche
+                  </Typography>
                   <Line data={performanceData} />
                 </CardContent>
               </Card>
@@ -114,9 +140,11 @@ const DashboardPage = () => {
 
       case 'transactions':
         return (
-          <Card>
+          <Card elevation={3}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Transazioni Investimenti</Typography>
+              <Typography variant="h6" gutterBottom>
+                Storico Transazioni
+              </Typography>
               <div className="table-responsive">
                 <table className="investment-table">
                   <thead>
@@ -130,7 +158,7 @@ const DashboardPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.investments.map(investment => (
+                    {data.investments.map((investment) => (
                       <tr key={investment.id}>
                         <td>{new Date(investment.date).toLocaleDateString()}</td>
                         <td>{investment.asset}</td>
@@ -148,16 +176,32 @@ const DashboardPage = () => {
         );
 
       default:
-        return <PortfolioAnalytics data={data.investments} />;
+        return null;
     }
   };
 
+  // Gestione stati di caricamento/errore
   if (loading) {
-    return <div className="loading-spinner">Loading...</div>;
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <Typography variant="h6">Caricamento dati in corso...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <Typography variant="h6" color="error">
+          Errore nel caricamento dei dati. Riprovare più tardi.
+        </Typography>
+      </Box>
+    );
   }
 
   return (
     <div className="dashboard-container">
+      {/* Menu principale */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeTab}
@@ -173,27 +217,36 @@ const DashboardPage = () => {
         </Tabs>
       </Box>
 
+      {/* Contenuto principale */}
       <Paper sx={{ p: 3, mt: 2 }}>
         {activeTab === 'dashboard' && (
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h4" gutterBottom>Panoramica Finanziaria</Typography>
+              <Typography variant="h4" gutterBottom>
+                Panoramica Finanziaria
+              </Typography>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Card>
+              <Card elevation={3}>
                 <CardContent>
-                  <Typography variant="h6">Patrimonio Totale</Typography>
-                  <Typography variant="h4">$25,430.00</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Patrimonio Totale
+                  </Typography>
+                  <Typography variant="h4" color="primary" gutterBottom>
+                    $25,430.00
+                  </Typography>
                   <Line data={performanceData} />
                 </CardContent>
               </Card>
             </Grid>
 
             <Grid item xs={12} md={8}>
-              <Card>
+              <Card elevation={3}>
                 <CardContent>
-                  <Typography variant="h6">Ultime Transazioni</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Ultime Transazioni
+                  </Typography>
                   <div className="table-responsive">
                     <table className="transactions-table">
                       <thead>
@@ -205,11 +258,11 @@ const DashboardPage = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.transactions.slice(0, 5).map(transaction => (
-                          <tr key={transaction.id}>
+                        {data.transactions.map((transaction, index) => (
+                          <tr key={index}>
                             <td>{new Date(transaction.date).toLocaleDateString()}</td>
                             <td>{transaction.description}</td>
-                            <td>{transaction.category}</td>
+                            <td>{transaction.category?.name || 'N/A'}</td>
                             <td>${transaction.amount.toFixed(2)}</td>
                           </tr>
                         ))}

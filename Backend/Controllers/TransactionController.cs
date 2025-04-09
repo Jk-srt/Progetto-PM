@@ -17,41 +17,57 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactions()
-    {
-        return await _context.Transactions.ToListAsync();
-    }
+        public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactions()
+        {
+            var userId = Request.Headers["userId"].ToString();
+
+            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int parsedUserId))
+            {
+                return BadRequest("User ID in the request headers is not valid.");
+            }
+
+            // Carica le transazioni con le relazioni di categoria
+            var transactions = await _context.Transactions
+                .Where(t => t.UserId == parsedUserId)
+                .Include(t => t.Category) // Eager loading della categoria
+                .AsNoTracking() // Ottimizza performance
+                .ToListAsync();
+
+            return Ok(transactions);
+        }
+
+
+    
     [HttpPost]
-    [HttpPost]
-public async Task<ActionResult<Transaction>> AddTransaction(Transaction transaction)
-{
-    // Recupera l'ID utente dall'intestazione
-    var userId = Request.Headers["userId"].ToString();
-    if (string.IsNullOrEmpty(userId))
-    {
-        return BadRequest("User ID is missing from the request headers.");
-    }
+        public async Task<ActionResult<Transaction>> AddTransaction(Transaction transaction)
+        {
+            // Recupera l'ID utente dall'intestazione
+            var userId = Request.Headers["userId"].ToString();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("User ID is missing from the request headers.");
+            }
 
-    if (!int.TryParse(userId, out int parsedUserId))
-    {
-        return BadRequest("User ID in the request headers is not a valid integer.");
-    }
+            if (!int.TryParse(userId, out int parsedUserId))
+            {
+                return BadRequest("User ID in the request headers is not a valid integer.");
+            }
 
-    // Associa l'ID utente alla transazione
-    transaction.UserId = parsedUserId;
+            // Associa l'ID utente alla transazione
+            transaction.UserId = parsedUserId;
 
-    // Verifica che l'ID categoria sia valido
-    if (transaction.CategoryId <= 0)
-    {
-        return BadRequest("Category ID is required and must be greater than zero.");
-    }
+            // Verifica che l'ID categoria sia valido
+            if (transaction.CategoryId <= 0)
+            {
+                return BadRequest("Category ID is required and must be greater than zero.");
+            }
 
-    // Salva la transazione nel database
-    _context.Transactions.Add(transaction);
-    await _context.SaveChangesAsync();
+            // Salva la transazione nel database
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
 
-    return CreatedAtAction(nameof(GetTransactions), new { id = transaction.TransactionId }, transaction);
-}
+            return CreatedAtAction(nameof(GetTransactions), new { id = transaction.TransactionId }, transaction);
+        }
 
 
 }
