@@ -22,10 +22,12 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
 import './DashboardCSS.css';
+import TransactionsList from './TransactionsPage';
 
 ChartJS.register(
   CategoryScale,
@@ -290,7 +292,7 @@ const DashboardPage = () => {
             {renderInvestmentContent()}
           </>
         )}
-
+        {activeTab === 'transactions' && <Transactions transactions={data.transactions} />}
         {activeTab === 'news' && <NewsPage />}
         {activeTab === 'assistant' && <AssistantPage />}
       </Paper>
