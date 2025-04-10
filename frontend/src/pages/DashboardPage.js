@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  Grid,
-  Tabs,
-  Tab,
-  Box,
-  Paper,
-  Typography
-} from '@mui/material';
+import { Tabs, Tab, Container, Row, Col, Card, Alert, Table } from 'react-bootstrap';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -26,8 +17,6 @@ import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
-import './DashboardCSS.css';
-import TransactionsList from './TransactionsPage';
 
 ChartJS.register(
   CategoryScale,
@@ -51,7 +40,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Dati grafici
+  // Dati per i grafici
   const portfolioAllocationData = {
     labels: ['Azioni', 'Obbligazioni', 'ETF', 'Cripto'],
     datasets: [{
@@ -70,87 +59,74 @@ const DashboardPage = () => {
     }]
   };
 
-  // Fetch dati iniziali
+  // Carica dati iniziali
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        throw new Error('User ID not found in localStorage');
+    const fetchData = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          throw new Error('User ID not found in localStorage');
+        }
+        console.log("User ID:", userId);
+
+        const [transactions, investments, categories] = await Promise.all([
+          fetch('http://localhost:5000/api/transactions', {
+            headers: { 'userId': userId }
+          }).then(res => res.json()),
+          fetch('http://localhost:5000/api/investments', {
+            headers: { 'userId': userId }
+          }).then(res => res.json()),
+          fetch('http://localhost:5000/api/categories').then(res => res.json())
+        ]);
+        console.log("Categories:", categories);
+        console.log("Transactions:", transactions);
+        console.log("Investments:", investments);
+        localStorage.setItem('categories', JSON.stringify(categories));
+        setData({ transactions, investments });
+        setLoading(false);
+      } catch (error) {
+        console.error("Errore nel caricamento dati:", error);
+        setError(true);
+        setLoading(false);
       }
-      console.log("User ID:", userId); // Debug: verifica l'ID utente
+    };
 
-      const [transactions, investments,categories] = await Promise.all([
-        fetch('http://localhost:5000/api/transactions', {
-          headers: {
-            'userId': userId
-          }
-        }).then(res => res.json()),
-        fetch('http://localhost:5000/api/investments', {
-          headers: {
-            'userId': userId
-          }
-        }).then(res => res.json()),
-        fetch('http://localhost:5000/api/categories').then(res => res.json())
-      ]);
-      console.log("Categories:", categories); // Debug: verifica le categorie
-      console.log("Transactions:", transactions); // Debug: verifica le transazioni
-      console.log("Investments:", investments); // Debug: verifica gli investimenti
-      localStorage.setItem('categories', JSON.stringify(categories)); // Salva le categorie in localStorage
-      setData({ transactions, investments });
-      setLoading(false);
-    } catch (error) {
-      console.error("Errore nel caricamento dati:", error);
-      setError(true);
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, []);
 
-  fetchData();
-}, []);
-
-
-  // Render contenuto investimenti
+  // Renderizza il contenuto della sezione Investimenti
   const renderInvestmentContent = () => {
     switch (activeInvestmentTab) {
       case 'overview':
         return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Allocazione Portafoglio
-                  </Typography>
+          <Row className="mt-3">
+            <Col md={6}>
+              <Card className="mb-3">
+                <Card.Body>
+                  <Card.Title>Allocazione Portafoglio</Card.Title>
                   <Pie data={portfolioAllocationData} />
-                </CardContent>
+                </Card.Body>
               </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Performance Storiche
-                  </Typography>
+            </Col>
+            <Col md={6}>
+              <Card className="mb-3">
+                <Card.Body>
+                  <Card.Title>Performance Storiche</Card.Title>
                   <Line data={performanceData} />
-                </CardContent>
+                </Card.Body>
               </Card>
-            </Grid>
-          </Grid>
+            </Col>
+          </Row>
         );
-
       case 'analytics':
         return <PortfolioAnalytics data={data.investments} />;
-
       case 'transactions':
         return (
-          <Card elevation={3}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Storico Transazioni
-              </Typography>
+          <Card className="mb-3">
+            <Card.Body>
+              <Card.Title>Storico Transazioni</Card.Title>
               <div className="table-responsive">
-                <table className="investment-table">
+                <Table striped bordered hover>
                   <thead>
                     <tr>
                       <th>Data</th>
@@ -173,86 +149,70 @@ const DashboardPage = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Table>
               </div>
-            </CardContent>
+            </Card.Body>
           </Card>
         );
-
       default:
         return null;
     }
   };
 
-  // Gestione stati di caricamento/errore
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <Typography variant="h6">Caricamento dati in corso...</Typography>
-      </Box>
+      <Container className="text-center mt-4">
+        <h6>Caricamento dati in corso...</h6>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <Typography variant="h6" color="error">
+      <Container className="text-center mt-4">
+        <Alert variant="danger">
           Errore nel caricamento dei dati. Riprovare più tardi.
-        </Typography>
-      </Box>
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="dashboard-container">
+    <Container className="mt-4">
       {/* Menu principale */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs
-          value={activeTab}
-          onChange={(e, newValue) => setActiveTab(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab label="Dashboard" value="dashboard" />
-          <Tab label="Transazioni" value="transactions" />
-          <Tab label="Investimenti" value="investments" />
-          <Tab label="Notizie" value="news" />
-          <Tab label="Assistente" value="assistant" />
-        </Tabs>
-      </Box>
+      <Tabs
+        activeKey={activeTab}
+        onSelect={(k) => setActiveTab(k)}
+        id="main-tabs"
+        className="mb-3"
+      >
+        <Tab eventKey="dashboard" title="Dashboard" />
+        <Tab eventKey="transactions" title="Transazioni" />
+        <Tab eventKey="investments" title="Investimenti" />
+        <Tab eventKey="news" title="Notizie" />
+        <Tab eventKey="assistant" title="Assistente" />
+      </Tabs>
 
       {/* Contenuto principale */}
-      <Paper sx={{ p: 3, mt: 2 }}>
-        {activeTab === 'dashboard' && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h4" gutterBottom>
-                Panoramica Finanziaria
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Patrimonio Totale
-                  </Typography>
-                  <Typography variant="h4" color="primary" gutterBottom>
-                    $25,430.00
-                  </Typography>
+      {activeTab === 'dashboard' && (
+        <>
+          <h4 className="mb-4">Panoramica Finanziaria</h4>
+          <Row>
+            <Col md={4}>
+              <Card className="mb-4">
+                <Card.Body>
+                  <Card.Title>Patrimonio Totale</Card.Title>
+                  <h4 className="text-primary mb-3">$25,430.00</h4>
                   <Line data={performanceData} />
-                </CardContent>
+                </Card.Body>
               </Card>
-            </Grid>
-
-            <Grid item xs={12} md={8}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Ultime Transazioni
-                  </Typography>
+            </Col>
+            <Col md={8}>
+              <Card className="mb-4">
+                <Card.Body>
+                  <Card.Title>Ultime Transazioni</Card.Title>
                   <div className="table-responsive">
-                    <table className="transactions-table">
+                    <Table striped bordered hover>
                       <thead>
                         <tr>
                           <th>Data</th>
@@ -271,34 +231,35 @@ const DashboardPage = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </Table>
                   </div>
-                </CardContent>
+                </Card.Body>
               </Card>
-            </Grid>
-          </Grid>
-        )}
+            </Col>
+          </Row>
+        </>
+      )}
 
-        {activeTab === 'investments' && (
-          <>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              <Tabs
-                value={activeInvestmentTab}
-                onChange={(e, newValue) => setActiveInvestmentTab(newValue)}
-              >
-                <Tab label="Panoramica" value="overview" />
-                <Tab label="Analisi" value="analytics" />
-                <Tab label="Transazioni" value="transactions" />
-              </Tabs>
-            </Box>
-            {renderInvestmentContent()}
-          </>
-        )}
-        {activeTab === 'transactions' && <Transactions transactions={data.transactions} />}
-        {activeTab === 'news' && <NewsPage />}
-        {activeTab === 'assistant' && <AssistantPage />}
-      </Paper>
-    </div>
+      {activeTab === 'investments' && (
+        <>
+          <Tabs
+            activeKey={activeInvestmentTab}
+            onSelect={(k) => setActiveInvestmentTab(k)}
+            id="investments-tabs"
+            className="mb-3"
+          >
+            <Tab eventKey="overview" title="Panoramica" />
+            <Tab eventKey="analytics" title="Analisi" />
+            <Tab eventKey="transactions" title="Transazioni" />
+          </Tabs>
+          {renderInvestmentContent()}
+        </>
+      )}
+
+      {activeTab === 'transactions' && <Transactions transactions={data.transactions} />}
+      {activeTab === 'news' && <NewsPage />}
+      {activeTab === 'assistant' && <AssistantPage />}
+    </Container>
   );
 };
 

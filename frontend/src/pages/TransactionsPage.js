@@ -1,35 +1,28 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // Importa per la navigazione
+import { useNavigate } from "react-router-dom";
+import { Container, Table, Button } from "react-bootstrap";
 
 const TransactionsList = ({ transactions }) => {
-  const navigate = useNavigate(); // Hook per la navigazione
-  
-  // Verifico se transactions è definito e se è un array
+  const navigate = useNavigate();
+
+  // Verifica se transactions è definito ed è un array
   if (!transactions || !Array.isArray(transactions)) {
     return <div>Nessuna transazione disponibile</div>;
   }
 
   return (
-    <div>
-      {/* Contenitore con stile flex per posizionare il pulsante a destra */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-        <button 
-          onClick={() => navigate('/add-transaction')} // Corretto: usa il percorso della pagina
-          style={{
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            padding: '10px 15px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
+    <Container>
+      {/* Pulsante posizionato a destra */}
+      <div className="d-flex justify-content-end mb-3">
+        <Button 
+          variant="success" 
+          onClick={() => navigate('/add-transaction')}
         >
           Aggiungi Transazione
-        </button>
+        </Button>
       </div>
-      
-      <table>
+
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
             <th>Data</th>
@@ -48,8 +41,8 @@ const TransactionsList = ({ transactions }) => {
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </Container>
   );
 };
 

@@ -15,7 +15,6 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import './AddTransactionPage.css';
 
 const AddTransactionPage = () => {
   const navigate = useNavigate();
