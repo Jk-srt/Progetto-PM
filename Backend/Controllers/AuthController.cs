@@ -34,7 +34,7 @@ namespace Backend.Controllers
 
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
                 string firebaseUid = decodedToken.Uid;
-                string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
+                string? email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
 

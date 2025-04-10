@@ -35,6 +35,9 @@ export const AuthProvider = ({ children }) => {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             const idToken = await user.getIdToken();
+            const appo=await user.stsTokenManager.accessToken;
+            console.log('ID Token:', appo); // Debug: verifica l'ID token
+            localStorage.setItem('token', appo); // Salva l'utente nel localStorage
 
             const response = await fetch('http://localhost:5000/api/auth/firebase', {
                 method: 'POST',

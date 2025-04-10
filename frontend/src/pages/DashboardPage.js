@@ -80,7 +80,7 @@ const DashboardPage = () => {
       }
       console.log("User ID:", userId); // Debug: verifica l'ID utente
 
-      const [transactions, investments] = await Promise.all([
+      const [transactions, investments,categories] = await Promise.all([
         fetch('http://localhost:5000/api/transactions', {
           headers: {
             'userId': userId
@@ -90,11 +90,13 @@ const DashboardPage = () => {
           headers: {
             'userId': userId
           }
-        }).then(res => res.json())
+        }).then(res => res.json()),
+        fetch('http://localhost:5000/api/categories').then(res => res.json())
       ]);
+      console.log("Categories:", categories); // Debug: verifica le categorie
       console.log("Transactions:", transactions); // Debug: verifica le transazioni
       console.log("Investments:", investments); // Debug: verifica gli investimenti
-
+      localStorage.setItem('categories', JSON.stringify(categories)); // Salva le categorie in localStorage
       setData({ transactions, investments });
       setLoading(false);
     } catch (error) {

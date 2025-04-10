@@ -7,6 +7,7 @@ import{ErrorBoundary} from './components/ErrorBoundary';
 import {LoadingScreen }from './components/LoadingScreen';
 import {ErrorPage} from './pages/ErrorPage';
 import DebugLocation from './components/DebugLocation'; // Assicurati che il percorso sia corretto
+import AddTransactionPage from './pages/AddTransactionPage'; // Assicurati che il percorso sia corretto
 import { use } from 'react';
 
 
@@ -68,6 +69,7 @@ const RouteManager = () => (
         </ProtectedRoute>
       }
     />
+    <Route path="/add-transaction" element={<AddTransactionPage />} />
     <Route path="/news" element={<NewsPage />} />
     <Route path="/assistant" element={<AssistantPage />} />
     <Route path="*" element={<ErrorPage />} />

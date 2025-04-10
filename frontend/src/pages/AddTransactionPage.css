@@ -1,0 +1,108 @@
+/* Stile generale della pagina */
+body {
+    background-color: #121212; /* Sfondo scuro (quasi nero) */
+    color: #ffffff; /* Testo chiaro per contrasto */
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Assicura che lo sfondo copra l'intera pagina */
+  }
+  
+  /* Container principale con animazione */
+  .add-transaction-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  /* Animazione di entrata */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Stile della card */
+  .MuiCard-root {
+    background-color: #1e1e1e; /* Card con sfondo leggermente più chiaro */
+    border-radius: 12px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 600px;
+    overflow: hidden;
+  }
+  
+  /* Titolo della card */
+  .MuiTypography-h4 {
+    color: #8eb8e5; /* Colore azzurro come nell'immagine */
+    text-align: center;
+    font-weight: 500;
+    margin: 20px 0;
+    font-size: 28px;
+  }
+  
+  /* Stili per input e form */
+  .MuiInputBase-root {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #2c2c2c; /* Sfondo leggermente più chiaro per gli input */
+  }
+  
+  .MuiOutlinedInput-notchedOutline {
+    border-color: #444444;
+  }
+  
+  .MuiInputBase-input {
+    color: #ffffff;
+    padding: 15px;
+  }
+  
+  .MuiInputLabel-root {
+    color: #b0b0b0;
+    transform: translate(14px, 14px) scale(1);
+  }
+  
+  .MuiInputLabel-root.Mui-focused {
+    color: #8eb8e5; /* Label in focus dello stesso colore del titolo */
+    transform: translate(14px, -9px) scale(0.75);
+  }
+  
+  /* Stile per il bottone */
+  .MuiButton-containedPrimary {
+    background-color: #8eb8e5; /* Colore azzurro per il bottone */
+    color: #000000; /* Testo scuro per contrasto */
+    border-radius: 20px;
+    padding: 10px 25px;
+    font-size: 16px;
+    text-transform: none;
+    box-shadow: 0px 3px 10px rgba(142, 184, 229, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .MuiButton-containedPrimary:hover {
+    background-color: #a0c4ea; /* Versione più chiara al passaggio del mouse */
+    box-shadow: 0px 5px 15px rgba(142, 184, 229, 0.5);
+  }
+  
+  /* Stile per il menu a tendina */
+  .MuiSelect-select {
+    padding: 15px;
+  }
+  
+  .MuiMenu-paper {
+    background-color: #2c2c2c;
+  }
+  
+  .MuiMenuItem-root {
+    color: #ffffff;
+  }
+  
+  /* Alert per errori */
+  .MuiAlert-root {
+    margin-bottom: 15px;
+    border-radius: 8px;
+  }
+  
