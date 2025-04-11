@@ -55,7 +55,11 @@ public class TransactionsController : ControllerBase
 
             // Associa l'ID utente alla transazione
             transaction.UserId = parsedUserId;
-
+            
+            if(transaction.Type != 0)
+            {
+                transaction.Amount = -transaction.Amount; // Se è una spesa, rendi il valore negativo
+            }
             // Verifica che l'ID categoria sia valido
             if (transaction.CategoryId <= 0)
             {

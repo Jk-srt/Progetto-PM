@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Container, Row, Col, Card, Alert, Table } from 'react-bootstrap';
+import { useNavigate } from "react-router-dom";
+import { Tabs, Tab, Container, Row, Col, Card, Alert, Table,Button} from 'react-bootstrap';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -31,12 +32,14 @@ ChartJS.register(
 );
 
 const DashboardPage = () => {
+    const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview');
   const [data, setData] = useState({
     transactions: [],
     investments: []
   });
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -64,29 +67,20 @@ const DashboardPage = () => {
     const fetchData = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        if (!userId) {
-          throw new Error('User ID not found in localStorage');
-        }
-        console.log("User ID:", userId);
-
-        const [transactions, investments, categories] = await Promise.all([
-          fetch('http://localhost:5000/api/transactions', {
-            headers: { 'userId': userId }
-          }).then(res => res.json()),
-          fetch('http://localhost:5000/api/investments', {
-            headers: { 'userId': userId }
-          }).then(res => res.json()),
-          fetch('http://localhost:5000/api/categories').then(res => res.json())
+        const [transactions, investments] = await Promise.all([
+          fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
+          fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json())
         ]);
-        console.log("Categories:", categories);
-        console.log("Transactions:", transactions);
-        console.log("Investments:", investments);
-        localStorage.setItem('categories', JSON.stringify(categories));
+
+        const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+        
         setData({ transactions, investments });
-        setLoading(false);
+        setTotal(totalAmount);
+        console.log("Dati caricati:", { transactions, investments });
+        console.log("Totale:", totalAmount);
       } catch (error) {
-        console.error("Errore nel caricamento dati:", error);
-        setError(true);
+        console.error("Fetch failed:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -124,7 +118,15 @@ const DashboardPage = () => {
         return (
           <Card className="mb-3">
             <Card.Body>
-              <Card.Title>Storico Transazioni</Card.Title>
+              <Card.Title>Storico Operazioni</Card.Title>
+              <div className="d-flex justify-content-end mb-3">
+                <Button 
+                  variant="success" 
+                  onClick={() => navigate('/add-investment')}
+                >
+                  Aggiungi Operazione
+                </Button>
+              </div>
               <div className="table-responsive">
                 <Table striped bordered hover>
                   <thead>
@@ -202,7 +204,7 @@ const DashboardPage = () => {
               <Card className="mb-4">
                 <Card.Body>
                   <Card.Title>Patrimonio Totale</Card.Title>
-                  <h4 className="text-primary mb-3">$25,430.00</h4>
+                  <h4 className="text-primary mb-3">{total}</h4>
                   <Line data={performanceData} />
                 </Card.Body>
               </Card>
@@ -250,7 +252,7 @@ const DashboardPage = () => {
           >
             <Tab eventKey="overview" title="Panoramica" />
             <Tab eventKey="analytics" title="Analisi" />
-            <Tab eventKey="transactions" title="Transazioni" />
+            <Tab eventKey="transactions" title="Operazioni" />
           </Tabs>
           {renderInvestmentContent()}
         </>

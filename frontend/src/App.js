@@ -8,6 +8,7 @@ import {LoadingScreen }from './components/LoadingScreen';
 import {ErrorPage} from './pages/ErrorPage';
 import DebugLocation from './components/DebugLocation'; // Assicurati che il percorso sia corretto
 import AddTransactionPage from './pages/AddTransactionPage'; // Assicurati che il percorso sia corretto
+import AddInvestmentPage from './pages/AddInvestmentPage';
 import { use } from 'react';
 
 
@@ -70,6 +71,7 @@ const RouteManager = () => (
       }
     />
     <Route path="/add-transaction" element={<AddTransactionPage />} />
+    <Route path="/add-investment" element={<AddInvestmentPage />} />
     <Route path="/news" element={<NewsPage />} />
     <Route path="/assistant" element={<AssistantPage />} />
     <Route path="*" element={<ErrorPage />} />
