@@ -10,13 +10,14 @@ import DebugLocation from './components/DebugLocation'; // Assicurati che il per
 import AddTransactionPage from './pages/AddTransactionPage'; // Assicurati che il percorso sia corretto
 import AddInvestmentPage from './pages/AddInvestmentPage';
 import { use } from 'react';
-
+import { Link } from 'react-router-dom';
 
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const NewsPage = lazy(() => import('./pages/NewsPage'));
 const AssistantPage = lazy(() => import('./pages/AssistantPage'));
+const LogoutPage = lazy(() => import('./pages/LogoutPage'));
 
 const darkTheme = createTheme({
   palette: {
@@ -58,6 +59,12 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const RouteManager = () => (
+<>
+    <nav style={{ padding: '1rem', backgroundColor: '#1e1e1e' }}>
+        <Link to="/dashboard" style={{ marginRight: '1rem', color: '#90caf9' }}>Dashboard</Link>
+        <Link to="/add-transaction" style={{ marginRight: '1rem', color: '#90caf9' }}>Add Transaction</Link>
+        <Link to="/logout" style={{ color: '#f48fb1' }}>Logout</Link>
+    </nav>
   <Routes>
     {/* Aggiungi il reindirizzamento della root */}
     <Route path="/" element={<Navigate to="/login" replace />} />
@@ -74,8 +81,10 @@ const RouteManager = () => (
     <Route path="/add-investment" element={<AddInvestmentPage />} />
     <Route path="/news" element={<NewsPage />} />
     <Route path="/assistant" element={<AssistantPage />} />
+    <Route path="/logout" element={<LogoutPage />} />
     <Route path="*" element={<ErrorPage />} />
   </Routes>
+</>
 );
 
 
