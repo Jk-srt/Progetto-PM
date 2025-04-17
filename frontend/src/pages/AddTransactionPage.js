@@ -33,6 +33,7 @@ const AddTransactionPage = () => {
   useEffect(() => {
     try {
       const storedCategories = localStorage.getItem('categories');
+      console.log(storedCategories);
       if (storedCategories) {
         const parsedCategories = JSON.parse(storedCategories);
         setCategories(parsedCategories);
@@ -203,7 +204,6 @@ const AddTransactionPage = () => {
                     }}
                   >
                     <MenuItem value="" disabled>
-                      Seleziona categoria
                     </MenuItem>
                     {categories.map(category => (
                       <MenuItem 

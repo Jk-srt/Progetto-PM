@@ -67,16 +67,20 @@ const DashboardPage = () => {
     const fetchData = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        const [transactions, investments] = await Promise.all([
+        const [transactions, investments,categories] = await Promise.all([
           fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
-          fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json())
+          fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
+          fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json()
+        )
         ]);
 
         const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
         
-        setData({ transactions, investments });
+        setData({ transactions, investments , categories });
+        // Salva le categorie nel localStorage per un uso futuro
+        localStorage.setItem('categories', JSON.stringify(categories));
         setTotal(totalAmount);
-        console.log("Dati caricati:", { transactions, investments });
+        console.log("Dati caricati:", { transactions, investments ,categories});
         console.log("Totale:", totalAmount);
       } catch (error) {
         console.error("Fetch failed:", error);
