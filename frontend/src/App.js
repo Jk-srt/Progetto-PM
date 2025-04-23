@@ -60,11 +60,7 @@ const ProtectedRoute = ({ children }) => {
 
 const RouteManager = () => (
 <>
-    <nav style={{ padding: '1rem', backgroundColor: '#1e1e1e' }}>
-        <Link to="/dashboard" style={{ marginRight: '1rem', color: '#90caf9' }}>Dashboard</Link>
-        <Link to="/add-transaction" style={{ marginRight: '1rem', color: '#90caf9' }}>Add Transaction</Link>
-        <Link to="/logout" style={{ color: '#f48fb1' }}>Logout</Link>
-    </nav>
+    
   <Routes>
     {/* Aggiungi il reindirizzamento della root */}
     <Route path="/" element={<Navigate to="/login" replace />} />
@@ -73,6 +69,11 @@ const RouteManager = () => (
       path="/dashboard"
       element={
         <ProtectedRoute>
+          <nav style={{ padding: '1rem', backgroundColor: '#1e1e1e' }}>
+            <Link to="/dashboard" style={{ marginRight: '1rem', color: '#90caf9' }}>Dashboard</Link>
+            <Link to="/add-transaction" style={{ marginRight: '1rem', color: '#90caf9' }}>Add Transaction</Link>
+            <Link to="/logout" style={{ color: '#f48fb1' }}>Logout</Link>
+          </nav>
           <DashboardPage />
         </ProtectedRoute>
       }
