@@ -39,34 +39,57 @@ const timeframeToDateRange = (timeframe) => {
 
 export const fetchHistoricalData = async (symbol, timeframe) => {
   try {
-    const response = await fetch(
-      `/api/serp-proxy/historical-data?symbol=${symbol}&timeframe=${timeframe}`
-    );
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const data = await response.json();
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Errore sconosciuto');
+      const response = await fetch(
+          `http://localhost:5000/api/serp-proxy/historical-data?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`,
+          {
+              signal: controller.signal,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
+              }
+          }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP Error: ${response.status}`);
       }
 
-    if (!data.price_history || !data.price_history.prices) {
-      throw new Error('Dati storici non disponibili');
-    }
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Invalid content type: ${contentType} - Response: ${text.slice(0, 100)}`);
+      }
 
-    return {
-      labels: data.price_history.prices.map(p => new Date(p.timestamp * 1000)),
-      datasets: [{
-        label: `${symbol} Storico`,
-        data: data.price_history.prices.map(p => ({
-          x: new Date(p.timestamp * 1000),
-          y: p.price
-        })),
-        borderColor: '#1e3a8a',
-        backgroundColor: 'rgba(30, 58, 138, 0.1)'
-      }]
-    };
+      const data = await response.json();
+
+      if (!data?.prices) {
+          throw new Error('Dati storici non disponibili nella risposta');
+      }
+
+      return {
+        labels: data.prices.map(p => new Date(p.timestamp * 1000)),
+        datasets: [{
+          data: data.prices.map(p => ({ 
+            x: new Date(p.timestamp * 1000), 
+            y: p.price 
+          }))
+        }]
+      };
   } catch (error) {
-    console.error('Errore SerpApi:', error);
-    throw new Error(`Errore nel recupero dati: ${error.message}`);
+      console.error('Errore SerpApi:', {
+          message: error.message,
+          stack: error.stack,
+          symbol,
+          timeframe
+      });
+      throw new Error(`Errore nel recupero dati: ${error.message}`);
   }
 };
+
+
