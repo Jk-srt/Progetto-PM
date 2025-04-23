@@ -66,6 +66,11 @@ export const AuthProvider = ({ children }) => {
             await signOut(auth);
             setUser(null);
             navigate('/login');
+            localStorage.removeItem('token'); // Rimuovi il token dal localStorage
+            localStorage.removeItem('userId'); // Rimuovi l'ID utente dal localStorage
+            localStorage.removeItem('GoogleUser'); // Rimuovi l'utente Google dal localStorage
+            localStorage.removeItem('categories');
+            console.log("Utente disconnesso con successo");
         } catch (error) {
             console.error("Errore durante il logout:", error);
         }

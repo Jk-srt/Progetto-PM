@@ -12,8 +12,10 @@ import {
   TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import FinnhubService from '../services/FinnhubService';
 import { it } from 'date-fns/locale';
-import { fetchHistoricalData, fetchRealTimePrice } from '../services/FinnhubService';
+import { fetchRealTimePrice } from '../services/FinnhubService';
+import { fetchHistoricalData } from '../services/SerpapiSevice';
 
 ChartJS.register(
   CategoryScale,
@@ -85,44 +87,6 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
   const intervalRef = useRef(null);
   const isInitialLoadRef = useRef(true);
   
-  // Generate historic data points
-  const generateHistoricData = (timeframe, basePrice) => {
-    const now = new Date();
-    const points = [];
-    let numPoints, stepSize;
-    
-    switch (timeframe) {
-      case '1D': numPoints = 390; stepSize = 60000; break; // 1 minuto per 6.5 ore
-      case '1W': numPoints = 5 * 78; stepSize = 300000; break; // 5 minuti per 5 giorni
-      case '1M': numPoints = 22 * 16; stepSize = 27 * 60000; break; // 30 minuti per 22 giorni
-      case '3M': numPoints = 66 * 8; stepSize = 54 * 60000; break; // 1 ora per 66 giorni
-      case '1Y': numPoints = 252 * 2; stepSize = 4 * 60 * 60000; break; // 4 ore per 252 giorni
-      case '5Y': numPoints = 60 * 12; stepSize = 1 * 24 * 60 * 60000; break; // 1 giorno per 60 mesi
-      default: numPoints = 22 * 16; stepSize = 27 * 60000; // Default: 1M
-    }
-    
-    // Calcola lo startPrice in base al prezzo attuale e alla variazione storica tipica
-    const volatility = 0.015; // 1.5% di volatilità giornaliera
-    const drift = 0.0002; // Tendenza verso l'alto leggera
-    let price = basePrice * 0.95; // Inizia leggermente sotto il prezzo attuale
-    
-    // Genera i punti dati storici
-    for (let i = 0; i < numPoints; i++) {
-      const date = new Date(now.getTime() - (numPoints - i) * stepSize);
-      const randomFactor = (Math.random() - 0.48) * volatility; // Leggera tendenza rialzista
-      
-      price = price * (1 + randomFactor + drift);
-      price = Math.max(0.01, price); // Previene prezzi negativi
-      
-      points.push({
-        x: date,
-        y: parseFloat(price.toFixed(2))
-      });
-    }
-    
-    return points;
-  };
-  
   // Funzione di utilità per ottenere tutti i valori Y dai dataset
   const getAllDataValues = (chartData) => {
     if (!chartData || !chartData.datasets) return [0, 100];
@@ -151,91 +115,74 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
     const loadInitialData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
-        // Ottieni il prezzo corrente
+        // 1. Carica dati storici reali
+        const historical = await fetchHistoricalData(symbol, timeframe);
+        // 2. Carica prezzo attuale
         const priceData = await fetchRealTimePrice(symbol);
         setCurrentPrice(priceData.price);
         setPriceChange(priceData.change);
         setPercentChange(priceData.percentChange);
-        
-        // Genera i dati storici basati sul prezzo attuale
-        const historicPoints = generateHistoricData(timeframe, priceData.price);
-        
-        // Imposta i dati del grafico
+
+        // 3. Prepara datasets: storico + tempo reale (vuoto all'inizio)
         setChartData({
-          labels: historicPoints.map(point => point.x),
-          datasets: [{
-            label: `${symbol} (Storico)`,
-            data: historicPoints,
-            borderColor: '#1e3a8a',
-            backgroundColor: 'rgba(30, 58, 138, 0.1)',
-            borderWidth: 2,
-            tension: 0.1,
-            fill: true
-          }, {
-            label: `${symbol} (Tempo Reale)`,
-            data: [], // Inizialmente vuoto, verrà popolato con gli aggiornamenti
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            borderWidth: 3,
-            tension: 0,
-            fill: false
-          }]
+          labels: historical.labels,
+          datasets: [
+            {
+              ...historical.datasets[0],
+              label: `${symbol} (Storico)`,
+            },
+            {
+              label: `${symbol} (Tempo Reale)`,
+              data: [],
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderWidth: 3,
+              tension: 0,
+              fill: false
+            }
+          ]
         });
-        
+
         setLoading(false);
         isInitialLoadRef.current = false;
       } catch (err) {
-        console.error('Errore nel caricamento dei dati:', err);
         setError('Impossibile caricare i dati. Riprova più tardi.');
         setLoading(false);
       }
     };
-    
+
     loadInitialData();
-    
-    // Cleanup
+
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [symbol, timeframe]);
   
   // Configura il polling per gli aggiornamenti in tempo reale
   useEffect(() => {
     if (isInitialLoadRef.current) return;
-    
+
     const updateRealTimeData = async () => {
       try {
         const priceData = await fetchRealTimePrice(symbol);
         setCurrentPrice(priceData.price);
         setPriceChange(priceData.change);
         setPercentChange(priceData.percentChange);
-        
-        // Aggiorna il grafico con il nuovo punto dati
+
         setChartData(prevData => {
-          // Ottieni l'ultimo punto dai dati storici
-          const lastHistoricPoint = prevData.datasets[0].data[prevData.datasets[0].data.length - 1];
           const now = new Date();
-          
-          // Aggiorna i dati in tempo reale
-          const newRealtimeData = [...prevData.datasets[1].data, {
-            x: now,
-            y: priceData.price
-          }];
-          
-          // Limita a 30 punti per i dati in tempo reale
+          const newRealtimeData = [...prevData.datasets[1].data, { x: now, y: priceData.price }];
           const maxRealtimePoints = 30;
-          const slicedRealtimeData = newRealtimeData.length > maxRealtimePoints 
-            ? newRealtimeData.slice(newRealtimeData.length - maxRealtimePoints) 
+          const slicedRealtimeData = newRealtimeData.length > maxRealtimePoints
+            ? newRealtimeData.slice(newRealtimeData.length - maxRealtimePoints)
             : newRealtimeData;
-          
+
           return {
             ...prevData,
             datasets: [
-              prevData.datasets[0],
+              prevData.datasets[0], // storico
               {
                 ...prevData.datasets[1],
                 data: slicedRealtimeData
@@ -244,21 +191,15 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
           };
         });
       } catch (err) {
-        console.error('Errore nell\'aggiornamento dei dati in tempo reale:', err);
+        // gestisci errori silenziosamente
       }
     };
-    
-    // Esegui subito il primo aggiornamento
+
     updateRealTimeData();
-    
-    // Configura l'intervallo di polling
     intervalRef.current = setInterval(updateRealTimeData, pollingInterval);
-    
-    // Pulizia
+
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [symbol, pollingInterval, isInitialLoadRef.current]);
   
