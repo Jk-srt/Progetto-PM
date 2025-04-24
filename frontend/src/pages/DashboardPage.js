@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Tabs, Tab, Container, Row, Col, Card, Alert, Table,Button} from 'react-bootstrap';
+import { Tabs, Tab, Container, Row, Col, Card, Alert, Table, Button } from 'react-bootstrap';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -32,18 +32,27 @@ ChartJS.register(
 );
 
 const DashboardPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeInvestmentTab, setActiveInvestmentTab] = useState('overview');
-  const [data, setData] = useState({
+  const [data, setData] = useState({ 
     transactions: [],
-    investments: []
+    investments: [],
+    categories: []
   });
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [performanceData, setPerformanceData] = useState({
+    labels: [],
+    datasets: [{
+      label: 'Rendimento',
+      data: [],
+      borderColor: '#4e73df',
+      tension: 0.4
+    }]
+  });
 
-  // Dati per i grafici
   const portfolioAllocationData = {
     labels: ['Azioni', 'Obbligazioni', 'ETF', 'Cripto'],
     datasets: [{
@@ -52,38 +61,85 @@ const DashboardPage = () => {
     }]
   };
 
-  const performanceData = {
-    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
-    datasets: [{
-      label: 'Rendimento',
-      data: [65, 59, 80, 81, 56, 55],
-      borderColor: '#4e73df',
-      tension: 0.4
-    }]
+  const generatePerformanceData = (transactions) => {
+    if (!transactions || transactions.length === 0) {
+      return {
+        labels: [],
+        datasets: [{
+          label: 'Rendimento',
+          data: [],
+          borderColor: '#4e73df',
+          tension: 0.4
+        }]
+      };
+    }
+
+    const monthlySums = {};
+    
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      
+      if (!monthlySums[monthYear]) {
+        monthlySums[monthYear] = 0;
+      }
+      monthlySums[monthYear] += transaction.amount;
+    });
+
+    const monthlyData = Object.entries(monthlySums)
+      .map(([key, value]) => {
+        const [month, year] = key.split('/');
+        return {
+          date: new Date(parseInt(year), parseInt(month) - 1, 1),
+          amount: value
+        };
+      })
+      .sort((a, b) => a.date - b.date);
+
+    const labels = monthlyData.map(item => {
+      const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+      return `${monthNames[item.date.getMonth()]} ${item.date.getFullYear()}`;
+    });
+    
+    const data = monthlyData.map(item => item.amount);
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Rendimento',
+        data,
+        borderColor: '#4e73df',
+        tension: 0.4
+      }]
+    };
   };
 
-  // Carica dati iniziali
+  const chartOptions = {
+    responsive: true,
+    animation: false
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        const [transactions, investments,categories] = await Promise.all([
+        const [transactions, investments, categories] = await Promise.all([
           fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
           fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
-          fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json()
-        )
+          fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json())
         ]);
 
         const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
         
-        setData({ transactions, investments , categories });
-        // Salva le categorie nel localStorage per un uso futuro
+        setData({ transactions, investments, categories });
+        const performanceChartData = generatePerformanceData(transactions);
+        setPerformanceData(performanceChartData);
+        
         localStorage.setItem('categories', JSON.stringify(categories));
         setTotal(totalAmount);
-        console.log("Dati caricati:", { transactions, investments ,categories});
-        console.log("Totale:", totalAmount);
       } catch (error) {
         console.error("Fetch failed:", error);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -92,7 +148,6 @@ const DashboardPage = () => {
     fetchData();
   }, []);
 
-  // Renderizza il contenuto della sezione Investimenti
   const renderInvestmentContent = () => {
     switch (activeInvestmentTab) {
       case 'overview':
@@ -110,7 +165,7 @@ const DashboardPage = () => {
               <Card className="mb-3">
                 <Card.Body>
                   <Card.Title>Performance Storiche</Card.Title>
-                  <Line data={performanceData} />
+                  <Line data={performanceData} options={chartOptions} />
                 </Card.Body>
               </Card>
             </Col>
@@ -185,7 +240,6 @@ const DashboardPage = () => {
 
   return (
     <Container className="mt-4">
-      {/* Menu principale */}
       <Tabs
         activeKey={activeTab}
         onSelect={(k) => setActiveTab(k)}
@@ -196,10 +250,9 @@ const DashboardPage = () => {
         <Tab eventKey="transactions" title="Transazioni" />
         <Tab eventKey="investments" title="Investimenti" />
         <Tab eventKey="news" title="Notizie" />
-        <Tab eventKey="assistant" title="Assistente" />
+        <Tab eventKey="assistente" title="Assistente" />
       </Tabs>
 
-      {/* Contenuto principale */}
       {activeTab === 'dashboard' && (
         <>
           <h4 className="mb-4">Panoramica Finanziaria</h4>
@@ -208,8 +261,8 @@ const DashboardPage = () => {
               <Card className="mb-4">
                 <Card.Body>
                   <Card.Title>Patrimonio Totale</Card.Title>
-                  <h4 className="text-primary mb-3">{total}</h4>
-                  <Line data={performanceData} />
+                  <h4 className="text-primary mb-3">${total.toFixed(2)}</h4>
+                  <Line data={performanceData} options={chartOptions} />
                 </Card.Body>
               </Card>
             </Col>
@@ -264,7 +317,7 @@ const DashboardPage = () => {
 
       {activeTab === 'transactions' && <Transactions transactions={data.transactions} />}
       {activeTab === 'news' && <NewsPage />}
-      {activeTab === 'assistant' && <AssistantPage />}
+      {activeTab === 'assistente' && <AssistantPage />}
     </Container>
   );
 };
