@@ -15,6 +15,28 @@ namespace Backend.Models
         
         [MaxLength(255)]
         public string FirebaseUid { get; set; }
-    
+    }
+
+    public class RegisterModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; }
+
+        public string DisplayName { get; set; }
+    }
+
+    public class LoginModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string Password { get; set; }
     }
 }

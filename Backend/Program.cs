@@ -68,6 +68,13 @@ builder.Services.AddCors(options =>
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .AllowCredentials();
     });
+    
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 // Configurazione Swagger
@@ -96,6 +103,7 @@ app.UseRouting();
 
 // Ordine corretto middleware
 app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 

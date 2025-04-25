@@ -1,7 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithPopup,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    GoogleAuthProvider,
+    signOut 
+} from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
+import axios from 'axios';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA4kTnlAVRxHmr5MdRH0MWrknyT-z3w7ag",
@@ -29,20 +38,12 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe();
     }, []);
 
-    const loginWithGoogle = async () => {
-        const provider = new GoogleAuthProvider();
+    const registerWithBackend = async (token) => {
         try {
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            const idToken = await user.getIdToken();
-            const appo=await user.stsTokenManager.accessToken;
-            console.log('ID Token:', appo); // Debug: verifica l'ID token
-            localStorage.setItem('token', appo); // Salva l'utente nel localStorage
-
             const response = await fetch('http://localhost:5000/api/auth/firebase', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${idToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -51,10 +52,75 @@ export const AuthProvider = ({ children }) => {
             if (!response.ok) {
                 throw new Error(responseData.message || 'Errore nella registrazione');
             }
-            localStorage.setItem('userId', responseData.userId); // Salva l'ID utente nel localStorage
 
-            console.log('Utente registrato/aggiornato:', responseData);
+            localStorage.setItem('userId', responseData.userId); // Salva l'ID utente nel localStorage
+            return responseData;
+        } catch (error) {
+            console.error("Error registering with backend:", error);
+            throw error;
+        }
+    };
+
+    const loginWithGoogle = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+            localStorage.setItem('token', idToken);
+
+            const backendResponse = await registerWithBackend(idToken);
+            localStorage.setItem('userId', backendResponse.userId);
+            
+
             navigate('/dashboard');
+            return result.user;
+        } catch (error) {
+            console.error("Errore durante il login con Google:", error);
+            alert(error.message);
+        }
+    };
+
+    const registerWithEmailPassword = async (email, password, displayName) => {
+        try {
+            // 1. Crea utente in Firebase
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+
+            // 2. Registra nel backend
+            await axios.post('http://localhost:5000/api/auth/register', {
+                email,
+                displayName
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${idToken}`
+                }
+            });
+
+            // 3. Aggiorna stato
+            const backendUser = await registerWithBackend(idToken);
+            localStorage.setItem('userId', backendUser.userId);
+
+            navigate('/dashboard');
+        } catch (error) {
+            if (error.code === 'auth/email-already-in-use') {
+                throw new Error("Email già registrata");
+            }
+            console.error("Errore registrazione:", error);
+            throw error;
+        }
+    };
+
+    const loginWithEmailPassword = async (email, password) => {
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+
+            localStorage.setItem('token', idToken);
+            const backendResponse = await registerWithBackend(idToken);
+            localStorage.setItem('userId', backendResponse.userId);
+
+            navigate('/dashboard');
+            return userCredential.user;
         } catch (error) {
             console.error("Errore durante il login:", error);
             alert(error.message);
@@ -77,7 +143,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            loginWithGoogle,
+            registerWithEmailPassword,
+            loginWithEmailPassword,
+            logout
+        }}>
             {!loading && children}
         </AuthContext.Provider>
     );
