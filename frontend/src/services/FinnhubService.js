@@ -33,8 +33,90 @@ const SYMBOL_MAP = {
   'SWDA': 'SPY',   // Da iShares Core MSCI World a US equivalent
   'AGGH': 'AGG',   // Da iShares Core Global Aggregate Bond a US equivalent
   'ISP': 'JPM',    // Da Intesa Sanpaolo a JPMorgan Chase
-  'ENEL': 'NEE'    // Da Enel a NextEra Energy
+  'ENEL': 'NEE',   // Da Enel a NextEra Energy
+
+  // Mappa simboli estesa per supportare equivalenti USA
+  'EUNL': 'SPY', // iShares Core MSCI World
+  'IEMA': 'EEM', // iShares MSCI Emerging Markets
+  'SXR8': 'SPY', // Euro Stoxx 50 → S&P 500
+  'G': 'GE',     // Generali → General Electric
+  'EURUSD': 'EUR/USD',
+  'GBPUSD': 'GBP/USD'
 };
+
+/**
+ * Funzione per ottenere la risoluzione dinamica in base al timeframe
+ * @param {string} timeframe - Intervallo di tempo
+ * @returns {string} - Risoluzione
+ */
+const getResolution = (timeframe) => {
+  switch(timeframe) {
+    case '1D': return '5'; // 5 minuti (massimo consentito nel free)
+    case '1W': return '15'; 
+    case '1M': return 'D';
+    case '3M': return 'D';
+    case '1Y': return 'W';
+    case '5Y': return 'M';
+    case 'MAX': return 'M';
+    default: return 'D';
+  }
+};
+
+/**
+ * Funzione per calcolare il range temporale
+ * @param {string} timeframe - Intervallo di tempo
+ * @returns {Object} - Oggetto con proprietà 'from' e 'to'
+ */
+const calculateTimeRange = (timeframe) => {
+  const now = Math.floor(Date.now() / 1000);
+  const ranges = {
+    '1D': now - 86400,
+    '1W': now - 604800,
+    '1M': now - 2592000,
+    '3M': now - 7776000,
+    '1Y': now - 31536000,
+    '5Y': now - 157680000,
+    'MAX': 315532800 // 1980-01-01
+  };
+  return { from: ranges[timeframe], to: now };
+};
+
+/**
+ * Funzione per gestire errori avanzati
+ * @param {Error} error - Errore generato
+ * @param {string} symbol - Simbolo dell'investimento
+ */
+const handleFinnhubError = (error, symbol) => {
+  if (error.message.includes('403')) {
+    throw new Error(`Accesso negato per ${symbol}: Aggiorna al piano premium`);
+  }
+  if (error.message.includes('429')) {
+    throw new Error('Limite chiamate raggiunto: attendere 1 minuto');
+  }
+  throw error;
+};
+
+/**
+ * Funzione per processare i dati delle candele
+ * @param {Object} response - Risposta dell'API
+ * @param {string} symbol - Simbolo dell'investimento
+ * @returns {Object} - Dati formattati per Chart.js
+ */
+const processCandleData = (response, symbol) => {
+  return {
+    labels: response.t.map(t => new Date(t * 1000)),
+    datasets: [{
+      label: `${symbol} Historical`,
+      data: response.c.map((c, i) => ({
+        x: new Date(response.t[i] * 1000),
+        y: c
+      })),
+      borderColor: '#1e3a8a',
+      backgroundColor: 'rgba(30, 58, 138, 0.1)'
+    }]
+  };
+};
+
 /**
  * Recupera dati storici per un simbolo specificato
  * @param {string} symbol - Simbolo dell'investimento
@@ -43,112 +125,30 @@ const SYMBOL_MAP = {
  */
 export const fetchHistoricalData = async (symbol, timeframe) => {
   try {
-    // Converti il simbolo nel formato USA
     const finnhubSymbol = SYMBOL_MAP[symbol] || symbol;
-    
-    // Ottieni il prezzo attuale e alcune informazioni di base
-    const quoteData = await fetchRealTimePrice(symbol);
-    const profileData = await fetchCompanyProfile(symbol);
-    
-    // Calcola intervallo di date in base al timeframe
-    const to = Math.floor(Date.now() / 1000);
-    let from = to;
-    
-    switch(timeframe) {
-      case '1D': from = to - 1 * 24 * 60 * 60; break;
-      case '1W': from = to - 7 * 24 * 60 * 60; break;
-      case '1M': from = to - 30 * 24 * 60 * 60; break;
-      case '3M': from = to - 90 * 24 * 60 * 60; break;
-      case '1Y': from = to - 365 * 24 * 60 * 60; break;
-      case '5Y': from = to - 5 * 365 * 24 * 60 * 60; break;
-      case 'MAX': from = new Date('1980-01-01').getTime() / 1000; break;
-      default: from = to - 30 * 24 * 60 * 60;
+    const resolution = getResolution(timeframe);
+    const { from, to } = calculateTimeRange(timeframe);
+
+    const response = await fetchWithRateLimit('stock/candle', {
+      symbol: finnhubSymbol,
+      resolution,
+      from,
+      to
+    });
+
+    if (response.s !== 'ok') {
+      throw new Error(`Dati non disponibili per ${symbol} (${timeframe})`);
     }
-    
-    // Genera date e punti dati in base al timeframe
-    const currentPrice = quoteData.price;
-    const previousClose = quoteData.previousClose;
-    const today = new Date();
-    const dates = [];
-    const prices = [];
-    
-    // Determina il numero di punti da generare in base al timeframe
-    let numPoints;
-    let dayStep;
-    
-    switch(timeframe) {
-      case '1D': numPoints = 24; dayStep = 1/24; break;
-      case '1W': numPoints = 7; dayStep = 1; break;
-      case '1M': numPoints = 30; dayStep = 1; break;
-      case '3M': numPoints = 90; dayStep = 1; break;
-      case '1Y': numPoints = 52; dayStep = 7; break;
-      case '5Y': numPoints = 60; dayStep = 30; break;
-      case 'MAX': numPoints = 100; dayStep = 120; break;
-      default: numPoints = 30; dayStep = 1;
-    }
-    
-    // Calcola la volatilità stimata
-    const volatility = Math.abs((currentPrice - previousClose) / previousClose) || 0.01;
-    const priceRange = currentPrice * 0.20; // 20% di movimento nel periodo
-    
-    // Genera dati storici simulati basati sul prezzo corrente
-    // che seguono un trend verosimile
-    let price = currentPrice * (1 - (Math.random() * 0.02) - 0.05);
-    
-    if (timeframe === 'MAX' || timeframe === '5Y') {
-      price = currentPrice * 0.3; // Gli asset tendono a crescere nel lungo periodo
-    } else if (timeframe === '1Y') {
-      price = currentPrice * 0.8;
-    }
-    
-    for (let i = 0; i < numPoints; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (numPoints - i - 1) * dayStep);
-      dates.push(date);
-      
-      // Aggiungi movimento randomico con trend generale verso il prezzo attuale
-      const randomFactor = (Math.random() - 0.45) * volatility;
-      const trendFactor = (currentPrice - price) / (numPoints - i) * 0.1;
-      price = price * (1 + randomFactor + trendFactor);
-      
-      // Assicurati che il prezzo non vada mai sotto zero
-      price = Math.max(0.01, price);
-      
-      prices.push(parseFloat(price.toFixed(2)));
-    }
-    
-    // Formatta i dati per Chart.js
-    return {
-      labels: dates,
-      datasets: [{
-        label: symbol,
-        data: prices.map((price, index) => ({
-          x: dates[index],
-          y: price
-        })),
-        borderColor: '#1e3a8a',
-        backgroundColor: 'rgba(30, 58, 138, 0.1)',
-        borderWidth: 2,
-        tension: 0.1,
-        fill: true
-      }]
-    };
+
+    return processCandleData(response, symbol);
   } catch (error) {
-    console.error(`Errore nella generazione di dati storici per ${symbol}:`, error);
-    throw error;
+    handleFinnhubError(error, symbol);
   }
 };
 
-// Gestione del rate limiting
-let lastCallTime = 0;
-const MIN_CALL_INTERVAL = 1000; // Minimo 1 secondo tra le chiamate
-
-/**
- * Funzione di utility per attendere un certo tempo
- * @param {number} ms - Millisecondi da attendere
- * @returns {Promise<void>}
- */
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Gestione avanzata del rate limit
+let callQueue = [];
+const MAX_CALLS_PER_MINUTE = 50; // Conservative limit
 
 /**
  * Esegue una chiamata API con gestione del rate limiting
@@ -157,39 +157,36 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
  * @returns {Promise<Object>} - Risposta dell'API
  */
 const fetchWithRateLimit = async (endpoint, params = {}) => {
-  // Calcola il tempo da attendere per rispettare il rate limit
   const now = Date.now();
-  const elapsed = now - lastCallTime;
-  
-  if (elapsed < MIN_CALL_INTERVAL) {
-    await delay(MIN_CALL_INTERVAL - elapsed);
+
+  // Cleanup old calls
+  callQueue = callQueue.filter(t => t > now - 60000);
+
+  if (callQueue.length >= MAX_CALLS_PER_MINUTE) {
+    const waitTime = 60000 - (now - callQueue[0]);
+    await delay(waitTime);
+    return fetchWithRateLimit(endpoint, params);
   }
-  
-  // Costruisce l'URL con i parametri e il token
+
+  callQueue.push(now);
   const url = new URL(`${BASE_URL}/${endpoint}`);
-  
-  // Aggiunge il token e gli altri parametri
   url.searchParams.append('token', API_KEY);
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
-  });
-  
-  try {
-    // Esegue la chiamata
-    lastCallTime = Date.now();
-    const response = await fetch(url.toString());
-    
-    // Verifica errori HTTP
-    if (!response.ok) {
-      throw new Error(`Errore API Finnhub: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error(`Errore nella chiamata a ${endpoint}:`, error);
-    throw error;
-  }
+
+  Object.entries(params).forEach(([k, v]) => 
+    url.searchParams.append(k, v));
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+  return response.json();
 };
+
+/**
+ * Funzione di utility per attendere un certo tempo
+ * @param {number} ms - Millisecondi da attendere
+ * @returns {Promise<void>}
+ */
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Ottiene notizie generali del mercato finanziario

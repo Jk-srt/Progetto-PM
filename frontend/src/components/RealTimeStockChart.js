@@ -14,6 +14,7 @@ import {
 import 'chartjs-adapter-date-fns';
 import { it } from 'date-fns/locale';
 import { fetchRealTimePrice } from '../services/FinnhubService';
+import { fetchHistoricalData} from '../serices/SerpApiService';
 
 // Registrazione dei componenti necessari di ChartJS
 ChartJS.register(
@@ -64,6 +65,7 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
   const [error, setError] = useState(null);
   const [isSimulated, setIsSimulated] = useState(false);
   const [pollingInterval, setPollingInterval] = useState(15000); // 15 secondi di default
+  const [timeframe, setTimeframe] = useState('1D'); // Nuovo stato per il timeframe
   
   // Ref per il polling
   const intervalRef = useRef(null);
@@ -72,6 +74,31 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
   useEffect(() => {
     createSpinningAnimation();
   }, []);
+  
+  // Effetto per caricare i dati storici iniziali
+  useEffect(() => {
+    const loadHistoricalData = async () => {
+      try {
+        setLoading(true);
+        const historicalData = await fetchHistoricalData(symbol, timeframe);
+        setChartData(historicalData);
+
+        // Imposta il prezzo corrente basandosi sull'ultimo dato
+        if (historicalData.datasets[0].data.length > 0) {
+          const lastDataPoint = historicalData.datasets[0].data[historicalData.datasets[0].data.length - 1];
+          setCurrentPrice(lastDataPoint.y);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Errore nel caricamento dei dati storici:', err);
+        setError('Impossibile caricare i dati storici.');
+        setLoading(false);
+      }
+    };
+
+    loadHistoricalData();
+  }, [symbol, timeframe]);
   
   // Effetto per il polling dei dati
   useEffect(() => {
@@ -120,19 +147,18 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
       }
     };
     
-    // Carica i dati iniziali
-    updateRealTimeData();
-    
-    // Imposta il polling
-    intervalRef.current = setInterval(updateRealTimeData, pollingInterval);
-    
+    if (!loading) {
+      intervalRef.current = setInterval(updateRealTimeData, pollingInterval);
+      updateRealTimeData();
+    }
+
     // Cleanup all'unmount
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [symbol, pollingInterval]);
+  }, [symbol, pollingInterval, loading]);
   
   // Opzioni del grafico memorizzate
   const chartOptions = useMemo(() => ({
@@ -220,6 +246,33 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
     }
   }), [symbol, investmentName]);
 
+  // Componente per il selettore di intervallo
+  const TimeframeSelector = ({ currentTimeframe, onChange }) => {
+    const timeframes = ['1D', '1W', '1M', '3M', '1Y', '5Y', 'MAX'];
+
+    return (
+      <div style={{ marginBottom: '16px' }}>
+        {timeframes.map(tf => (
+          <button
+            key={tf}
+            onClick={() => onChange(tf)}
+            style={{
+              margin: '0 4px',
+              padding: '8px 12px',
+              backgroundColor: tf === currentTimeframe ? '#1e3a8a' : '#f3f4f6',
+              color: tf === currentTimeframe ? '#fff' : '#000',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            {tf}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="card">
       <div className="card-header" style={{ 
@@ -296,6 +349,7 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
       </div>
       
       <div className="card-body" style={{ height: '500px', padding: '16px', position: 'relative' }}>
+        <TimeframeSelector currentTimeframe={timeframe} onChange={setTimeframe} />
         {loading && (
           <div style={{
             position: 'absolute',
