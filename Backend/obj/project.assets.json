@@ -47,6 +47,19 @@
           }
         }
       },
+      "CsvHelper/30.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/CsvHelper.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/CsvHelper.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "FirebaseAdmin/3.1.0": {
         "type": "package",
         "dependencies": {
@@ -61,6 +74,37 @@
         },
         "runtime": {
           "lib/net6.0/FirebaseAdmin.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Flurl/3.0.7": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Flurl.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Flurl.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Flurl.Http/3.2.4": {
+        "type": "package",
+        "dependencies": {
+          "Flurl": "3.0.6",
+          "Newtonsoft.Json": "12.0.2",
+          "System.Text.Encoding.CodePages": "4.5.1"
+        },
+        "compile": {
+          "lib/netstandard2.0/Flurl.Http.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Flurl.Http.dll": {
             "related": ".xml"
           }
         }
@@ -1947,7 +1991,7 @@
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "compile": {
-          "lib/net6.0/_._": {
+          "lib/net6.0/System.Text.Encoding.CodePages.dll": {
             "related": ".xml"
           }
         },
@@ -2053,6 +2097,21 @@
             "rid": "win"
           }
         }
+      },
+      "YahooFinanceApi/2.3.3": {
+        "type": "package",
+        "dependencies": {
+          "CsvHelper": "30.0.1",
+          "Flurl": "3.0.7",
+          "Flurl.Http": "3.2.4",
+          "Newtonsoft.Json": "13.0.3"
+        },
+        "compile": {
+          "lib/netstandard2.0/YahooFinanceApi.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/YahooFinanceApi.dll": {}
+        }
       }
     }
   },
@@ -2095,6 +2154,30 @@
         "lib/netstandard2.0/Azure.Identity.xml"
       ]
     },
+    "CsvHelper/30.0.1": {
+      "sha512": "rcZtgbWR+As4G3Vpgx0AMNmShGuQLFjkHAPIIflzrfkJCx8/AOd4m96ZRmiU1Wi39qS5UVjV0P8qdgqOo5Cwyg==",
+      "type": "package",
+      "path": "csvhelper/30.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "csvhelper.30.0.1.nupkg.sha512",
+        "csvhelper.nuspec",
+        "lib/net45/CsvHelper.dll",
+        "lib/net45/CsvHelper.xml",
+        "lib/net47/CsvHelper.dll",
+        "lib/net47/CsvHelper.xml",
+        "lib/net5.0/CsvHelper.dll",
+        "lib/net5.0/CsvHelper.xml",
+        "lib/net6.0/CsvHelper.dll",
+        "lib/net6.0/CsvHelper.xml",
+        "lib/netstandard2.0/CsvHelper.dll",
+        "lib/netstandard2.0/CsvHelper.xml",
+        "lib/netstandard2.1/CsvHelper.dll",
+        "lib/netstandard2.1/CsvHelper.xml"
+      ]
+    },
     "FirebaseAdmin/3.1.0": {
       "sha512": "QNafwBg5psTGKOIyo78sNYjJ9GI5z/TPqOgpyOOv+2nzeK8sVaIPT2eDpcgzpxcRcKbjISbel38cQH/pIHNeOA==",
       "type": "package",
@@ -2111,6 +2194,42 @@
         "lib/net6.0/FirebaseAdmin.xml",
         "lib/netstandard2.0/FirebaseAdmin.dll",
         "lib/netstandard2.0/FirebaseAdmin.xml"
+      ]
+    },
+    "Flurl/3.0.7": {
+      "sha512": "W3zHc8m6/yqOAedHwpFQv5VT8t0W/jkS3AVlv1Tj520KDNjUa31at0zMc3XYJy8f9qdOmUcvSUarf6G2nK1ZIg==",
+      "type": "package",
+      "path": "flurl/3.0.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "flurl.3.0.7.nupkg.sha512",
+        "flurl.nuspec",
+        "icon.png",
+        "lib/net461/Flurl.dll",
+        "lib/net461/Flurl.xml",
+        "lib/net472/Flurl.dll",
+        "lib/net472/Flurl.xml",
+        "lib/netstandard2.0/Flurl.dll",
+        "lib/netstandard2.0/Flurl.xml"
+      ]
+    },
+    "Flurl.Http/3.2.4": {
+      "sha512": "Me9Vm4Lm21vt/pbR0G2Dww/ZOjJgh6mB2FiH28aiUYStJD10ZecDp8jxg2zKxcy6lnkvLm99pjG4yC/k7a/d8w==",
+      "type": "package",
+      "path": "flurl.http/3.2.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "flurl.http.3.2.4.nupkg.sha512",
+        "flurl.http.nuspec",
+        "icon.png",
+        "lib/net461/Flurl.Http.dll",
+        "lib/net461/Flurl.Http.xml",
+        "lib/net472/Flurl.Http.dll",
+        "lib/net472/Flurl.Http.xml",
+        "lib/netstandard2.0/Flurl.Http.dll",
+        "lib/netstandard2.0/Flurl.Http.xml"
       ]
     },
     "Google.Api.Gax/4.8.0": {
@@ -5727,6 +5846,18 @@
         "system.windows.extensions.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "YahooFinanceApi/2.3.3": {
+      "sha512": "1ZwoNaJJJgRgjFkOoswrj+jw7VYzJjOsg8SKzVSafmDNbGy0+j6iS8WQseKsvLzipgkvkQn77pcBXmXfMGULsg==",
+      "type": "package",
+      "path": "yahoofinanceapi/2.3.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/YahooFinanceApi.dll",
+        "yahoofinanceapi.2.3.3.nupkg.sha512",
+        "yahoofinanceapi.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -5743,7 +5874,8 @@
       "Microsoft.Extensions.Identity.Stores >= 9.0.3",
       "Newtonsoft.Json >= 13.0.3",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.4",
-      "Swashbuckle.AspNetCore >= 8.1.0"
+      "Swashbuckle.AspNetCore >= 8.1.0",
+      "YahooFinanceApi >= 2.3.3"
     ]
   },
   "packageFolders": {
@@ -5752,11 +5884,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+      "projectUniqueName": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+      "projectPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
       "packagesPath": "C:\\Users\\feder\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
+      "outputPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\feder\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -5844,6 +5976,10 @@
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[8.1.0, )"
+          },
+          "YahooFinanceApi": {
+            "target": "Package",
+            "version": "[2.3.3, )"
           }
         },
         "imports": [

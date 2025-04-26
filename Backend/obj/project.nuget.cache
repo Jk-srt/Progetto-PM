@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "JiYmcC9YJqA=",
+  "dgSpecHash": "QYbqp6Es41Y=",
   "success": true,
-  "projectFilePath": "c:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+  "projectFilePath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\feder\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
+    "C:\\Users\\feder\\.nuget\\packages\\csvhelper\\30.0.1\\csvhelper.30.0.1.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\firebaseadmin\\3.1.0\\firebaseadmin.3.1.0.nupkg.sha512",
+    "C:\\Users\\feder\\.nuget\\packages\\flurl\\3.0.7\\flurl.3.0.7.nupkg.sha512",
+    "C:\\Users\\feder\\.nuget\\packages\\flurl.http\\3.2.4\\flurl.http.3.2.4.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\google.api.gax\\4.8.0\\google.api.gax.4.8.0.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\google.api.gax.rest\\4.8.0\\google.api.gax.rest.4.8.0.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\google.apis\\1.68.0\\google.apis.1.68.0.nupkg.sha512",
@@ -106,7 +109,8 @@
     "C:\\Users\\feder\\.nuget\\packages\\system.text.json\\9.0.3\\system.text.json.9.0.3.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\system.threading.channels\\7.0.0\\system.threading.channels.7.0.0.nupkg.sha512",
     "C:\\Users\\feder\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
-    "C:\\Users\\feder\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
+    "C:\\Users\\feder\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512",
+    "C:\\Users\\feder\\.nuget\\packages\\yahoofinanceapi\\2.3.3\\yahoofinanceapi.2.3.3.nupkg.sha512"
   ],
   "logs": []
 }

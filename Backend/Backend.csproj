@@ -26,7 +26,8 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" /> <!-- Aggiungi questo -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="YahooFinanceApi" Version="2.3.3" /> <!-- Aggiungi questo -->
   </ItemGroup>
 
 </Project>

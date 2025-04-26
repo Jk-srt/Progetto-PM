@@ -14,7 +14,7 @@ import {
 import 'chartjs-adapter-date-fns';
 import { it } from 'date-fns/locale';
 import { fetchRealTimePrice } from '../services/FinnhubService';
-import { fetchHistoricalData} from '../serices/SerpApiService';
+import { fetchHistoricalData} from '../serices/YahooFinanceService';
 
 // Registrazione dei componenti necessari di ChartJS
 ChartJS.register(

@@ -15,7 +15,7 @@ import 'chartjs-adapter-date-fns';
 import FinnhubService from '../services/FinnhubService';
 import { it } from 'date-fns/locale';
 import { fetchRealTimePrice } from '../services/FinnhubService';
-import { fetchHistoricalData } from '../services/SerpapiSevice';
+import { fetchHistoricalData } from '../services/YahooFinanceService';
 
 ChartJS.register(
   CategoryScale,
@@ -31,7 +31,6 @@ ChartJS.register(
 // Funzione per ottenere l'unità di tempo appropriata in base al timeframe
 const getTimeUnit = (timeframe) => {
   switch(timeframe) {
-    case '1D': return 'minute';
     case '1W': return 'hour';
     case '1M': return 'day';
     case '3M': return 'day';
@@ -359,7 +358,6 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ marginRight: '20px' }}>
-            <button style={buttonStyle(timeframe === '1D')} onClick={() => setTimeframe('1D')}>1G</button>
             <button style={buttonStyle(timeframe === '1W')} onClick={() => setTimeframe('1W')}>1S</button>
             <button style={buttonStyle(timeframe === '1M')} onClick={() => setTimeframe('1M')}>1M</button>
             <button style={buttonStyle(timeframe === '3M')} onClick={() => setTimeframe('3M')}>3M</button>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import AsyncSelect from 'react-select/async';
+import { fetchListingStatus } from '../services/YahooFinanceService';
 import CombinedInvestmentChart from './CombinedInvestmentChart';
 
 const PortfolioAnalytics = () => {
   const [selectedInvestment, setSelectedInvestment] = useState('AAPL');
-  
-  // Lista di investimenti nel portafoglio (solo USA)
+
+  // Lista base di investimenti nel portafoglio (solo USA)
   const portfolioInvestments = [
     { id: 'AAPL', name: 'Apple Inc.', type: 'Azione' },
     { id: 'MSFT', name: 'Microsoft Corporation', type: 'Azione' },
@@ -19,18 +21,15 @@ const PortfolioAnalytics = () => {
     { id: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', type: 'ETF' }
   ];
 
-  // Ottiene i dettagli dell'investimento selezionato
   const getInvestmentDetails = (id) => {
-    const selectedInvestment = portfolioInvestments.find(inv => inv.id === id);
-    
-    // Dati di base comuni
+    const selected = portfolioInvestments.find(inv => inv.id === id);
+
     const baseDetails = [
       { label: 'Simbolo', value: id },
-      { label: 'Tipo', value: selectedInvestment?.type || 'Sconosciuto' }
+      { label: 'Tipo', value: selected?.type || 'Sconosciuto' }
     ];
-    
-    // Dati specifici per tipo
-    switch(id) {
+
+    switch (id) {
       case 'AAPL':
         return [
           ...baseDetails,
@@ -96,6 +95,21 @@ const PortfolioAnalytics = () => {
     }
   };
 
+  // Caricamento asincrono opzioni
+  const loadOptions = async (inputValue) => {
+    if (!inputValue) {
+      return portfolioInvestments.map(inv => ({
+        label: `${inv.name} (${inv.id})`,
+        value: inv.id
+      }));
+    }
+    const list = await fetchListingStatus(inputValue);
+    return list.map(item => ({
+      label: `${item.name} (${item.symbol})`,
+      value: item.symbol
+    }));
+  };
+
   return (
     <div>
       <div className="card mb-4">
@@ -107,51 +121,30 @@ const PortfolioAnalytics = () => {
             <label htmlFor="investment-selector" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
               Seleziona Investimento (solo mercato USA):
             </label>
-            <select 
-              id="investment-selector" 
-              style={{
-                padding: '8px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-                width: '100%',
-                marginTop: '8px',
-                fontSize: '16px'
+            <AsyncSelect
+              cacheOptions
+              defaultOptions
+              loadOptions={loadOptions}
+              onChange={option => setSelectedInvestment(option.value)}
+              placeholder="Cerca simboli (es. AAPL)…"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  padding: '6px',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                })
               }}
-              value={selectedInvestment}
-              onChange={(e) => setSelectedInvestment(e.target.value)}
-            >
-              <optgroup label="Azioni">
-                {portfolioInvestments
-                  .filter(inv => inv.type === 'Azione')
-                  .map(investment => (
-                    <option key={investment.id} value={investment.id}>
-                      {investment.name} ({investment.id})
-                    </option>
-                  ))
-                }
-              </optgroup>
-              <optgroup label="ETF">
-                {portfolioInvestments
-                  .filter(inv => inv.type === 'ETF')
-                  .map(investment => (
-                    <option key={investment.id} value={investment.id}>
-                      {investment.name} ({investment.id})
-                    </option>
-                  ))
-                }
-              </optgroup>
-            </select>
+            />
           </div>
         </div>
       </div>
-      
-      {/* Visualizza il grafico combinato per l'investimento selezionato */}
+
       <CombinedInvestmentChart 
         symbol={selectedInvestment} 
         investmentName={portfolioInvestments.find(inv => inv.id === selectedInvestment)?.name}
       />
-      
-      {/* Informazioni aggiuntive sull'investimento */}
+
       <div className="card mt-4">
         <div className="card-header">
           <h3>Dettagli Investimento</h3>
