@@ -179,11 +179,12 @@ const DashboardPage = () => {
             <Card.Body>
               <Card.Title>Storico Operazioni</Card.Title>
               <div className="d-flex justify-content-end mb-3">
+                { /* nella tab Investimenti > Operazioni */ }
                 <Button 
                   variant="success" 
                   onClick={() => navigate('/add-investment')}
                 >
-                  Aggiungi Operazione
+                  Aggiungi Investimento   // ← modifica etichetta
                 </Button>
               </div>
               <div className="table-responsive">
