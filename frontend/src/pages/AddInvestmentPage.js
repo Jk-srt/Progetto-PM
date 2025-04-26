@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { fetchListingStatus, fetchQuoteOnNearestTradingDate } from '../services/YahooFinanceService';
 import { useNavigate } from 'react-router-dom';
@@ -16,16 +16,14 @@ const AddInvestmentPage = () => {
     Quantity: '',
     Price: '',
     Date: new Date().toISOString().split('T')[0],
-    unitPrice: 0             // ← aggiunto campo per prezzo unitario
+    unitPrice: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // carica simboli da YahooFinanceService
+  // Carica simboli da YahooFinanceService
   const loadOptions = async (inputValue) => {
-    if (!inputValue) {
-      return []; // oppure un elenco base
-    }
+    if (!inputValue) return [];
     const list = await fetchListingStatus(inputValue);
     return list.map(item => ({
       label: `${item.name} (${item.symbol})`,
@@ -33,6 +31,43 @@ const AddInvestmentPage = () => {
       name: item.name,
       type: item.type,
       exchange: item.exchange
+    }));
+  };
+
+  // Quando cambia asset o data, aggiorna unitPrice e ricalcola Price/Quantity
+  useEffect(() => {
+    if (!selectedAsset || !investment.Date) return;
+    fetchQuoteOnNearestTradingDate(selectedAsset.value, investment.Date)
+      .then(data => {
+        const up = data.price ?? 0;
+        setInvestment(prev => {
+          const qty = parseFloat(prev.Quantity) || 0;
+          return {
+            ...prev,
+            unitPrice: up,
+            Price: (qty ? (up * qty).toFixed(2) : up.toString())
+          };
+        });
+      })
+      .catch(err => console.error(err));
+  }, [selectedAsset, investment.Date]);
+
+  // Gestori personalizzati per evitare loop di useEffect
+  const handleQuantityChange = (e) => {
+    const qty = parseFloat(e.target.value) || 0;
+    setInvestment(prev => ({
+      ...prev,
+      Quantity: e.target.value,
+      Price: (prev.unitPrice * qty).toFixed(2)
+    }));
+  };
+
+  const handlePriceChange = (e) => {
+    const price = parseFloat(e.target.value) || 0;
+    setInvestment(prev => ({
+      ...prev,
+      Price: e.target.value,
+      Quantity: prev.unitPrice ? (price / prev.unitPrice).toFixed(2) : ''
     }));
   };
 
@@ -64,46 +99,6 @@ const AddInvestmentPage = () => {
     }
   };
 
-  // al cambio di asset o data, carica unitPrice e imposta Price = unitPrice * Quantity (se presente) o unitPrice
-  React.useEffect(() => {
-    if (selectedAsset && investment.Date) {
-      fetchQuoteOnNearestTradingDate(selectedAsset.value, investment.Date)
-        .then(data => {
-          const up = data.price ?? 0;
-          setInvestment(prev => ({
-            ...prev,
-            unitPrice: up,
-            Price: prev.Quantity
-              ? (up * parseFloat(prev.Quantity)).toFixed(2)
-              : up.toString()
-          }));
-        })
-        .catch(() => {});
-    }
-  }, [selectedAsset, investment.Date]);
-
-  // al cambio di Quantity, ricalcola Price = unitPrice * Quantity
-  React.useEffect(() => {
-    const q = parseFloat(investment.Quantity);
-    if (!isNaN(q) && investment.unitPrice) {
-      setInvestment(prev => ({
-        ...prev,
-        Price: (prev.unitPrice * q).toFixed(2)
-      }));
-    }
-  }, [investment.Quantity]);
-
-  // al cambio di Price, ricalcola Quantity = Price / unitPrice
-  React.useEffect(() => {
-    const p = parseFloat(investment.Price);
-    if (!isNaN(p) && investment.unitPrice) {
-      setInvestment(prev => ({
-        ...prev,
-        Quantity: (p / prev.unitPrice).toFixed(2)
-      }));
-    }
-  }, [investment.Price]);
-
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
       <Card sx={{ borderRadius: 3, bgcolor: '#1e1e1e' }}>
@@ -114,7 +109,6 @@ const AddInvestmentPage = () => {
           {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
-              {/* replace TextField Asset with AsyncSelect */}
               <Grid item xs={12}>
                 <AsyncSelect
                   cacheOptions
@@ -162,7 +156,7 @@ const AddInvestmentPage = () => {
                   name="Quantity"
                   type="number"
                   value={investment.Quantity}
-                  onChange={e => setInvestment({ ...investment, Quantity: e.target.value })}
+                  onChange={handleQuantityChange}
                   required
                   inputProps={{ step: "0.01" }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#2c2c2c' } }}
@@ -176,7 +170,7 @@ const AddInvestmentPage = () => {
                   name="Price"
                   type="number"
                   value={investment.Price}
-                  onChange={e => setInvestment({ ...investment, Price: e.target.value })}
+                  onChange={handlePriceChange}
                   required
                   inputProps={{ step: "0.01" }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#2c2c2c' } }}
