@@ -59,33 +59,42 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const RouteManager = () => (
-<>
-    
-  <Routes>
-    {/* Aggiungi il reindirizzamento della root */}
-    <Route path="/" element={<Navigate to="/login" replace />} />
-    <Route path="/login" element={<LoginPage />} />
-    <Route
-      path="/dashboard"
-      element={
-        <ProtectedRoute>
-          <nav style={{ padding: '1rem', backgroundColor: '#1e1e1e' }}>
-        <Link to="/dashboard" style={{ marginRight: '1rem', color: '#90caf9' }}>Dashboard</Link>
-        <Link to="/add-transaction" style={{ marginRight: '1rem', color: '#90caf9' }}>Add Transaction</Link>
-        <Link to="/logout" style={{ color: '#f48fb1' }}>Logout</Link>
-    </nav>
-          <DashboardPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route path="/add-transaction" element={<AddTransactionPage />} />
-    <Route path="/add-investment" element={<AddInvestmentPage />} />
-    <Route path="/news" element={<NewsPage />} />
-    <Route path="/assistant" element={<AssistantPage />} />
-    <Route path="/logout" element={<LogoutPage />} />
-    <Route path="*" element={<ErrorPage />} />
-  </Routes>
-</>
+  <>
+    <Routes>
+      {/* Aggiungi il reindirizzamento della root */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <nav style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem', backgroundColor: '#1e1e1e' }}>
+              <button
+                style={{
+                  backgroundColor: '#f44336',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => (window.location.href = '/logout')}
+              >
+                Logout
+              </button>
+            </nav>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/add-transaction" element={<AddTransactionPage />} />
+      <Route path="/add-investment" element={<AddInvestmentPage />} />
+      <Route path="/news" element={<NewsPage />} />
+      <Route path="/assistant" element={<AssistantPage />} />
+      <Route path="/logout" element={<LogoutPage />} />
+      <Route path="*" element={<ErrorPage />} />
+    </Routes>
+  </>
 );
 
 

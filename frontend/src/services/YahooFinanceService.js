@@ -12,7 +12,9 @@ export async function fetchListingStatus(query = '') {
     const url = `${API_BASE}/api/yahoo/listing?query=${encodeURIComponent(query)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Errore nella ricerca dei simboli');
-    return await res.json();
+    const data = await res.json();
+    console.log('Listing status response:', data);
+    return data;
 }
 
 export async function fetchRealTimeQuote(symbol) {

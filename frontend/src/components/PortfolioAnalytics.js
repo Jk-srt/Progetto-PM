@@ -4,7 +4,13 @@ import { fetchListingStatus } from '../services/YahooFinanceService';
 import CombinedInvestmentChart from './CombinedInvestmentChart';
 
 const PortfolioAnalytics = () => {
-  const [selectedInvestment, setSelectedInvestment] = useState('AAPL');
+  // 1) Stato diventa oggetto completo
+  const [selectedOption, setSelectedOption] = useState({
+    value: 'AAPL',
+    name: 'Apple Inc.',
+    type: 'Azione',
+    exchange: 'NASDAQ'
+  });
 
   // Lista base di investimenti nel portafoglio (solo USA)
   const portfolioInvestments = [
@@ -21,93 +27,36 @@ const PortfolioAnalytics = () => {
     { id: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', type: 'ETF' }
   ];
 
-  const getInvestmentDetails = (id) => {
-    const selected = portfolioInvestments.find(inv => inv.id === id);
-
-    const baseDetails = [
-      { label: 'Simbolo', value: id },
-      { label: 'Tipo', value: selected?.type || 'Sconosciuto' }
-    ];
-
-    switch (id) {
-      case 'AAPL':
-        return [
-          ...baseDetails,
-          { label: 'Settore', value: 'Tecnologia' },
-          { label: 'Capitalizzazione', value: '2.89 Trilioni USD' },
-          { label: 'P/E Ratio', value: '33.20' },
-          { label: 'Dividend Yield', value: '0.43%' },
-          { label: 'Beta', value: '1.33' },
-          { label: 'Mercato', value: 'NASDAQ' }
-        ];
-      case 'MSFT':
-        return [
-          ...baseDetails,
-          { label: 'Settore', value: 'Tecnologia' },
-          { label: 'Capitalizzazione', value: '3.04 Trilioni USD' },
-          { label: 'P/E Ratio', value: '37.51' },
-          { label: 'Dividend Yield', value: '0.72%' },
-          { label: 'Beta', value: '0.89' },
-          { label: 'Mercato', value: 'NASDAQ' }
-        ];
-      case 'JPM':
-        return [
-          ...baseDetails,
-          { label: 'Settore', value: 'Finanza' },
-          { label: 'Capitalizzazione', value: '720 Miliardi USD' },
-          { label: 'P/E Ratio', value: '14.25' },
-          { label: 'Dividend Yield', value: '2.18%' },
-          { label: 'Beta', value: '1.07' },
-          { label: 'Mercato', value: 'NYSE' }
-        ];
-      case 'SPY':
-        return [
-          ...baseDetails,
-          { label: 'Categoria', value: 'Large Blend' },
-          { label: 'Spese correnti', value: '0.09%' },
-          { label: 'AUM', value: '473.66 Miliardi USD' },
-          { label: 'N° di azioni', value: '503' },
-          { label: 'Beta', value: '1.00' },
-          { label: 'Emittente', value: 'State Street' }
-        ];
-      case 'VOO':
-        return [
-          ...baseDetails,
-          { label: 'Categoria', value: 'Large Blend' },
-          { label: 'Spese correnti', value: '0.03%' },
-          { label: 'AUM', value: '331.42 Miliardi USD' },
-          { label: 'N° di azioni', value: '508' },
-          { label: 'Beta', value: '1.00' },
-          { label: 'Emittente', value: 'Vanguard' }
-        ];
-      case 'QQQ':
-        return [
-          ...baseDetails,
-          { label: 'Categoria', value: 'Large Growth' },
-          { label: 'Spese correnti', value: '0.20%' },
-          { label: 'AUM', value: '245.03 Miliardi USD' },
-          { label: 'N° di azioni', value: '101' },
-          { label: 'Beta', value: '1.15' },
-          { label: 'Emittente', value: 'Invesco' }
-        ];
-      default:
-        return baseDetails;
-    }
-  };
-
-  // Caricamento asincrono opzioni
+  // 2) LoadOptions include ora name, type, exchange
   const loadOptions = async (inputValue) => {
     if (!inputValue) {
       return portfolioInvestments.map(inv => ({
         label: `${inv.name} (${inv.id})`,
-        value: inv.id
+        value: inv.id,
+        name: inv.name,
+        type: inv.type,
+        exchange: 'USA Market'
       }));
     }
     const list = await fetchListingStatus(inputValue);
     return list.map(item => ({
       label: `${item.name} (${item.symbol})`,
-      value: item.symbol
+      value: item.symbol,
+      name: item.name,
+      type: item.type,
+      exchange: item.exchange
     }));
+  };
+
+  // 3) getInvestmentDetails usa l’oggetto selezionato
+  const getInvestmentDetails = (opt) => {
+    if (!opt) return [];
+    return [
+      { label: 'Simbolo', value: opt.value },
+      { label: 'Nome', value: opt.name },
+      { label: 'Exchange', value: opt.exchange },
+      { label: 'Tipo', value: opt.type }
+    ];
   };
 
   return (
@@ -125,7 +74,7 @@ const PortfolioAnalytics = () => {
               cacheOptions
               defaultOptions
               loadOptions={loadOptions}
-              onChange={option => setSelectedInvestment(option.value)}
+              onChange={option => setSelectedOption(option)}      // 4) setta l’oggetto completo
               placeholder="Cerca simboli (es. AAPL)…"
               styles={{
                 control: (base) => ({
@@ -141,8 +90,8 @@ const PortfolioAnalytics = () => {
       </div>
 
       <CombinedInvestmentChart 
-        symbol={selectedInvestment} 
-        investmentName={portfolioInvestments.find(inv => inv.id === selectedInvestment)?.name}
+        symbol={selectedOption.value}                     // 5) passa symbol e name
+        investmentName={selectedOption.name}
       />
 
       <div className="card mt-4">
@@ -158,7 +107,7 @@ const PortfolioAnalytics = () => {
               </tr>
             </thead>
             <tbody>
-              {getInvestmentDetails(selectedInvestment).map((detail, index) => (
+              {getInvestmentDetails(selectedOption).map((detail, index) => (
                 <tr key={index}>
                   <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{detail.label}</td>
                   <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{detail.value}</td>
