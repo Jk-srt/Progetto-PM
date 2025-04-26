@@ -163,6 +163,62 @@ namespace ProgettoPM.Backend.Controllers
                 prevClose     = quote.GetProperty("regularMarketPreviousClose").GetDecimal()
             });
         }
+        
+        [HttpGet("quote")]
+        public async Task<IActionResult> GetQuote(string symbol, string date)
+        {
+            if (!DateTime.TryParse(date, out var parsedDate))
+            return BadRequest("Invalid date format. Please use a valid date string.");
+
+            // Convert the provided date to Unix timestamps for the start and end of the day
+            var startTimestamp = ((DateTimeOffset)parsedDate.Date).ToUnixTimeSeconds();
+            var endTimestamp = ((DateTimeOffset)parsedDate.Date.AddDays(1).AddSeconds(-1)).ToUnixTimeSeconds();
+
+            string url = $"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={startTimestamp}&period2={endTimestamp}&interval=1d";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+            var response = await _http.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+            return StatusCode((int)response.StatusCode, "Yahoo Finance request failed");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            var result = doc.RootElement
+            .GetProperty("chart")
+            .GetProperty("result")[0];
+
+            var timestamps = result
+            .GetProperty("timestamp")
+            .EnumerateArray()
+            .Select(t => DateTimeOffset.FromUnixTimeSeconds(t.GetInt64()).UtcDateTime)
+            .ToArray();
+
+            var closes = result
+            .GetProperty("indicators")
+            .GetProperty("quote")[0]
+            .GetProperty("close")
+            .EnumerateArray()
+            .Select(c => c.ValueKind == JsonValueKind.Number ? c.GetDecimal() : (decimal?)null)
+            .ToArray();
+
+            // Find the close price for the requested date
+            var entry = timestamps.Zip(closes, (time, close) => new { time, close })
+            .FirstOrDefault(e => e.time.Date == parsedDate.Date);
+
+            if (entry == null || entry.close == null)
+            return NotFound("No data available for the specified date.");
+
+            return Ok(new
+            {
+            date = entry.time,
+            price = entry.close
+            });
+        }
 
     }
 }

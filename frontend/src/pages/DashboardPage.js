@@ -307,7 +307,6 @@ const DashboardPage = () => {
             id="investments-tabs"
             className="mb-3"
           >
-            <Tab eventKey="overview" title="Panoramica" />
             <Tab eventKey="analytics" title="Analisi" />
             <Tab eventKey="transactions" title="Operazioni" />
           </Tabs>
