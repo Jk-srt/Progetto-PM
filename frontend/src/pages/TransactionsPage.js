@@ -42,13 +42,7 @@ export default function TransactionsPage({ transactions = [] }) {
           <Typography variant="h4" gutterBottom>
             Storico Transazioni
           </Typography>
-          <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/add-transaction')}
-          >
-            Nuova Transazione
-          </Button>
+          
         </div>
 
         {/* Cards riepilogo */}
