@@ -1,49 +1,147 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Table, Button } from "react-bootstrap";
+import {
+  Container,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  IconButton
+} from '@mui/material';
+import {
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon
+} from '@mui/icons-material';
 
-const TransactionsList = ({ transactions }) => {
+export default function TransactionsPage({ transactions = [] }) {
   const navigate = useNavigate();
 
-  // Verifica se transactions è definito ed è un array
-  if (!transactions || !Array.isArray(transactions)) {
-    return <div>Nessuna transazione disponibile</div>;
-  }
+  // Calcola totali
+  const totalEntrate = transactions
+      ?.filter(t => t.amount > 0)
+      ?.reduce((sum, t) => sum + t.amount, 0) || 0;
+
+  const totalUscite = transactions
+      ?.filter(t => t.amount < 0)
+      ?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+
+  const saldoNetto = totalEntrate - totalUscite;
 
   return (
-    <Container>
-      {/* Pulsante posizionato a destra */}
-      <div className="d-flex justify-content-end mb-3">
-        <Button 
-          variant="success" 
-          onClick={() => navigate('/add-transaction')}
-        >
-          Aggiungi Transazione
-        </Button>
-      </div>
+      <Container>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <Typography variant="h4" gutterBottom>
+            Storico Transazioni
+          </Typography>
+          <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/add-transaction')}
+          >
+            Nuova Transazione
+          </Button>
+        </div>
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Descrizione</th>
-            <th>Categoria</th>
-            <th>Importo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map(transaction => (
-            <tr key={transaction.id || Math.random()}>
-              <td>{new Date(transaction.date).toLocaleDateString()}</td>
-              <td>{transaction.description}</td>
-              <td>{transaction.category?.name || 'N/A'}</td>
-              <td>${transaction.amount.toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </Container>
+        {/* Cards riepilogo */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderLeft: '4px solid #4caf50' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  <ArrowUpwardIcon sx={{ color: '#4caf50', mr: 1 }} />
+                  Totale Entrate
+                </Typography>
+                <Typography variant="h4">
+                  €{totalEntrate.toFixed(2)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderLeft: '4px solid #f44336' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  <ArrowDownwardIcon sx={{ color: '#f44336', mr: 1 }} />
+                  Totale Uscite
+                </Typography>
+                <Typography variant="h4">
+                  €{totalUscite.toFixed(2)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderLeft: '4px solid #2196f3' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Saldo Netto
+                </Typography>
+                <Typography
+                    variant="h4"
+                    sx={{ color: saldoNetto >= 0 ? '#4caf50' : '#f44336' }}
+                >
+                  €{saldoNetto.toFixed(2)}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Tabella transazioni */}
+        <Table sx={{ minWidth: 650 }} aria-label="tabella transazioni">
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Data</strong></TableCell>
+              <TableCell><strong>Descrizione</strong></TableCell>
+              <TableCell><strong>Categoria</strong></TableCell>
+              <TableCell><strong>Metodo</strong></TableCell>
+              <TableCell align="right"><strong>Importo</strong></TableCell>
+              <TableCell align="center"><strong>Azioni</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transactions.map((transaction, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    {new Date(transaction.date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{transaction.description}</TableCell>
+                  <TableCell>{transaction.category?.name || 'N/A'}</TableCell>
+                  <TableCell>{transaction.method || 'N/A'}</TableCell>
+                  <TableCell align="right">
+                <span
+                    style={{
+                      color: transaction.amount > 0 ? '#4caf50' : '#f44336',
+                      fontWeight: 500
+                    }}
+                >
+                  {transaction.amount > 0 ? '+' : '-'}€
+                  {Math.abs(transaction.amount).toFixed(2)}
+                </span>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton size="small" color="primary">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small" color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Container>
   );
-};
-
-export default TransactionsList;
+}
