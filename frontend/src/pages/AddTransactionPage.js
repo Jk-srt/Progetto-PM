@@ -16,7 +16,7 @@ import {
   Alert
 } from '@mui/material';
 
-const AddTransactionPage = () => {
+const AddTransactionPage = ({ onAdded }) => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [transaction, setTransaction] = useState({
@@ -89,8 +89,12 @@ const AddTransactionPage = () => {
       const data = await response.json();
       console.log('Transazione registrata con successo:', data);
   
-      // Reindirizzamento a /dashboard se la risposta è OK
-      navigate('/dashboard');
+      // Chiudi popup se fornito, altrimenti naviga
+      if (onAdded) {
+        onAdded();
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
         console.error('Errore completo:', error);
         setError(error.message);
@@ -180,7 +184,8 @@ const AddTransactionPage = () => {
                     onChange={handleChange}
                     required
                     sx={{
-                      backgroundColor: '#2c2c2c'
+                      backgroundColor: '#2c2c2c',
+                      height: 56
                     }}
                   >
                     <MenuItem value={0}>Entrata</MenuItem>
@@ -200,7 +205,8 @@ const AddTransactionPage = () => {
                     required
                     displayEmpty
                     sx={{
-                      backgroundColor: '#2c2c2c'
+                      backgroundColor: '#2c2c2c',
+                      height: 56
                     }}
                   >
                     <MenuItem value="" disabled>

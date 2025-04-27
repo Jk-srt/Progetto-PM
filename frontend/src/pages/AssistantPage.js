@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Container } from "react-bootstrap";
 
 const AssistantPage = () => {
@@ -49,8 +51,11 @@ const AssistantPage = () => {
               <div className={`${m.sender === 'user'
                 ? 'bg-blue-600 text-gray-300'
                 : 'bg-gray-700 text-gray-300'
-              } rounded-xl p-3 max-w-xs md:max-w-md`}> 
-                <p>{m.text}</p>
+              } rounded-xl p-3 max-w-xs md:max-w-md`}>
+                {/* render markdown incluso R code block */}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {m.text}
+                </ReactMarkdown>
               </div>
             </div>
           ))}

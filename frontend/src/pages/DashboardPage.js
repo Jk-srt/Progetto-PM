@@ -15,7 +15,10 @@ import {
   Tab,
   useTheme,
   CircularProgress,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
 import {
   Wallet as WalletIcon,
@@ -41,6 +44,7 @@ import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
+import AddTransactionPage from './AddTransactionPage'; // componente form esistente
 
 // Registra gli elementi Chart.js una sola volta
 ChartJS.register(
@@ -76,6 +80,7 @@ const DashboardPage = () => {
   });
   const [userImage, setUserImage] = useState(null);
   const [userName, setUserName] = useState(null);
+  const [openAddTx, setOpenAddTx] = useState(false); // stato per il modal
 
   // Chart refs per cleanup
   const lineChartRef = useRef(null);
@@ -327,7 +332,7 @@ const DashboardPage = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => navigate('/add-transaction')}
+              onClick={() => setOpenAddTx(true)}
             >
               Nuova Transazione
             </Button>
@@ -492,6 +497,24 @@ const DashboardPage = () => {
           </>
       )}
     </Box>
+
+    {/* Dialog per nuova transazione */}
+    <Dialog
+      open={openAddTx}
+      onClose={() => setOpenAddTx(false)}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Nuova Transazione</DialogTitle>
+      <DialogContent>
+        <AddTransactionPage 
+          onAdded={() => {
+            setOpenAddTx(false);
+            // ... eventualmente ricarica i dati/refresh ...
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   </Container>
   );
 };
