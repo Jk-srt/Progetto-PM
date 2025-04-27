@@ -134,23 +134,6 @@ const AddInvestmentPage = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel sx={{ color: '#8eb8e5' }}>Tipo</InputLabel>
-                  <Select
-                    name="Type"
-                    value={investment.Type}
-                    onChange={e => setInvestment({ ...investment, Type: e.target.value })}
-                    required
-                    sx={{ backgroundColor: '#2c2c2c' }}
-                  >
-                    <MenuItem value={0}>Acquisto</MenuItem>
-                    <MenuItem value={1}>Vendita</MenuItem>
-                    <MenuItem value={2}>Trasferimento</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Quantità"
