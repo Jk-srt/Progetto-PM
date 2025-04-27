@@ -76,15 +76,22 @@ const AddInvestmentPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+  
+    // costruisci il payload in camelCase
+    const payload = {
+      quantity:    parseFloat(investment.Quantity),
+      purchasePrice: parseFloat(investment.Price),
+      currentPrice:  0,
+      // genera un ISO string corretto in UTC
+      purchaseDate:  new Date(investment.Date).toISOString(),
+      action:        0,                         // 0 = Buy
+      assetName:     selectedAsset.value       // camelCase
+    };
+  
     try {
-      await InvestmentService.create({
-        Asset: selectedAsset?.value,
-        Type: investment.Type,
-        Quantity: parseFloat(investment.Quantity),
-        Price: parseFloat(investment.Price),
-        Date: `${investment.Date}T00:00:00Z`
-      });
-      
+      // assicurati che create invii:
+      // axios.post('/api/investments', payload, { headers: { userId: … }})
+      await InvestmentService.create(payload);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

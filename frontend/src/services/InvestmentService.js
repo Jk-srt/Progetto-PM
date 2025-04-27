@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 const API_URL = 'http://localhost:5000/api/investments';
 
 class InvestmentService {
@@ -12,8 +11,12 @@ class InvestmentService {
 		return axios.get(`${API_URL}/${id}`);
 	}
 	// crea un nuovo investimento
-	create(data) {
-		return axios.post(API_URL, data);
+	create(investment) {
+		return axios.post(API_URL, investment, {
+			headers: { 'Content-Type': 'application/json',
+				'userId': localStorage.getItem('userId') // aggiungi l'header userId
+			 }
+		});
 	}
 	// aggiorna un investimento esistente
 	update(id, data) {
@@ -24,5 +27,4 @@ class InvestmentService {
 		return axios.delete(`${API_URL}/${id}`);
 	}
 }
-
 export default new InvestmentService();
