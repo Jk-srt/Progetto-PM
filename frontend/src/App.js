@@ -46,8 +46,10 @@ const darkTheme = createTheme({
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  localStorage.setItem('GoogleUser', user);
-
+  if (user) {
+    localStorage.setItem('GoogleUser', JSON.stringify(user));
+    console.log('GoogleUser (saved):', user);
+  }
   if (loading) {
     return <LoadingScreen />;
   }

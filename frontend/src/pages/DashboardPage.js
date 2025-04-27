@@ -14,7 +14,8 @@ import {
   Tabs,
   Tab,
   useTheme,
-  CircularProgress
+  CircularProgress,
+  Avatar
 } from '@mui/material';
 import {
   Wallet as WalletIcon,
@@ -73,6 +74,8 @@ const DashboardPage = () => {
       tension: 0.4
     }]
   });
+  const [userImage, setUserImage] = useState(null);
+  const [userName, setUserName] = useState(null);
 
   // Chart refs per cleanup
   const lineChartRef = useRef(null);
@@ -182,6 +185,17 @@ const DashboardPage = () => {
 
   // Fetch dati come nel file originale
   useEffect(() => {
+    const googleUser = localStorage.getItem("GoogleUser");
+    if (googleUser) {
+      try {
+        const user = JSON.parse(googleUser);
+        if (user.photoURL) setUserImage(user.photoURL);
+        const name = user.displayName || user.email.split('@')[0];
+        setUserName(name);   // <--- aggiunto
+      } catch (error) {
+        console.error("Errore parsing GoogleUser", error);
+      }
+    }
     const fetchData = async () => {
       try {
         const userId = localStorage.getItem('userId');
@@ -201,9 +215,15 @@ const DashboardPage = () => {
         setLoading(false);
       }
     };
+    
     fetchData();
-    // eslint-disable-next-line
+    
   }, []);
+
+  useEffect(() => {
+    
+  }, []);
+  
 
   // Cards statistiche
   const stats = [
@@ -248,9 +268,13 @@ const DashboardPage = () => {
         <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <AccountCircleIcon sx={{ fontSize: 40, mr: 2 }} />
+              {userImage ? (
+                <Avatar src={userImage} sx={{ width: 40, height: 40, mr: 2 }} />
+              ) : (
+                <AccountCircleIcon sx={{ fontSize: 40, mr: 2 }} />
+              )}
               <div>
-                <Typography variant="h6">Utente</Typography>
+                <Typography variant="h6">{userName}</Typography>
                 <Typography variant="body2" color="text.secondary">Profilo</Typography>
               </div>
             </Box>
