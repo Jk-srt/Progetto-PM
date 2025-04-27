@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { fetchListingStatus, fetchQuoteOnNearestTradingDate } from '../services/YahooFinanceService';
+import InvestmentService from '../services/InvestmentService';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, TextField,
@@ -75,22 +76,22 @@ const AddInvestmentPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+  
+    // costruisci il payload in camelCase
+    const payload = {
+      quantity:    parseFloat(investment.Quantity),
+      purchasePrice: parseFloat(investment.Price),
+      currentPrice:  0,
+      // genera un ISO string corretto in UTC
+      purchaseDate:  new Date(investment.Date).toISOString(),
+      action:        0,                         // 0 = Buy
+      assetName:     selectedAsset.value       // camelCase
+    };
+  
     try {
-      await fetch('http://localhost:5000/api/investments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'userId': localStorage.getItem('userId')
-        },
-        body: JSON.stringify({
-          Asset: selectedAsset?.value,
-          Type: investment.Type,
-          Quantity: parseFloat(investment.Quantity),
-          Price: parseFloat(investment.Price),
-          Date: `${investment.Date}T00:00:00Z`
-        })
-      });
+      // assicurati che create invii:
+      // axios.post('/api/investments', payload, { headers: { userId: … }})
+      await InvestmentService.create(payload);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -130,23 +131,6 @@ const AddInvestmentPage = () => {
                     colors: { ...theme.colors, primary25: '#444', primary: '#8eb8e5' }
                   })}
                 />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel sx={{ color: '#8eb8e5' }}>Tipo</InputLabel>
-                  <Select
-                    name="Type"
-                    value={investment.Type}
-                    onChange={e => setInvestment({ ...investment, Type: e.target.value })}
-                    required
-                    sx={{ backgroundColor: '#2c2c2c' }}
-                  >
-                    <MenuItem value={0}>Acquisto</MenuItem>
-                    <MenuItem value={1}>Vendita</MenuItem>
-                    <MenuItem value={2}>Trasferimento</MenuItem>
-                  </Select>
-                </FormControl>
               </Grid>
 
               <Grid item xs={12} md={6}>
