@@ -7,7 +7,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Button,
   Grid,
   Card,
   CardContent,
@@ -17,14 +16,11 @@ import {
 import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
-  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
 
 export default function TransactionsPage({ transactions = [] }) {
-  const navigate = useNavigate();
-
   // Calcola totali
   const totalEntrate = transactions
       ?.filter(t => t.amount > 0)
