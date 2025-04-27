@@ -13,7 +13,6 @@ import {
     useTheme
 } from '@mui/material';
 
-// Lista fallback locale (opzionale)
 const portfolioInvestments = [
     { id: 'AAPL', name: 'Apple Inc.', type: 'Azione', exchange: 'NASDAQ' },
     { id: 'MSFT', name: 'Microsoft Corporation', type: 'Azione', exchange: 'NASDAQ' },
@@ -38,7 +37,6 @@ const PortfolioAnalytics = () => {
         exchange: 'NASDAQ'
     });
 
-    // Ricerca asincrona titoli
     const loadOptions = async (inputValue) => {
         if (!inputValue) {
             return portfolioInvestments.map(inv => ({
@@ -59,7 +57,6 @@ const PortfolioAnalytics = () => {
         }));
     };
 
-    // Dettagli investimento come tile
     const getInvestmentDetails = (opt) => {
         if (!opt) return [];
         return [
@@ -70,7 +67,6 @@ const PortfolioAnalytics = () => {
         ];
     };
 
-    // Stili avanzati per AsyncSelect (dark mode e leggibilità)
     const customSelectStyles = {
         control: (base) => ({
             ...base,
@@ -127,26 +123,29 @@ const PortfolioAnalytics = () => {
                 mb: 4,
                 borderRadius: '16px',
                 background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                boxShadow: theme.shadows[6]
+                boxShadow: theme.shadows[6],
+                overflow: 'hidden'
             }}>
-                <CardContent>
+                <CardContent sx={{ position: 'relative', zIndex: 2 }}>
                     <Typography variant="h3" sx={{
                         color: 'white',
                         mb: 4,
                         fontWeight: 700,
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        textAlign: 'center'
                     }}>
-                        Analisi Portafoglio
+                        Analisi Mercato
                     </Typography>
 
-                    <Grid container spacing={3}>
+                    <Grid container spacing={3} justifyContent="center">
                         <Grid item xs={12} md={8}>
                             <Typography variant="subtitle1" sx={{
                                 color: 'rgba(255,255,255,0.9)',
-                                mb: 1,
-                                fontWeight: 500
+                                mb: 2,
+                                fontWeight: 500,
+                                textAlign: 'center'
                             }}>
-                                Cerca investimento:
+                                Cerca e seleziona un investimento per visualizzare i dettagli e le analisi delle prestazioni.
                             </Typography>
                             <AsyncSelect
                                 cacheOptions
@@ -155,7 +154,13 @@ const PortfolioAnalytics = () => {
                                 value={selectedOption}
                                 onChange={setSelectedOption}
                                 placeholder="Inserisci simbolo o nome..."
-                                styles={customSelectStyles}
+                                // aggiunte per portale e z‑index
+                                styles={{
+                                    ...customSelectStyles,
+                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                }}
+                                menuPortalTarget={document.body}
+                                menuPosition="fixed"
                                 theme={selectTheme => ({
                                     ...selectTheme,
                                     borderRadius: 8,
@@ -184,14 +189,22 @@ const PortfolioAnalytics = () => {
                     title={
                         <Typography variant="h5" sx={{
                             color: theme.palette.primary.main,
-                            fontWeight: 600
+                            fontWeight: 600,
+                            textAlign: 'center'
                         }}>
                             Dettagli Investimento
                         </Typography>
                     }
                 />
                 <CardContent>
-                    <Grid container spacing={2}>
+                    <Typography variant="body1" sx={{
+                        color: theme.palette.text.secondary,
+                        mb: 3,
+                        textAlign: 'center'
+                    }}>
+                        Esplora i dettagli del tuo investimento selezionato, inclusi simbolo, nome, exchange e tipo.
+                    </Typography>
+                    <Grid container spacing={2} justifyContent="center">
                         {getInvestmentDetails(selectedOption).map((detail, index) => (
                             <Grid item xs={12} sm={6} md={3} key={index}>
                                 <Paper sx={{
@@ -200,7 +213,12 @@ const PortfolioAnalytics = () => {
                                     border: `1px solid ${theme.palette.divider}`,
                                     backgroundColor: theme.palette.background.default,
                                     textAlign: 'center',
-                                    boxShadow: theme.shadows[1]
+                                    boxShadow: theme.shadows[1],
+                                    transition: 'transform 0.2s ease-in-out',
+                                    '&:hover': {
+                                        transform: 'scale(1.05)',
+                                        boxShadow: theme.shadows[4]
+                                    }
                                 }}>
                                     <Typography variant="caption" sx={{
                                         color: theme.palette.text.secondary,

@@ -163,8 +163,7 @@ const RealTimeStockChart = ({ symbol, investmentName }) => {
   // Opzioni del grafico memorizzate
   const chartOptions = useMemo(() => ({
     responsive: true,
-    maintainAspectRatio: false,
-    animation: false, // Disabilita le animazioni per prestazioni con aggiornamenti frequenti
+    maintainAspectRatio: false, // Disabilita le animazioni per prestazioni con aggiornamenti frequenti
     plugins: {
       tooltip: {
         mode: 'index',

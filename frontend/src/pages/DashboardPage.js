@@ -144,17 +144,25 @@ const DashboardPage = () => {
     };
   };
 
-  // Palette torta
+  // Allocazione portafoglio dinamica in base a transazioni e categorie
   const portfolioAllocationData = {
-    labels: ['Azioni', 'Obbligazioni', 'ETF', 'Cripto'],
+    labels: data.categories.map(cat => cat.name),
     datasets: [{
-      data: [45, 25, 20, 10],
-      backgroundColor: [
-        theme.palette.primary.main,
-        theme.palette.success.main,
-        theme.palette.info.main,
-        theme.palette.warning.main
-      ],
+      data: data.categories.map(cat =>
+        data.transactions
+          .filter(tx => tx.category?.id === cat.id)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+      ),
+      backgroundColor: data.categories.map((_, idx) => {
+        const palette = [
+          theme.palette.primary.main,
+          theme.palette.success.main,
+          theme.palette.info.main,
+          theme.palette.warning.main,
+          theme.palette.error.main
+        ];
+        return palette[idx % palette.length];
+      }),
       borderColor: theme.palette.background.paper,
       borderWidth: 2
     }]
@@ -263,208 +271,228 @@ const DashboardPage = () => {
   ];
 
   return (
-      <Container maxWidth="xl" sx={{ display: 'flex', gap: 3, pt: 3, minHeight: '100vh' }}>
-        {/* Sidebar */}
-        <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              {userImage ? (
-                <Avatar src={userImage} sx={{ width: 40, height: 40, mr: 2 }} />
-              ) : (
-                <AccountCircleIcon sx={{ fontSize: 40, mr: 2 }} />
-              )}
-              <div>
-                <Typography variant="h6">{userName}</Typography>
-                <Typography variant="body2" color="text.secondary">Profilo</Typography>
-              </div>
-            </Box>
-            <Divider sx={{ my: 2 }} />
-            <Tabs
-                orientation="vertical"
-                value={activeTab}
-                onChange={(e, newValue) => setActiveTab(newValue)}
-                sx={{ width: '100%' }}
-            >
-              {sidebarTabs.map(tab => (
-                  <Tab key={tab.value} label={tab.label} value={tab.value} />
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Main Content */}
-        <Box sx={{ flexGrow: 1, minHeight: '100vh', pb: 5 }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" fontWeight={700}>
-              {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <IconButton>
-                <NotificationsIcon />
-              </IconButton>
-              {activeTab === 'transactions' && (
-                  <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => navigate('/add-transaction')}
-                  >
-                    Nuova Transazione
-                  </Button>
-              )}
-              {activeTab === 'investments' && (
-                  <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => navigate('/add-investment')}
-                  >
-                    Nuovo Investimento
-                  </Button>
-              )}
-            </Box>
-          </Box>
-
-          {/* Loading/Error State */}
-          {loading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-                <CircularProgress />
-              </Box>
+  <Container 
+    maxWidth="xl" 
+    sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}  // altezza fissa viewport
+  >
+    {/* Sidebar */}
+    <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          {userImage ? (
+            <Avatar src={userImage} sx={{ width: 40, height: 40, mr: 2 }} />
+          ) : (
+            <AccountCircleIcon sx={{ fontSize: 40, mr: 2 }} />
           )}
-          {error && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-                <Typography color="error">Errore nel caricamento dei dati. Riprovare più tardi.</Typography>
-              </Box>
-          )}
-
-          {/* Contenuto dinamico */}
-          {!loading && !error && (
-              <>
-                {activeTab === 'dashboard' && (
-                    <>
-                      {/* Stats Cards */}
-                      <Grid container spacing={3} sx={{ mb: 3 }}>
-                        {stats.map((stat, index) => (
-                            <Grid item xs={12} sm={6} lg={3} key={index}>
-                              <Card sx={{ height: '100%', borderLeft: `6px solid ${stat.color}` }}>
-                                <CardContent>
-                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                      <Typography variant="body2" color="text.secondary">{stat.title}</Typography>
-                                      <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
-                                    </div>
-                                    <Box sx={{
-                                      bgcolor: stat.color + '22',
-                                      color: stat.color,
-                                      borderRadius: '50%',
-                                      width: 44,
-                                      height: 44,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                    }}>
-                                      {stat.icon}
-                                    </Box>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                        ))}
-                      </Grid>
-
-                      {/* Charts Row */}
-                      <Grid container spacing={3} sx={{ mb: 3 }}>
-                        <Grid item xs={12} lg={8}>
-                          <Card>
-                            <CardHeader title="Andamento Patrimonio" />
-                            <CardContent sx={{ height: 300 }}>
-                              <Line
-                                  ref={(ref) => {
-                                    if (ref && ref.chartInstance) {
-                                      lineChartRef.current = ref.chartInstance;
-                                    }
-                                  }}
-                                  data={performanceData}
-                                  options={chartOptions}
-                                  height={300}
-                              />
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                        <Grid item xs={12} lg={4}>
-                          <Card>
-                            <CardHeader title="Allocazione Portafoglio" />
-                            <CardContent sx={{ height: 300 }}>
-                              <Pie
-                                  ref={(ref) => {
-                                    if (ref && ref.chartInstance) {
-                                      pieChartRef.current = ref.chartInstance;
-                                    }
-                                  }}
-                                  data={portfolioAllocationData}
-                                  options={{ plugins: { legend: { display: true, position: 'bottom' } } }}
-                                  height={300}
-                              />
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      </Grid>
-
-                      {/* Recent Transactions Table */}
-                      <Card>
-                        <CardHeader
-                            title="Ultime Transazioni"
-                            action={
-                              <Button onClick={() => setActiveTab('transactions')}>Vedi tutte</Button>
-                            }
-                        />
-                        <Box sx={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                            <tr>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Data</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Descrizione</th>
-                              <th style={{ padding: 8, textAlign: 'left' }}>Categoria</th>
-                              <th style={{ padding: 8, textAlign: 'right' }}>Importo</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {data.transactions.slice(0, 8).map((transaction, idx) => (
-                                <tr key={idx}>
-                                  <td style={{ padding: 8 }}>{new Date(transaction.date).toLocaleDateString()}</td>
-                                  <td style={{ padding: 8 }}>{transaction.description}</td>
-                                  <td style={{ padding: 8 }}>{transaction.category?.name || 'N/A'}</td>
-                                  <td style={{
-                                    padding: 8,
-                                    textAlign: 'right',
-                                    color: transaction.amount < 0 ? theme.palette.error.main : theme.palette.success.main
-                                  }}>
-                                    {transaction.amount < 0 ? '-' : '+'}€{Math.abs(transaction.amount).toFixed(2)}
-                                  </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                          </table>
-                        </Box>
-                      </Card>
-                    </>
-                )}
-
-                {activeTab === 'transactions' && (
-                    <Transactions transactions={data.transactions} />
-                )}
-                {activeTab === 'investments' && (
-                    <PortfolioAnalytics data={data.investments} />
-                )}
-                {activeTab === 'news' && (
-                    <NewsPage />
-                )}
-                {activeTab === 'assistente' && (
-                    <AssistantPage />
-                )}
-              </>
-          )}
+          <div>
+            <Typography variant="h6">{userName}</Typography>
+            <Typography variant="body2" color="text.secondary">Profilo</Typography>
+          </div>
         </Box>
-      </Container>
+        <Divider sx={{ my: 2 }} />
+        <Tabs
+            orientation="vertical"
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            sx={{ width: '100%' }}
+        >
+          {sidebarTabs.map(tab => (
+              <Tab key={tab.value} label={tab.label} value={tab.value} />
+          ))}
+        </Tabs>
+      </CardContent>
+    </Card>
+
+    {/* Main Content */}
+    <Box 
+      sx={{ flexGrow: 1, height: '100vh', pb: 5, overflowY: 'auto' }}  // scroll interno
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3
+        }}
+      >
+        <Typography variant="h4" fontWeight={700}>
+          {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <IconButton>
+            <NotificationsIcon />
+          </IconButton>
+          {activeTab === 'transactions' && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/add-transaction')}
+            >
+              Nuova Transazione
+            </Button>
+          )}
+          {activeTab === 'investments' && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/add-investment')}
+            >
+              Nuovo Investimento
+            </Button>
+          )}
+          {/* Bottone Logout sempre visibile */}
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => navigate('/logout')}
+          >
+            Logout
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Loading/Error State */}
+      {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+          </Box>
+      )}
+      {error && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <Typography color="error">Errore nel caricamento dei dati. Riprovare più tardi.</Typography>
+          </Box>
+      )}
+
+      {/* Contenuto dinamico */}
+      {!loading && !error && (
+          <>
+            {activeTab === 'dashboard' && (
+                <>
+                  {/* Stats Cards */}
+                  <Grid container spacing={3} sx={{ mb: 3 }}>
+                    {stats.map((stat, index) => (
+                        <Grid item xs={12} sm={6} lg={3} key={index}>
+                          <Card sx={{ height: '100%', borderLeft: `6px solid ${stat.color}` }}>
+                            <CardContent>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <Typography variant="body2" color="text.secondary">{stat.title}</Typography>
+                                  <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
+                                </div>
+                                <Box sx={{
+                                  bgcolor: stat.color + '22',
+                                  color: stat.color,
+                                  borderRadius: '50%',
+                                  width: 44,
+                                  height: 44,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}>
+                                  {stat.icon}
+                                </Box>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                    ))}
+                  </Grid>
+
+                  {/* Charts Row */}
+                  <Grid container spacing={3} sx={{ mb: 3 }}>
+                    <Grid item xs={12} lg={8}>
+                      <Card>
+                        <CardHeader title="Andamento Patrimonio" />
+                        <CardContent sx={{ height: 300 }}>
+                          <Line
+                              ref={(ref) => {
+                                if (ref && ref.chartInstance) {
+                                  lineChartRef.current = ref.chartInstance;
+                                }
+                              }}
+                              data={performanceData}
+                              options={chartOptions}
+                              height={300}
+                          />
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} lg={4}>
+                      <Card>
+                        <CardHeader title="Allocazione Portafoglio" />
+                        <CardContent sx={{ height: 300 }}>
+                          <Pie
+                              ref={(ref) => {
+                                if (ref && ref.chartInstance) {
+                                  pieChartRef.current = ref.chartInstance;
+                                }
+                              }}
+                              data={portfolioAllocationData}
+                              options={{ plugins: { legend: { display: true, position: 'bottom' } } }}
+                              height={300}
+                          />
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+
+                  {/* Recent Transactions Table */}
+                  <Card>
+                    <CardHeader
+                        title="Ultime Transazioni"
+                        action={
+                          <Button onClick={() => setActiveTab('transactions')}>Vedi tutte</Button>
+                        }
+                    />
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                        <tr>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Data</th>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Descrizione</th>
+                          <th style={{ padding: 8, textAlign: 'left' }}>Categoria</th>
+                          <th style={{ padding: 8, textAlign: 'right' }}>Importo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {data.transactions.slice(0, 8).map((transaction, idx) => (
+                            <tr key={idx}>
+                              <td style={{ padding: 8 }}>{new Date(transaction.date).toLocaleDateString()}</td>
+                              <td style={{ padding: 8 }}>{transaction.description}</td>
+                              <td style={{ padding: 8 }}>{transaction.category?.name || 'N/A'}</td>
+                              <td style={{
+                                padding: 8,
+                                textAlign: 'right',
+                                color: transaction.amount < 0 ? theme.palette.error.main : theme.palette.success.main
+                              }}>
+                                {transaction.amount < 0 ? '-' : '+'}€{Math.abs(transaction.amount).toFixed(2)}
+                              </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </Box>
+                  </Card>
+                </>
+            )}
+
+            {activeTab === 'transactions' && (
+                <Transactions transactions={data.transactions} />
+            )}
+            {activeTab === 'investments' && (
+                <PortfolioAnalytics data={data.investments} />
+            )}
+            {activeTab === 'news' && (
+                <NewsPage />
+            )}
+            {activeTab === 'assistente' && (
+                <AssistantPage />
+            )}
+          </>
+      )}
+    </Box>
+  </Container>
   );
 };
 

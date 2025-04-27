@@ -38,6 +38,10 @@ const NewsPage = () => {
             day: 'numeric'
         });
 
+    // truncate summary oltre maxLength
+    const truncateText = (text, maxLength = 150) =>
+        text && text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+
     return (
         <Container>
             <h2 className="mb-4">Notizie Finanziarie</h2>
@@ -64,7 +68,7 @@ const NewsPage = () => {
                 <Row>
                     {news.slice(0, newsCount).map((article, index) => (
                         <Col key={index} md={6} lg={4} className="mb-4">
-                            <Card className="h-100">
+                            <Card className="h-100 bg-dark text-secondary">
                                 {article.image && (
                                     <Card.Img
                                         variant="top"
@@ -74,10 +78,10 @@ const NewsPage = () => {
                                 )}
                                 <Card.Body>
                                     <Card.Title>{article.headline}</Card.Title>
-                                    <Card.Text>{article.summary}</Card.Text>
+                                    <Card.Text>{truncateText(article.summary, 100)}</Card.Text>
                                     <div className="d-flex justify-content-between">
-                                        <small className="text-muted">{article.source}</small>
-                                        <small className="text-muted">{formatDate(article.datetime)}</small>
+                                        <small className="text-secondary">{article.source}</small>
+                                        <small className="text-secondary">{formatDate(article.datetime)}</small>
                                     </div>
                                 </Card.Body>
                             </Card>

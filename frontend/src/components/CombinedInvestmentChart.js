@@ -64,7 +64,7 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
       label: symbol,
       data: [],
       borderColor: '#1e3a8a',
-      backgroundColor: 'rgba(30, 58, 138, 0.1)',
+      backgroundColor: 'rgba(44, 44, 216, 0.1)',
       borderWidth: 2,
       tension: 0.1,
       fill: true
@@ -136,7 +136,7 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
               label: `${symbol} (Tempo Reale)`,
               data: [],
               borderColor: '#ef4444',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              backgroundColor: 'rgba(180, 15, 15, 0.1)',
               borderWidth: 3,
               tension: 0,
               fill: false

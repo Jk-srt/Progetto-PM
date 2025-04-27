@@ -70,21 +70,6 @@ const RouteManager = () => (
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <nav style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem', backgroundColor: '#1e1e1e' }}>
-              <button
-                style={{
-                  backgroundColor: '#f44336',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-                onClick={() => (window.location.href = '/logout')}
-              >
-                Logout
-              </button>
-            </nav>
             <DashboardPage />
           </ProtectedRoute>
         }
