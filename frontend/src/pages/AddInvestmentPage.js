@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { fetchListingStatus, fetchQuoteOnNearestTradingDate } from '../services/YahooFinanceService';
+import InvestmentService from '../services/InvestmentService';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, TextField,
@@ -76,21 +77,14 @@ const AddInvestmentPage = () => {
     setLoading(true);
     setError('');
     try {
-      await fetch('http://localhost:5000/api/investments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'userId': localStorage.getItem('userId')
-        },
-        body: JSON.stringify({
-          Asset: selectedAsset?.value,
-          Type: investment.Type,
-          Quantity: parseFloat(investment.Quantity),
-          Price: parseFloat(investment.Price),
-          Date: `${investment.Date}T00:00:00Z`
-        })
+      await InvestmentService.create({
+        Asset: selectedAsset?.value,
+        Type: investment.Type,
+        Quantity: parseFloat(investment.Quantity),
+        Price: parseFloat(investment.Price),
+        Date: `${investment.Date}T00:00:00Z`
       });
+      
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

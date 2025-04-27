@@ -19,7 +19,6 @@ public class Investment
     
     public TransactionAction Action { get; set; }
     
-    // Foreign Keys
     public int UserId { get; set; }
     public string AssetName { get; set; }
     
