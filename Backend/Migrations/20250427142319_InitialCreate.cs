@@ -13,23 +13,6 @@ namespace Backend.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Assets",
-                columns: table => new
-                {
-                    AssetId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Ticker = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Tipo = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ISIN = table.Column<string>(type: "character varying(12)", maxLength: 12, nullable: false),
-                    Symbol = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Assets", x => x.AssetId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -71,17 +54,11 @@ namespace Backend.Migrations
                     PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    AssetId = table.Column<int>(type: "integer", nullable: false)
+                    AssetName = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Investments", x => x.InvestmentId);
-                    table.ForeignKey(
-                        name: "FK_Investments_Assets_AssetId",
-                        column: x => x.AssetId,
-                        principalTable: "Assets",
-                        principalColumn: "AssetId",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Investments_Users_UserId",
                         column: x => x.UserId,
@@ -122,17 +99,6 @@ namespace Backend.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Assets_Ticker",
-                table: "Assets",
-                column: "Ticker",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Investments_AssetId",
-                table: "Investments",
-                column: "AssetId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Investments_UserId",
                 table: "Investments",
                 column: "UserId");
@@ -162,9 +128,6 @@ namespace Backend.Migrations
 
             migrationBuilder.DropTable(
                 name: "Transactions");
-
-            migrationBuilder.DropTable(
-                name: "Assets");
 
             migrationBuilder.DropTable(
                 name: "Categories");

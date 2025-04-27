@@ -21,13 +21,11 @@ public class Investment
     
     // Foreign Keys
     public int UserId { get; set; }
-    public int AssetId { get; set; }
+    public string AssetName { get; set; }
     
     // Navigation Properties
     public User User { get; set; }
-    public Asset Asset { get; set; }
 }
-
 public enum TransactionAction
 {
     Buy,

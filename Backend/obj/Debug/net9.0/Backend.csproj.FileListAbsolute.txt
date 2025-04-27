@@ -1,5 +1,4 @@
 c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.Development.json
-c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.json
 c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\package-lock.json
 c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.staticwebassets.endpoints.json
 c:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Backend.exe
@@ -696,3 +695,4 @@ C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\CsvHelper.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.Http.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\YahooFinanceApi.dll
+C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.json

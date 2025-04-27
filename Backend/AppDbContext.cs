@@ -9,7 +9,6 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
-    public DbSet<Asset> Assets { get; set; }
     public DbSet<Investment> Investments { get; set; }
     public DbSet<Category> Categories { get; set; }
 
@@ -27,10 +26,6 @@ public class AppDbContext : DbContext
             
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
-            .IsUnique();
-
-        modelBuilder.Entity<Asset>()
-            .HasIndex(a => a.Ticker)
             .IsUnique();
 
         modelBuilder.Entity<Transaction>()

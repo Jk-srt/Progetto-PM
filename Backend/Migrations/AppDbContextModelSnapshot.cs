@@ -22,47 +22,6 @@ namespace Backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Backend.Models.Asset", b =>
-                {
-                    b.Property<int>("AssetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AssetId"));
-
-                    b.Property<string>("ISIN")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Ticker")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("AssetId");
-
-                    b.HasIndex("Ticker")
-                        .IsUnique();
-
-                    b.ToTable("Assets");
-                });
-
             modelBuilder.Entity("Backend.Models.Category", b =>
                 {
                     b.Property<int>("CategoryId")
@@ -91,8 +50,9 @@ namespace Backend.Migrations
                     b.Property<int>("Action")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AssetId")
-                        .HasColumnType("integer");
+                    b.Property<string>("AssetName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("CurrentPrice")
                         .HasPrecision(15, 2)
@@ -113,8 +73,6 @@ namespace Backend.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("InvestmentId");
-
-                    b.HasIndex("AssetId");
 
                     b.HasIndex("UserId");
 
@@ -203,19 +161,11 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Investment", b =>
                 {
-                    b.HasOne("Backend.Models.Asset", "Asset")
-                        .WithMany("Investments")
-                        .HasForeignKey("AssetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Backend.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Asset");
 
                     b.Navigation("User");
                 });
@@ -237,11 +187,6 @@ namespace Backend.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Backend.Models.Asset", b =>
-                {
-                    b.Navigation("Investments");
                 });
 #pragma warning restore 612, 618
         }
