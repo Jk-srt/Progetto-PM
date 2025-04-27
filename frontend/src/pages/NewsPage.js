@@ -1,25 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Spinner, Button, Badge } from "react-bootstrap";
-import { fetchMarketNews } from "../services/FinnhubService";
+import React, { useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Spinner, Button, Badge } from 'react-bootstrap';
+import { fetchMarketNews } from '../services/FinnhubService';
 
-function NewsPage() {
+const NewsPage = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [category, setCategory] = useState("general");
-    const [newsCount, setNewsCount] = useState(9);
+    const [category, setCategory] = useState('general');
+    const [newsCount, setNewsCount] = useState(6);
 
-    // Funzione per caricare le notizie
     const loadNews = async (selectedCategory = category) => {
-        setLoading(true);
-        setError(null);
         try {
-            // Utilizziamo direttamente il servizio FinnhubService invece di passare per il backend
+            setLoading(true);
             const newsData = await fetchMarketNews(selectedCategory, 30);
             setNews(newsData);
+            setError(null);
         } catch (err) {
-            console.error("Errore nel caricamento delle notizie:", err);
-            setError("Impossibile caricare le notizie. Riprova più tardi.");
+            setError('Errore nel caricamento delle notizie');
         } finally {
             setLoading(false);
         }
@@ -29,154 +26,75 @@ function NewsPage() {
         loadNews();
     }, []);
 
-    // Cambia categoria
     const handleCategoryChange = (newCategory) => {
         setCategory(newCategory);
         loadNews(newCategory);
     };
 
-    // Carica altre notizie
-    const loadMoreNews = () => {
-        setNewsCount(prev => prev + 6);
-    };
-
-    // Formatta la data nel formato italiano
-    const formatDate = (dateString) => {
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        };
-        return new Date(dateString).toLocaleDateString('it-IT', options);
-    };
+    const formatDate = (timestamp) =>
+        new Date(timestamp * 1000).toLocaleDateString('it-IT', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
     return (
-        <Container className="my-4">
-            <h1 className="mb-4">Notizie Finanziarie</h1>
-            
-            {/* Menu delle categorie */}
+        <Container>
+            <h2 className="mb-4">Notizie Finanziarie</h2>
+
             <div className="mb-4">
-                <h5 className="mb-2">Categorie:</h5>
-                <div className="d-flex flex-wrap gap-2">
-                    <Button 
-                        variant={category === "general" ? "primary" : "outline-primary"} 
-                        onClick={() => handleCategoryChange("general")}
+                <strong>Categorie:</strong>
+                {['general', 'forex', 'crypto', 'merger'].map((cat) => (
+                    <Button
+                        key={cat}
+                        variant={category === cat ? 'primary' : 'outline-primary'}
+                        onClick={() => handleCategoryChange(cat)}
+                        className="ms-2"
                     >
-                        Generali
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
                     </Button>
-                    <Button 
-                        variant={category === "forex" ? "primary" : "outline-primary"} 
-                        onClick={() => handleCategoryChange("forex")}
-                    >
-                        Forex
-                    </Button>
-                    <Button 
-                        variant={category === "crypto" ? "primary" : "outline-primary"} 
-                        onClick={() => handleCategoryChange("crypto")}
-                    >
-                        Criptovalute
-                    </Button>
-                    <Button 
-                        variant={category === "merger" ? "primary" : "outline-primary"} 
-                        onClick={() => handleCategoryChange("merger")}
-                    >
-                        Fusioni/Acquisizioni
-                    </Button>
-                </div>
+                ))}
             </div>
 
-            {/* Stato di caricamento */}
-            {loading && (
-                <div className="text-center my-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-2">Caricamento notizie in corso...</p>
+            {loading && <Spinner animation="border" className="d-block mx-auto my-4" />}
+
+            {error && <div className="alert alert-danger">{error}</div>}
+
+            {!loading && !error && (
+                <Row>
+                    {news.slice(0, newsCount).map((article, index) => (
+                        <Col key={index} md={6} lg={4} className="mb-4">
+                            <Card className="h-100">
+                                {article.image && (
+                                    <Card.Img
+                                        variant="top"
+                                        src={article.image}
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                )}
+                                <Card.Body>
+                                    <Card.Title>{article.headline}</Card.Title>
+                                    <Card.Text>{article.summary}</Card.Text>
+                                    <div className="d-flex justify-content-between">
+                                        <small className="text-muted">{article.source}</small>
+                                        <small className="text-muted">{formatDate(article.datetime)}</small>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            )}
+
+            {news.length > newsCount && (
+                <div className="text-center my-4">
+                    <Button onClick={() => setNewsCount(p => p + 6)}>
+                        Carica altre notizie
+                    </Button>
                 </div>
-            )}
-
-            {/* Messaggio di errore */}
-            {error && (
-                <div className="alert alert-danger" role="alert">
-                    {error}
-                </div>
-            )}
-
-            {/* Lista delle notizie */}
-            {!loading && !error && news.length === 0 && (
-                <p>Nessuna notizia disponibile per questa categoria.</p>
-            )}
-
-            {!loading && !error && news.length > 0 && (
-                <>
-                    <Row>
-                        {news.slice(0, newsCount).map((article, index) => (
-                            <Col xs={12} md={6} lg={4} key={index} className="mb-4">
-                                <Card className="h-100 shadow-sm">
-                                    {article.image && (
-                                        <Card.Img 
-                                            variant="top" 
-                                            src={article.image} 
-                                            alt={article.headline}
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                            }}
-                                        />
-                                    )}
-                                    <Card.Body className="d-flex flex-column">
-                                        <div className="mb-2">
-                                            {article.category && (
-                                                <Badge bg="info" className="me-2">
-                                                    {article.category}
-                                                </Badge>
-                                            )}
-                                            {article.source && (
-                                                <Badge bg="secondary">
-                                                    {article.source}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <Card.Title>
-                                            <a
-                                                href={article.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ 
-                                                    textDecoration: "none", 
-                                                    color: "#007bff",
-                                                    fontWeight: "bold"
-                                                }}
-                                            >
-                                                {article.headline}
-                                            </a>
-                                        </Card.Title>
-                                        <Card.Text>
-                                            {article.summary || article.headline}
-                                        </Card.Text>
-                                        <div className="mt-auto text-muted small">
-                                            {article.datetime && formatDate(article.datetime * 1000)}
-                                        </div>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                    
-                    {/* Pulsante "Carica altre notizie" */}
-                    {news.length > newsCount && (
-                        <div className="text-center mt-4 mb-5">
-                            <Button 
-                                variant="outline-primary" 
-                                onClick={loadMoreNews}
-                            >
-                                Carica altre notizie
-                            </Button>
-                        </div>
-                    )}
-                </>
             )}
         </Container>
     );
-}
+};
 
 export default NewsPage;
