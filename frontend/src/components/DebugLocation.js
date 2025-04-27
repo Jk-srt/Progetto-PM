@@ -15,7 +15,6 @@ const DebugLocation = () => {
         zIndex: 1000,
       }}
     >
-      Current Path: {location.pathname}
     </div>
   );
 };
