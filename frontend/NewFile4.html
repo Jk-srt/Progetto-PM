@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzia - Gestione Finanziaria Personale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .blink {
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+<!-- Navbar -->
+<nav class="gradient-bg text-white shadow-lg">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-wallet text-2xl"></i>
+                <span class="text-xl font-bold">Finanzia</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="hover:text-blue-200 transition-all font-medium">Dashboard</a>
+                <a href="#" class="hover:text-blue-200 transition-all">Transazioni</a>
+                <a href="#" class="hover:text-blue-200 transition-all">Budget</a>
+                <a href="#" class="hover:text-blue-200 transition-all">Investimenti</a>
+                <a href="#" class="hover:text-blue-200 transition-all">Report</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <i class="fas fa-bell text-xl cursor-pointer hover:text-blue-200"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">2</span>
+                </div>
+                <div class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="h-8 w-8 rounded-full">
+                    <span class="hidden md:inline">Laura Bianchi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="md:hidden bg-blue-900 text-white px-4 py-2 flex justify-around">
+    <a href="#" class="p-2"><i class="fas fa-home"></i></a>
+    <a href="#" class="p-2"><i class="fas fa-exchange-alt"></i></a>
+    <a href="#" class="p-2"><i class="fas fa-chart-pie"></i></a>
+    <a href="#" class="p-2"><i class="fas fa-chart-line"></i></a>
+    <a href="#" class="p-2"><i class="fas fa-file-alt"></i></a>
+</div>
+
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard Finanziaria</h1>
+            <p class="text-gray-600">Benvenuta, Laura. Ecco il riepilogo delle tue finanze.</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center space-x-3">
+            <div class="flex items-center space-x-2 bg-white rounded-lg shadow p-2">
+                <i class="fas fa-calendar-alt text-gray-500"></i>
+                <select class="bg-transparent border-none focus:ring-0 text-gray-700">
+                    <option>Oggi</option>
+                    <option>Questa settimana</option>
+                    <option selected>Questo mese</option>
+                    <option>Quest'anno</option>
+                </select>
+            </div>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+                <i class="fas fa-plus mr-2"></i> Nuova transazione
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Saldo Totale -->
+        <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500">Saldo Totale</p>
+                    <h3 class="text-2xl font-bold mt-1">€8,742.50</h3>
+                    <p class="text-green-500 text-sm mt-1"><i class="fas fa-caret-up mr-1"></i> +12% (mese)</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-coins text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entrate -->
+        <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500">Entrate</p>
+                    <h3 class="text-2xl font-bold mt-1">€3,250.00</h3>
+                    <p class="text-gray-500 text-sm mt-1">vs €2,800.00 (scorso mese)</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-arrow-down text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uscite -->
+        <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500">Uscite</p>
+                    <h3 class="text-2xl font-bold mt-1">€1,980.50</h3>
+                    <p class="text-red-500 text-sm mt-1"><i class="fas fa-caret-up mr-1"></i> +8% (mese)</p>
+                </div>
+                <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-arrow-up text-red-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risparmi -->
+        <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500">Risparmi</p>
+                    <h3 class="text-2xl font-bold mt-1">€1,269.50</h3>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                    </div>
+                    <p class="text-gray-500 text-xs mt-1">65% dell'obiettivo mensile</p>
+                </div>
+                <div class="bg-yellow-100 p-3 rounded-lg">
+                    <i class="fas fa-piggy-bank text-yellow-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Cash Flow Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Cash Flow Mensile</h2>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">1M</button>
+                        <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded-full">3M</button>
+                        <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">6M</button>
+                        <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">1Y</button>
+                    </div>
+                </div>
+                <canvas id="cashFlowChart" height="300"></canvas>
+            </div>
+
+            <!-- Categorie di Spesa -->
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Categorie di Spesa</h2>
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="w-full md:w-1/2">
+                        <canvas id="expenseChart" height="250"></canvas>
+                    </div>
+                    <div class="w-full md:w-1/2 mt-4 md:mt-0">
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Casa</span>
+                                    <span class="text-sm font-medium">€680.00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-blue-600" style="width: 34%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Alimentari</span>
+                                    <span class="text-sm font-medium">€420.50</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-green-500" style="width: 21%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Trasporti</span>
+                                    <span class="text-sm font-medium">€315.00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-purple-500" style="width: 16%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Svago</span>
+                                    <span class="text-sm font-medium">€280.00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-yellow-500" style="width: 14%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium">Altro</span>
+                                    <span class="text-sm font-medium">€285.00</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-red-500" style="width: 15%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- Ultime Transazioni -->
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Ultime Transazioni</h2>
+                    <a href="#" class="text-blue-600 text-sm">Vedi tutte</a>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="flex items-center">
+                            <div class="bg-red-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-shopping-bag text-red-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Conad</p>
+                                <p class="text-xs text-gray-500">Alimentari • Oggi</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-red-600">-€48.70</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-home text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Affitto</p>
+                                <p class="text-xs text-gray-500">Casa • Ieri</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-red-600">-€680.00</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="flex items-center">
+                            <div class="bg-green-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-landmark text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Stipendio</p>
+                                <p class="text-xs text-gray-500">Entrate • 2 giorni fa</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-green-600">+€2,450.00</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="flex items-center">
+                            <div class="bg-purple-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-subway text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Abbonamento ATM</p>
+                                <p class="text-xs text-gray-500">Trasporti • 3 giorni fa</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-red-600">-€35.00</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-100 p-2 rounded-lg mr-3">
+                                <i class="fas fa-utensils text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Ristorante</p>
+                                <p class="text-xs text-gray-500">Svago • 4 giorni fa</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-red-600">-€65.50</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Obiettivi Finanziari -->
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">I tuoi Obiettivi</h2>
+                <div class="space-y-4">
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Fondo Emergenza</h3>
+                            <span class="text-sm font-medium">€3,500/€5,000</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-blue-600" style="width: 70%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">70% completato</p>
+                    </div>
+
+                    <div class="p-3 bg-green-50 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Vacanze Estate</h3>
+                            <span class="text-sm font-medium">€1,200/€2,000</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-green-500" style="width: 60%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">60% completato</p>
+                    </div>
+
+                    <div class="p-3 bg-purple-50 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-medium">Nuovo Portatile</h3>
+                            <span class="text-sm font-medium">€450/€1,200</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-purple-500" style="width: 38%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">38% completato</p>
+                    </div>
+                </div>
+                <button class="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
+                    Aggiungi Obiettivo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conti Bancari -->
+    <div class="mt-8 bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">I tuoi Conti</h2>
+            <a href="#" class="text-blue-600 text-sm">Gestisci conti</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Conto Corrente</p>
+                        <p class="font-bold text-lg">€5,742.50</p>
+                    </div>
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <i class="fas fa-university text-blue-600"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Intesa Sanpaolo • IT12X1234567890123456789012</p>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Carta di Credito</p>
+                        <p class="font-bold text-lg">-€320.50</p>
+                    </div>
+                    <div class="bg-red-100 p-2 rounded-lg">
+                        <i class="far fa-credit-card text-red-600"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">American Express • Scadenza 05/25</p>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Conto Risparmi</p>
+                        <p class="font-bold text-lg">€2,500.00</p>
+                    </div>
+                    <div class="bg-green-100 p-2 rounded-lg">
+                        <i class="fas fa-piggy-bank text-green-600"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Fineco • IT98X9876543210987654321098</p>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Investimenti</p>
+                        <p class="font-bold text-lg">€820.50</p>
+                    </div>
+                    <div class="bg-yellow-100 p-2 rounded-lg">
+                        <i class="fas fa-chart-line text-yellow-600"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Directa • Portafoglio diversificato</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="gradient-bg text-white py-8 mt-12">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-4">Finanzia</h3>
+                <p class="text-blue-200">Prendi il controllo delle tue finanze personali con strumenti semplici e potenti.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">Strumenti</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-blue-200 hover:text-white">Calcolatore Budget</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Piano di Risparmio</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Analisi Debiti</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Pianificatore Pensionistico</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">Supporto</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-blue-200 hover:text-white">Centro Assistenza</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Video Tutorial</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-blue-200 hover:text-white">Termini di Servizio</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-4">Newsletter</h3>
+                <p class="text-blue-200 mb-2">Iscriviti per consigli finanziari settimanali</p>
+                <div class="flex">
+                    <input type="email" placeholder="La tua email" class="px-3 py-2 rounded-l-lg text-gray-800 w-full">
+                    <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-lg"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <div class="flex space-x-4 mt-4">
+                    <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-blue-800 mt-8 pt-6 text-center text-blue-200">
+            <p>© 2023 Finanzia. Tutti i diritti riservati.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Cash Flow Chart
+    const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+    const cashFlowChart = new Chart(cashFlowCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
+            datasets: [
+                {
+                    label: 'Entrate',
+                    data: [2450, 2550, 2400, 2600, 2700, 3250],
+                    backgroundColor: '#10B981',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Uscite',
+                    data: [1850, 1750, 1920, 1880, 2100, 1980],
+                    backgroundColor: '#EF4444',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': €' + context.raw.toLocaleString('it-IT');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '€' + value.toLocaleString('it-IT');
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Expense Categories Chart
+    const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+    const expenseChart = new Chart(expenseCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Casa', 'Alimentari', 'Trasporti', 'Svago', 'Altro'],
+            datasets: [{
+                data: [680, 420.5, 315, 280, 285],
+                backgroundColor: [
+                    '#3B82F6',
+                    '#10B981',
+                    '#8B5CF6',
+                    '#F59E0B',
+                    '#EF4444'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: €${value.toLocaleString('it-IT')} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Simulate real-time updates
+    setInterval(() => {
+        // Update cash flow data randomly
+        const currentIncome = cashFlowChart.data.datasets[0].data[5];
+        const currentExpense = cashFlowChart.data.datasets[1].data[5];
+
+        const newIncome = currentIncome + (Math.random() * 200 - 100);
+        const newExpense = currentExpense + (Math.random() * 100 - 50);
+
+        cashFlowChart.data.datasets[0].data[5] = Math.max(2000, newIncome);
+        cashFlowChart.data.datasets[1].data[5] = Math.max(1500, newExpense);
+
+        // Update total balance
+        const balance = newIncome - newExpense;
+        document.querySelector('.total-balance').textContent = '€' + (8742.50 + balance - 1270).toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        cashFlowChart.update();
+    }, 10000);
+
+    // Add animation to progress bars
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 100);
+    });
+</script>
+</body>
+</html>

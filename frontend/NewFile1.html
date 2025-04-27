@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestTrack - Monitora i tuoi investimenti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .blink {
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navbar -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                    <span class="text-xl font-bold">InvestTrack</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#" class="hover:text-blue-200 transition-all">Dashboard</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Mercati</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Portafoglio</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Notizie</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-bell text-xl cursor-pointer hover:text-blue-200"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                    </div>
+                    <div class="flex items-center space-x-2 cursor-pointer">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="h-8 w-8 rounded-full">
+                        <span class="hidden md:inline">Marco Rossi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="md:hidden bg-blue-900 text-white px-4 py-2 flex justify-around">
+        <a href="#" class="p-2"><i class="fas fa-home"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-chart-pie"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-wallet"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-newspaper"></i></a>
+    </div>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Dashboard Investimenti</h1>
+                <p class="text-gray-600">Benvenuto, Marco. Ecco l'andamento dei tuoi investimenti.</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <div class="flex items-center space-x-2 bg-white rounded-lg shadow p-2">
+                    <i class="fas fa-calendar-alt text-gray-500"></i>
+                    <select class="bg-transparent border-none focus:ring-0 text-gray-700">
+                        <option>Ultimi 7 giorni</option>
+                        <option>Ultimo mese</option>
+                        <option>Ultimi 3 mesi</option>
+                        <option selected>Ultimo anno</option>
+                        <option>Tutti</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Valore Portafoglio</p>
+                        <h3 class="text-2xl font-bold mt-1">€24,568.90</h3>
+                        <p class="text-green-500 text-sm mt-1"><i class="fas fa-caret-up mr-1"></i> +5.2% (oggi)</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Guadagno Totale</p>
+                        <h3 class="text-2xl font-bold mt-1">€3,421.50</h3>
+                        <p class="text-green-500 text-sm mt-1"><i class="fas fa-caret-up mr-1"></i> +16.2% (YTD)</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-euro-sign text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Mercato Globale</p>
+                        <h3 class="text-2xl font-bold mt-1">+1.8%</h3>
+                        <p class="text-red-500 text-sm mt-1"><i class="fas fa-caret-down mr-1"></i> -0.4% (settimana)</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i class="fas fa-globe-europe text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Rischio Portafoglio</p>
+                        <h3 class="text-2xl font-bold mt-1">Moderato</h3>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-lg">
+                        <i class="fas fa-shield-alt text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Performance Chart -->
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Andamento Portafoglio</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">1M</button>
+                            <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded-full">1Y</button>
+                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">5Y</button>
+                            <button class="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">MAX</button>
+                        </div>
+                    </div>
+                    <canvas id="portfolioChart" height="300"></canvas>
+                </div>
+
+                <!-- Asset Allocation -->
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Allocazione Asset</h2>
+                    <div class="flex flex-col md:flex-row items-center">
+                        <div class="w-full md:w-1/2">
+                            <canvas id="assetChart" height="250"></canvas>
+                        </div>
+                        <div class="w-full md:w-1/2 mt-4 md:mt-0">
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-blue-600 rounded-full mr-2"></div>
+                                        <span>Azioni</span>
+                                    </div>
+                                    <span class="font-semibold">62%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                        <span>Obbligazioni</span>
+                                    </div>
+                                    <span class="font-semibold">23%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                        <span>ETF</span>
+                                    </div>
+                                    <span class="font-semibold">10%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                                        <span>Crypto</span>
+                                    </div>
+                                    <span class="font-semibold">5%</span>
+                                </div>
+                            </div>
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <p class="text-sm text-blue-800">Il tuo portafoglio è ben diversificato con un buon equilibrio tra rischio e rendimento.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Portfolio Holdings -->
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">I tuoi investimenti</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-chart-bar text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Apple Inc.</p>
+                                    <p class="text-xs text-gray-500">AAPL • 15 azioni</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">€4,215.30</p>
+                                <p class="text-xs text-green-500">+2.4%</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-green-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-landmark text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">BTP Italia</p>
+                                    <p class="text-xs text-gray-500">IT0005433123 • 50 obbl.</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">€8,750.00</p>
+                                <p class="text-xs text-green-500">+0.8%</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-yellow-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-boxes text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">iShares MSCI World</p>
+                                    <p class="text-xs text-gray-500">IE00B4L5Y983 • 25 unità</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">€2,345.60</p>
+                                <p class="text-xs text-red-500">-1.2%</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="bg-purple-100 p-2 rounded-lg mr-3">
+                                    <i class="fab fa-bitcoin text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Bitcoin</p>
+                                    <p class="text-xs text-gray-500">BTC • 0.15</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">€9,258.00</p>
+                                <p class="text-xs text-green-500 blink">+7.5%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
+                        Aggiungi investimento
+                    </button>
+                </div>
+
+                <!-- Market News -->
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Ultime notizie</h2>
+                        <a href="#" class="text-blue-600 text-sm">Vedi tutte</a>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="pb-3 border-b border-gray-100">
+                            <p class="text-sm text-gray-500">30 minuti fa • Bloomberg</p>
+                            <p class="font-medium mt-1">La Fed mantiene i tassi invariati, mercati in rialzo</p>
+                        </div>
+                        <div class="pb-3 border-b border-gray-100">
+                            <p class="text-sm text-gray-500">2 ore fa • Financial Times</p>
+                            <p class="font-medium mt-1">Apple annuncia nuovi chip AI, azioni +3% in pre-market</p>
+                        </div>
+                        <div class="pb-3 border-b border-gray-100">
+                            <p class="text-sm text-gray-500">4 ore fa • Reuters</p>
+                            <p class="font-medium mt-1">Criptovalute in rally: Bitcoin supera i 62.000€</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">6 ore fa • Il Sole 24 Ore</p>
+                            <p class="font-medium mt-1">Mercati europei positivi nonostante tensioni geopolitiche</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Indexes -->
+        <div class="mt-8 bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Indici di Mercato</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">FTSE MIB</p>
+                    <p class="font-bold">33,452.10</p>
+                    <p class="text-green-500 text-sm"><i class="fas fa-caret-up mr-1"></i> +0.7%</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">S&P 500</p>
+                    <p class="font-bold">5,248.49</p>
+                    <p class="text-green-500 text-sm"><i class="fas fa-caret-up mr-1"></i> +1.2%</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">NASDAQ</p>
+                    <p class="font-bold">16,349.25</p>
+                    <p class="text-green-500 text-sm"><i class="fas fa-caret-up mr-1"></i> +1.8%</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">DAX</p>
+                    <p class="font-bold">18,245.30</p>
+                    <p class="text-red-500 text-sm"><i class="fas fa-caret-down mr-1"></i> -0.3%</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">BTC/EUR</p>
+                    <p class="font-bold">62,145.80</p>
+                    <p class="text-green-500 text-sm"><i class="fas fa-caret-up mr-1"></i> +4.5%</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-gray-500 text-sm">Oro</p>
+                    <p class="font-bold">2,315.40</p>
+                    <p class="text-green-500 text-sm"><i class="fas fa-caret-up mr-1"></i> +0.9%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">InvestTrack</h3>
+                    <p class="text-blue-200">Monitora i tuoi investimenti in tempo reale e prendi decisioni informate.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Link utili</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-blue-200 hover:text-white">Dashboard</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Portafoglio</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Mercati</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Notizie</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Supporto</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-blue-200 hover:text-white">Contattaci</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">FAQ</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Termini di servizio</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Connettiti</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                    </div>
+                    <p class="text-blue-200 mt-4">Iscriviti alla nostra newsletter</p>
+                    <div class="mt-2 flex">
+                        <input type="email" placeholder="La tua email" class="px-3 py-2 rounded-l-lg text-gray-800 w-full">
+                        <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-lg"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-blue-800 mt-8 pt-6 text-center text-blue-200">
+                <p>© 2023 InvestTrack. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Portfolio Performance Chart
+        const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+        const portfolioChart = new Chart(portfolioCtx, {
+            type: 'line',
+            data: {
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Valore Portafoglio',
+                    data: [18500, 19200, 20100, 20800, 21500, 22300, 21800, 22500, 23200, 23800, 24200, 24568],
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Asset Allocation Chart
+        const assetCtx = document.getElementById('assetChart').getContext('2d');
+        const assetChart = new Chart(assetCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Azioni', 'Obbligazioni', 'ETF', 'Crypto'],
+                datasets: [{
+                    data: [62, 23, 10, 5],
+                    backgroundColor: [
+                        '#3B82F6',
+                        '#10B981',
+                        '#F59E0B',
+                        '#8B5CF6'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update portfolio value randomly
+            const currentValue = portfolioChart.data.datasets[0].data[11];
+            const randomChange = (Math.random() * 200) - 100; // Between -100 and +100
+            const newValue = Math.max(20000, currentValue + randomChange);
+            portfolioChart.data.datasets[0].data[11] = newValue;
+            
+            // Update percentage change
+            const changePercentage = ((newValue - 24200) / 24200 * 100).toFixed(2);
+            document.querySelectorAll('.portfolio-value').forEach(el => {
+                el.textContent = '€' + newValue.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            });
+            document.querySelector('.portfolio-change').textContent = changePercentage > 0 ? 
+                `+${changePercentage}%` : `${changePercentage}%`;
+            document.querySelector('.portfolio-change').className = changePercentage > 0 ? 
+                'portfolio-change text-xs text-green-500' : 'portfolio-change text-xs text-red-500';
+            
+            portfolioChart.update();
+        }, 5000);
+
+        // Toggle mobile menu
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestTrack - Aggiungi Investimento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .search-dropdown {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navbar -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                    <span class="text-xl font-bold">InvestTrack</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#" class="hover:text-blue-200 transition-all">Dashboard</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Mercati</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Portafoglio</a>
+                    <a href="#" class="hover:text-blue-200 transition-all">Notizie</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-bell text-xl cursor-pointer hover:text-blue-200"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                    </div>
+                    <div class="flex items-center space-x-2 cursor-pointer">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="h-8 w-8 rounded-full">
+                        <span class="hidden md:inline">Marco Rossi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="md:hidden bg-blue-900 text-white px-4 py-2 flex justify-around">
+        <a href="#" class="p-2"><i class="fas fa-home"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-chart-pie"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-wallet"></i></a>
+        <a href="#" class="p-2"><i class="fas fa-newspaper"></i></a>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Aggiungi Investimento</h1>
+                <p class="text-gray-600">Inserisci i dettagli del tuo nuovo investimento.</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="#" class="flex items-center text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left mr-2"></i> Torna al portafoglio
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover">
+                    <form id="investmentForm">
+                        <!-- Asset Type -->
+                        <div class="mb-6">
+                            <label class="block text-gray-700 font-medium mb-2">Tipo di investimento</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                    <input type="radio" name="assetType" id="stock" value="stock" class="hidden peer" checked>
+                                    <label for="stock" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:bg-blue-50">
+                                        <i class="fas fa-chart-bar text-blue-500 text-2xl mb-2"></i>
+                                        <span>Azioni</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="assetType" id="bond" value="bond" class="hidden peer">
+                                    <label for="bond" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-green-500 peer-checked:bg-green-50">
+                                        <i class="fas fa-landmark text-green-500 text-2xl mb-2"></i>
+                                        <span>Obbligazioni</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="assetType" id="etf" value="etf" class="hidden peer">
+                                    <label for="etf" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-yellow-500 peer-checked:bg-yellow-50">
+                                        <i class="fas fa-boxes text-yellow-500 text-2xl mb-2"></i>
+                                        <span>ETF</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" name="assetType" id="crypto" value="crypto" class="hidden peer">
+                                    <label for="crypto" class="flex flex-col items-center p-4 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-purple-500 peer-checked:bg-purple-50">
+                                        <i class="fab fa-bitcoin text-purple-500 text-2xl mb-2"></i>
+                                        <span>Criptovalute</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Asset -->
+                        <div class="mb-6 relative">
+                            <label for="assetSearch" class="block text-gray-700 font-medium mb-2">Cerca asset</label>
+                            <div class="relative">
+                                <input type="text" id="assetSearch" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Es: Apple Inc. o AAPL">
+                                <i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i>
+                            </div>
+                            <!-- Search Dropdown (hidden by default) -->
+                            <div id="searchResults" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg search-dropdown">
+                                <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center">
+                                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                        <i class="fas fa-chart-bar text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Apple Inc.</p>
+                                        <p class="text-xs text-gray-500">AAPL • NASDAQ</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center">
+                                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                        <i class="fas fa-chart-bar text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Microsoft Corp.</p>
+                                        <p class="text-xs text-gray-500">MSFT • NASDAQ</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 hover:bg-gray-50 cursor-pointer flex items-center">
+                                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                        <i class="fas fa-chart-bar text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Amazon.com Inc.</p>
+                                        <p class="text-xs text-gray-500">AMZN • NASDAQ</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Asset Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label for="quantity" class="block text-gray-700 font-medium mb-2">Quantità</label>
+                                <div class="relative">
+                                    <input type="number" id="quantity" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Es: 10">
+                                    <div class="absolute right-3 top-3.5 text-gray-500">unità</div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="price" class="block text-gray-700 font-medium mb-2">Prezzo per unità</label>
+                                <div class="relative">
+                                    <div class="absolute left-3 top-3.5 text-gray-500">€</div>
+                                    <input type="number" id="price" step="0.01" class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Es: 150.50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date and Fees -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label for="date" class="block text-gray-700 font-medium mb-2">Data acquisto</label>
+                                <input type="date" id="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label for="fees" class="block text-gray-700 font-medium mb-2">Commissioni</label>
+                                <div class="relative">
+                                    <div class="absolute left-3 top-3.5 text-gray-500">€</div>
+                                    <input type="number" id="fees" step="0.01" class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Es: 9.99" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-6">
+                            <label for="notes" class="block text-gray-700 font-medium mb-2">Note (opzionale)</label>
+                            <textarea id="notes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Aggiungi eventuali note..."></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Aggiungi investimento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div>
+                <div class="bg-white rounded-xl shadow-md p-6 transition-all card-hover sticky top-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Riepilogo investimento</h2>
+                    
+                    <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800">Qui vedrai il riepilogo del tuo investimento non appena inserirai i dati nel form.</p>
+                    </div>
+                    
+                    <div class="space-y-4 hidden" id="previewContent">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-chart-bar text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium" id="previewAssetName">Apple Inc.</p>
+                                    <p class="text-xs text-gray-500" id="previewAssetTicker">AAPL • 10 azioni</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium" id="previewTotalValue">€1,505.00</p>
+                                <p class="text-xs text-gray-500">@ <span id="previewPrice">150.50</span> per unità</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Data acquisto:</span>
+                                <span class="font-medium" id="previewDate">15/05/2023</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Commissioni:</span>
+                                <span class="font-medium" id="previewFees">€0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Investimento totale:</span>
+                                <span class="font-medium text-blue-600" id="previewTotalInvestment">€1,505.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <p class="text-sm text-gray-600" id="previewNotes">Nessuna nota inserita</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">InvestTrack</h3>
+                    <p class="text-blue-200">Monitora i tuoi investimenti in tempo reale e prendi decisioni informate.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Link utili</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-blue-200 hover:text-white">Dashboard</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Portafoglio</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Mercati</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Notizie</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Supporto</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-blue-200 hover:text-white">Contattaci</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">FAQ</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-blue-200 hover:text-white">Termini di servizio</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Connettiti</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-blue-200 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                    </div>
+                    <p class="text-blue-200 mt-4">Iscriviti alla nostra newsletter</p>
+                    <div class="mt-2 flex">
+                        <input type="email" placeholder="La tua email" class="px-3 py-2 rounded-l-lg text-gray-800 w-full">
+                        <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-lg"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-blue-800 mt-8 pt-6 text-center text-blue-200">
+                <p>© 2023 InvestTrack. Tutti i diritti riservati.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Show search results when typing
+        document.getElementById('assetSearch').addEventListener('input', function(e) {
+            const searchResults = document.getElementById('searchResults');
+            if (e.target.value.length > 0) {
+                searchResults.classList.remove('hidden');
+            } else {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        // Select asset from search results
+        document.querySelectorAll('#searchResults > div').forEach(item => {
+            item.addEventListener('click', function() {
+                const assetName = this.querySelector('p.font-medium').textContent;
+                const assetTicker = this.querySelector('p.text-xs').textContent.split(' • ')[0];
+                document.getElementById('assetSearch').value = assetName;
+                document.getElementById('searchResults').classList.add('hidden');
+                
+                // Update preview
+                document.getElementById('previewAssetName').textContent = assetName;
+                document.getElementById('previewAssetTicker').textContent = assetTicker;
+                updatePreview();
+            });
+        });
+
+        // Update preview when form changes
+        const formInputs = ['assetSearch', 'quantity', 'price', 'date', 'fees', 'notes'];
+        formInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            const previewContent = document.getElementById('previewContent');
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const fees = parseFloat(document.getElementById('fees').value) || 0;
+            const totalValue = quantity * price;
+            const totalInvestment = totalValue + fees;
+            
+            // Format date
+            const dateInput = document.getElementById('date').value;
+            let formattedDate = 'Nessuna data selezionata';
+            if (dateInput) {
+                const date = new Date(dateInput);
+                formattedDate = date.toLocaleDateString('it-IT');
+            }
+            
+            // Update preview values
+            document.getElementById('previewPrice').textContent = price.toFixed(2);
+            document.getElementById('previewTotalValue').textContent = '€' + totalValue.toFixed(2);
+            document.getElementById('previewDate').textContent = formattedDate;
+            document.getElementById('previewFees').textContent = '€' + fees.toFixed(2);
+            document.getElementById('previewTotalInvestment').textContent = '€' + totalInvestment.toFixed(2);
+            
+            const notes = document.getElementById('notes').value;
+            document.getElementById('previewNotes').textContent = notes || 'Nessuna nota inserita';
+            
+            // Show preview if we have at least some data
+            if (document.getElementById('assetSearch').value || quantity > 0 || price > 0) {
+                previewContent.classList.remove('hidden');
+            } else {
+                previewContent.classList.add('hidden');
+            }
+        }
+
+        // Form submission
+        document.getElementById('investmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Here you would normally send the data to your backend
+            // For this example, we'll just show a success message
+            alert('Investimento aggiunto con successo!');
+            
+            // Reset form
+            this.reset();
+            document.getElementById('previewContent').classList.add('hidden');
+        });
+
+        // Set today's date as default
+        document.getElementById('date').valueAsDate = new Date();
+    </script>
+</body>
+</html>
