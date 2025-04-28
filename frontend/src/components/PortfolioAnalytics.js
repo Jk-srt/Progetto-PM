@@ -114,14 +114,18 @@ const PortfolioAnalytics = () => {
         </Box>
       ) : (
         <>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
+          Capitale 
+        </Typography>
           {/* Summary Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
+            
             <Grid item xs={12} md={4}>
               <Card sx={{ borderLeft: '4px solid #4caf50' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     <ArrowUpwardIcon sx={{ color: '#4caf50', mr: 1 }} />
-                    Valore Attuale
+                     Attuale
                   </Typography>
                   <Typography variant="h4">
                     €{totalCurrentValue.toFixed(2)}
@@ -135,7 +139,7 @@ const PortfolioAnalytics = () => {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     <ArrowDownwardIcon sx={{ color: '#f44336', mr: 1 }} />
-                    Capitale Investito
+                     Investito
                   </Typography>
                   <Typography variant="h4">
                     €{totalInvested.toFixed(2)}
