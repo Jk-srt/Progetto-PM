@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { fetchListingStatus } from '../services/YahooFinanceService';
+import {fetchRealTimePrice} from '../services/FinnhubService';
 import CombinedInvestmentChart from './CombinedInvestmentChart';
 import InvestmentService from '../services/InvestmentService';
 import {
@@ -52,27 +53,33 @@ const PortfolioAnalytics = () => {
                 let invested = 0;
                 let currentValue = 0;
                 
-                investmentsData.forEach(inv => {
-                    let quote;
-                    try{
-                        quote=fetchListingStatus(inv.assetName);
+                for (const inv of investmentsData) {
+                    let price = null;
+
+                    try {
+                        console.log('Fetching quote for:', inv.assetName);
+                        const quote = await fetchRealTimePrice(inv.assetName);
                         console.log('Quote:', quote);
-                    }
-                    catch (error) {
+                        price = quote?.price || inv.purchasePrice; // Usa il prezzo recuperato o il prezzo di acquisto
+                    } catch (error) {
                         console.error('Error fetching quote:', error);
+                        price = inv.purchasePrice; // Fallback al prezzo di acquisto in caso di errore
                     }
+
                     const purchaseValue = inv.quantity * inv.purchasePrice;
-                    const currentValueCalc = inv.quantity * (inv.currentPrice || inv.purchasePrice);
-                    
-                    invested += purchaseValue;
-                    currentValue += currentValueCalc;
-                    
-                    // Add calculated values to each investment for display
+                    const currentValueCalc = inv.quantity * price;
+
+                    // Aggiorna i dati dell'investimento
+                    inv.currentPrice = price;
                     inv.purchaseValue = purchaseValue;
                     inv.currentTotalValue = currentValueCalc;
                     inv.gainLoss = currentValueCalc - purchaseValue;
                     inv.gainLossPercentage = purchaseValue > 0 ? (inv.gainLoss / purchaseValue) * 100 : 0;
-                });
+
+                    // Aggiorna i totali
+                    invested += purchaseValue;
+                    currentValue += currentValueCalc;
+                };
                 
                 setInvestments(investmentsData);
                 setTotalInvested(invested);
