@@ -195,7 +195,7 @@ const PortfolioAnalytics = () => {
                       <TableCell><strong>Data Acquisto</strong></TableCell>
                       <TableCell align="right"><strong>Totale Attuale</strong></TableCell>
                       <TableCell align="right"><strong>Guadagno/Perdita</strong></TableCell>
-                      <TableCell align="center"><strong>Azioni</strong></TableCell>
+                      <TableCell align="center"><strong></strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
