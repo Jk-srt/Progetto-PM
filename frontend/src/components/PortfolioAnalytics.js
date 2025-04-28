@@ -53,6 +53,14 @@ const PortfolioAnalytics = () => {
                 let currentValue = 0;
                 
                 investmentsData.forEach(inv => {
+                    let quote;
+                    try{
+                        quote=fetchListingStatus(inv.assetName);
+                        console.log('Quote:', quote);
+                    }
+                    catch (error) {
+                        console.error('Error fetching quote:', error);
+                    }
                     const purchaseValue = inv.quantity * inv.purchasePrice;
                     const currentValueCalc = inv.quantity * (inv.currentPrice || inv.purchasePrice);
                     
