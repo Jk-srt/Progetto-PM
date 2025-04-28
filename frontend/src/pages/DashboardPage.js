@@ -45,6 +45,7 @@ import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
 import AddTransactionPage from './AddTransactionPage'; // componente form esistente
+import AnaliticsPage from './AnaliticsPage';
 
 // Registra gli elementi Chart.js una sola volta
 ChartJS.register(
@@ -270,6 +271,7 @@ const DashboardPage = () => {
   const sidebarTabs = [
     { label: "Dashboard", value: "dashboard" },
     { label: "Transazioni", value: "transactions" },
+    { label: "Analisi Mercato", value: "analitics" },
     { label: "Investimenti", value: "investments" },
     { label: "Notizie", value: "news" },
     { label: "Assistente", value: "assistente" }
@@ -484,6 +486,9 @@ const DashboardPage = () => {
 
             {activeTab === 'transactions' && (
                 <Transactions transactions={data.transactions} />
+            )}
+            {activeTab === 'analitics' && (
+                <AnaliticsPage />
             )}
             {activeTab === 'investments' && (
                 <PortfolioAnalytics data={data.investments} />

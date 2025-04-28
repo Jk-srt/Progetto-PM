@@ -21,7 +21,12 @@ export async function fetchListingStatus(query = '') {
 
 export async function fetchRealTimeQuote(symbol) {
     const url = `${API_BASE}/api/yahoo/realtime?symbol=${encodeURIComponent(symbol)}`;
-    const res = await fetch(url);
+    const token = localStorage.getItem('token');
+    const res = await fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
     if (!res.ok) throw new Error('Errore nel recupero del quote in tempo reale');
     return await res.json();
 }
