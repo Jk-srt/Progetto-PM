@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { fetchListingStatus } from '../services/YahooFinanceService';
 import CombinedInvestmentChart from './CombinedInvestmentChart';
+import InvestmentService from '../services/InvestmentService';
 import {
     Card,
     CardHeader,
@@ -10,55 +11,117 @@ import {
     Box,
     Grid,
     Paper,
-    useTheme
+    useTheme,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    LinearProgress,
+    IconButton,
+    Button
 } from '@mui/material';
-
-const portfolioInvestments = [
-    { id: 'AAPL', name: 'Apple Inc.', type: 'Azione', exchange: 'NASDAQ' },
-    { id: 'MSFT', name: 'Microsoft Corporation', type: 'Azione', exchange: 'NASDAQ' },
-    { id: 'GOOGL', name: 'Alphabet Inc. (Google)', type: 'Azione', exchange: 'NASDAQ' },
-    { id: 'AMZN', name: 'Amazon.com Inc.', type: 'Azione', exchange: 'NASDAQ' },
-    { id: 'JPM', name: 'JPMorgan Chase & Co.', type: 'Azione', exchange: 'NYSE' },
-    { id: 'NEE', name: 'NextEra Energy Inc.', type: 'Azione', exchange: 'NYSE' },
-    { id: 'SPY', name: 'SPDR S&P 500 ETF Trust', type: 'ETF', exchange: 'NYSEARCA' },
-    { id: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'ETF', exchange: 'NYSEARCA' },
-    { id: 'QQQ', name: 'Invesco QQQ Trust (Nasdaq-100)', type: 'ETF', exchange: 'NASDAQ' },
-    { id: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'ETF', exchange: 'NYSEARCA' },
-    { id: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', type: 'ETF', exchange: 'NYSEARCA' }
-];
+import {
+    ArrowUpward as ArrowUpwardIcon,
+    ArrowDownward as ArrowDownwardIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Search as SearchIcon
+} from '@mui/icons-material';
 
 const PortfolioAnalytics = () => {
     const theme = useTheme();
+    const [investments, setInvestments] = useState([]);
+    const [totalInvested, setTotalInvested] = useState(0);
+    const [totalCurrentValue, setTotalCurrentValue] = useState(0);
+    const [totalGainLoss, setTotalGainLoss] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [error, setError] = useState(null);
 
-    const [selectedOption, setSelectedOption] = useState({
-        value: 'AAPL',
-        name: 'Apple Inc.',
-        type: 'Azione',
-        exchange: 'NASDAQ'
-    });
+    // Fetch user investments from the database
+    useEffect(() => {
+        const fetchInvestments = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await InvestmentService.getAll();
+                const investmentsData = response.data || [];
+                
+                // Calculate investment metrics
+                let invested = 0;
+                let currentValue = 0;
+                
+                investmentsData.forEach(inv => {
+                    const purchaseValue = inv.quantity * inv.purchasePrice;
+                    const currentValueCalc = inv.quantity * (inv.currentPrice || inv.purchasePrice);
+                    
+                    invested += purchaseValue;
+                    currentValue += currentValueCalc;
+                    
+                    // Add calculated values to each investment for display
+                    inv.purchaseValue = purchaseValue;
+                    inv.currentTotalValue = currentValueCalc;
+                    inv.gainLoss = currentValueCalc - purchaseValue;
+                    inv.gainLossPercentage = purchaseValue > 0 ? (inv.gainLoss / purchaseValue) * 100 : 0;
+                });
+                
+                setInvestments(investmentsData);
+                setTotalInvested(invested);
+                setTotalCurrentValue(currentValue);
+                setTotalGainLoss(currentValue - invested);
+            } catch (error) {
+                console.error('Error fetching investments:', error);
+                setError('Errore nel caricamento degli investimenti. Assicurati di essere loggato.');
+            } finally {
+                setLoading(false);
+            }
+        };
 
+        fetchInvestments();
+    }, []);
+
+    // Load options for search from Yahoo Finance API
     const loadOptions = async (inputValue) => {
         if (!inputValue) {
-            return portfolioInvestments.map(inv => ({
-                label: `${inv.name} (${inv.id})`,
-                value: inv.id,
-                name: inv.name,
-                type: inv.type,
-                exchange: inv.exchange
+            return investments.map(inv => ({
+                label: inv.assetName,
+                value: inv.assetName,
+                name: inv.assetName,
+                type: 'Investment',
+                exchange: 'N/A'
             }));
         }
-        const list = await fetchListingStatus(inputValue);
-        return list.map(item => ({
-            label: `${item.name} (${item.symbol})`,
-            value: item.symbol,
-            name: item.name,
-            type: item.type,
-            exchange: item.exchange
-        }));
+        
+        try {
+            const list = await fetchListingStatus(inputValue);
+            return list.map(item => ({
+                label: `${item.name} (${item.symbol})`,
+                value: item.symbol,
+                name: item.name,
+                type: item.type,
+                exchange: item.exchange
+            }));
+        } catch (error) {
+            console.error('Error loading options:', error);
+            return [];
+        }
     };
 
     const getInvestmentDetails = (opt) => {
         if (!opt) return [];
+        
+        const investmentData = investments.find(inv => inv.assetName === opt.value);
+        
+        if (investmentData) {
+            return [
+                { label: 'Simbolo', value: opt.value },
+                { label: 'Quantità', value: investmentData.quantity },
+                { label: 'Prezzo Acquisto', value: `€${investmentData.purchasePrice.toFixed(2)}` },
+                { label: 'Valore Attuale', value: `€${investmentData.currentTotalValue.toFixed(2)}` }
+            ];
+        }
+        
         return [
             { label: 'Simbolo', value: opt.value },
             { label: 'Nome', value: opt.name },
@@ -118,152 +181,309 @@ const PortfolioAnalytics = () => {
             minHeight: '100vh',
             backgroundColor: theme.palette.background.default
         }}>
-            {/* Header e ricerca */}
-            <Card sx={{
-                mb: 4,
-                borderRadius: '16px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                boxShadow: theme.shadows[6],
-                overflow: 'hidden'
-            }}>
-                <CardContent sx={{ position: 'relative', zIndex: 2 }}>
-                    <Typography variant="h3" sx={{
-                        color: 'white',
-                        mb: 4,
-                        fontWeight: 700,
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        textAlign: 'center'
-                    }}>
-                        Analisi Mercato
+            {loading ? (
+                <LinearProgress />
+            ) : error ? (
+                <Box sx={{ textAlign: 'center', my: 4, p: 3, bgcolor: 'error.light', borderRadius: 2 }}>
+                    <Typography variant="h6" color="error">
+                        {error}
                     </Typography>
+                </Box>
+            ) : (
+                <>
+                    {/* Summary Cards */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ borderLeft: '4px solid #4caf50' }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        <ArrowUpwardIcon sx={{ color: '#4caf50', mr: 1 }} />
+                                        Valore Attuale
+                                    </Typography>
+                                    <Typography variant="h4">
+                                        €{totalCurrentValue.toFixed(2)}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
 
-                    <Grid container spacing={3} justifyContent="center">
-                        <Grid item xs={12} md={8}>
-                            <Typography variant="subtitle1" sx={{
-                                color: 'rgba(255,255,255,0.9)',
-                                mb: 2,
-                                fontWeight: 500,
-                                textAlign: 'center'
-                            }}>
-                                Cerca e seleziona un investimento per visualizzare i dettagli e le analisi delle prestazioni.
-                            </Typography>
-                            <AsyncSelect
-                                cacheOptions
-                                defaultOptions
-                                loadOptions={loadOptions}
-                                value={selectedOption}
-                                onChange={setSelectedOption}
-                                placeholder="Inserisci simbolo o nome..."
-                                // aggiunte per portale e z‑index
-                                styles={{
-                                    ...customSelectStyles,
-                                    menuPortal: base => ({ ...base, zIndex: 9999 })
-                                }}
-                                menuPortalTarget={document.body}
-                                menuPosition="fixed"
-                                theme={selectTheme => ({
-                                    ...selectTheme,
-                                    borderRadius: 8,
-                                    colors: {
-                                        ...selectTheme.colors,
-                                        primary25: theme.palette.action.hover,
-                                        primary: theme.palette.primary.main,
-                                        neutral0: theme.palette.background.paper,
-                                        neutral80: theme.palette.text.primary
-                                    }
-                                })}
-                            />
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ borderLeft: '4px solid #f44336' }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        <ArrowDownwardIcon sx={{ color: '#f44336', mr: 1 }} />
+                                        Capitale Investito
+                                    </Typography>
+                                    <Typography variant="h4">
+                                        €{totalInvested.toFixed(2)}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ borderLeft: '4px solid #2196f3' }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        Guadagno/Perdita
+                                    </Typography>
+                                    <Typography
+                                        variant="h4"
+                                        sx={{ color: totalGainLoss >= 0 ? '#4caf50' : '#f44336' }}
+                                    >
+                                        {totalGainLoss >= 0 ? '+' : ''}
+                                        €{totalGainLoss.toFixed(2)} (
+                                        {totalInvested ? ((totalGainLoss / totalInvested) * 100).toFixed(2) : '0.00'}%)
+                                    </Typography>
+                                </CardContent>
+                            </Card>
                         </Grid>
                     </Grid>
-                </CardContent>
-            </Card>
 
-            {/* Dettagli investimento */}
-            <Card sx={{
-                mb: 4,
-                borderRadius: '16px',
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[4]
-            }}>
-                <CardHeader
-                    title={
-                        <Typography variant="h5" sx={{
-                            color: theme.palette.primary.main,
-                            fontWeight: 600,
-                            textAlign: 'center'
-                        }}>
-                            Dettagli Investimento
-                        </Typography>
-                    }
-                />
-                <CardContent>
-                    <Typography variant="body1" sx={{
-                        color: theme.palette.text.secondary,
-                        mb: 3,
-                        textAlign: 'center'
+                    {/* Search Bar */}
+                    <Card sx={{
+                        mb: 4,
+                        borderRadius: '16px',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                        boxShadow: theme.shadows[6],
+                        overflow: 'hidden'
                     }}>
-                        Esplora i dettagli del tuo investimento selezionato, inclusi simbolo, nome, exchange e tipo.
-                    </Typography>
-                    <Grid container spacing={2} justifyContent="center">
-                        {getInvestmentDetails(selectedOption).map((detail, index) => (
-                            <Grid item xs={12} sm={6} md={3} key={index}>
-                                <Paper sx={{
-                                    p: 2,
-                                    borderRadius: '8px',
-                                    border: `1px solid ${theme.palette.divider}`,
-                                    backgroundColor: theme.palette.background.default,
-                                    textAlign: 'center',
-                                    boxShadow: theme.shadows[1],
-                                    transition: 'transform 0.2s ease-in-out',
-                                    '&:hover': {
-                                        transform: 'scale(1.05)',
-                                        boxShadow: theme.shadows[4]
-                                    }
-                                }}>
-                                    <Typography variant="caption" sx={{
-                                        color: theme.palette.text.secondary,
-                                        fontWeight: 500,
-                                        letterSpacing: 1
-                                    }}>
-                                        {detail.label}
-                                    </Typography>
-                                    <Typography variant="h6" sx={{
-                                        color: theme.palette.text.primary,
-                                        fontWeight: 700,
-                                        mt: 1
-                                    }}>
-                                        {detail.value}
-                                    </Typography>
-                                </Paper>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </CardContent>
-            </Card>
+                        <CardContent sx={{ position: 'relative', zIndex: 2 }}>
+                            <Typography variant="h3" sx={{
+                                color: 'white',
+                                mb: 4,
+                                fontWeight: 700,
+                                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                textAlign: 'center'
+                            }}>
+                                Esplora il Mercato Azionario
+                            </Typography>
 
-            {/* Grafico */}
-            <Card sx={{
-                borderRadius: '16px',
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[4]
-            }}>
-                <CardHeader
-                    title={
-                        <Typography variant="h5" sx={{
-                            color: theme.palette.primary.main,
-                            fontWeight: 600
+                            <Grid container spacing={3} justifyContent="center">
+                                <Grid item xs={12} md={8}>
+                                    <Typography variant="subtitle1" sx={{
+                                        color: 'rgba(255,255,255,0.9)',
+                                        mb: 2,
+                                        fontWeight: 500,
+                                        textAlign: 'center'
+                                    }}>
+                                        Cerca un'azione o un altro strumento finanziario per visualizzare i dettagli e le analisi
+                                    </Typography>
+                                    <AsyncSelect
+                                        cacheOptions
+                                        defaultOptions
+                                        loadOptions={loadOptions}
+                                        value={selectedOption}
+                                        onChange={setSelectedOption}
+                                        placeholder="Cerca un'azione (es. AAPL, MSFT, AMZN)..."
+                                        styles={{
+                                            ...customSelectStyles,
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        menuPosition="fixed"
+                                        theme={selectTheme => ({
+                                            ...selectTheme,
+                                            borderRadius: 8,
+                                            colors: {
+                                                ...selectTheme.colors,
+                                                primary25: theme.palette.action.hover,
+                                                primary: theme.palette.primary.main,
+                                                neutral0: theme.palette.background.paper,
+                                                neutral80: theme.palette.text.primary
+                                            }
+                                        })}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+
+                    {/* Selected Asset Details */}
+                    {selectedOption && (
+                        <Card sx={{
+                            mb: 4,
+                            borderRadius: '16px',
+                            backgroundColor: theme.palette.background.paper,
+                            boxShadow: theme.shadows[4]
                         }}>
-                            Analisi Prestazioni
-                        </Typography>
-                    }
-                />
-                <CardContent sx={{ pt: 0 }}>
-                    <CombinedInvestmentChart
-                        symbol={selectedOption.value}
-                        investmentName={selectedOption.name}
-                    />
-                </CardContent>
-            </Card>
+                            <CardHeader
+                                title={
+                                    <Typography variant="h5" sx={{
+                                        color: theme.palette.primary.main,
+                                        fontWeight: 600,
+                                        textAlign: 'center'
+                                    }}>
+                                        Dettagli Asset: {selectedOption.name || selectedOption.value}
+                                    </Typography>
+                                }
+                            />
+                            <CardContent>
+                                <Typography variant="body1" sx={{
+                                    color: theme.palette.text.secondary,
+                                    mb: 3,
+                                    textAlign: 'center'
+                                }}>
+                                    Esplora i dettagli dell'asset selezionato
+                                </Typography>
+                                <Grid container spacing={2} justifyContent="center">
+                                    {getInvestmentDetails(selectedOption).map((detail, index) => (
+                                        <Grid item xs={12} sm={6} md={3} key={index}>
+                                            <Paper sx={{
+                                                p: 2,
+                                                borderRadius: '8px',
+                                                border: `1px solid ${theme.palette.divider}`,
+                                                backgroundColor: theme.palette.background.default,
+                                                textAlign: 'center',
+                                                boxShadow: theme.shadows[1],
+                                                transition: 'transform 0.2s ease-in-out',
+                                                '&:hover': {
+                                                    transform: 'scale(1.05)',
+                                                    boxShadow: theme.shadows[4]
+                                                }
+                                            }}>
+                                                <Typography variant="caption" sx={{
+                                                    color: theme.palette.text.secondary,
+                                                    fontWeight: 500,
+                                                    letterSpacing: 1
+                                                }}>
+                                                    {detail.label}
+                                                </Typography>
+                                                <Typography variant="h6" sx={{
+                                                    color: theme.palette.text.primary,
+                                                    fontWeight: 700,
+                                                    mt: 1
+                                                }}>
+                                                    {detail.value}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Price Chart */}
+                    {selectedOption && (
+                        <Card sx={{
+                            borderRadius: '16px',
+                            backgroundColor: theme.palette.background.paper,
+                            boxShadow: theme.shadows[4],
+                            mb: 4
+                        }}>
+                            <CardHeader
+                                title={
+                                    <Typography variant="h5" sx={{
+                                        color: theme.palette.primary.main,
+                                        fontWeight: 600
+                                    }}>
+                                        Analisi Prezzi di {selectedOption.name || selectedOption.value}
+                                    </Typography>
+                                }
+                            />
+                            <CardContent sx={{ pt: 0 }}>
+                                <CombinedInvestmentChart
+                                    symbol={selectedOption.value}
+                                    investmentName={selectedOption.name}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Investments Table */}
+                    <Card sx={{
+                        borderRadius: '16px',
+                        backgroundColor: theme.palette.background.paper,
+                        boxShadow: theme.shadows[4]
+                    }}>
+                        <CardHeader
+                            title={
+                                <Typography variant="h5" sx={{
+                                    color: theme.palette.primary.main,
+                                    fontWeight: 600
+                                }}>
+                                    I tuoi investimenti
+                                </Typography>
+                            }
+                        />
+                        <CardContent>
+                            {investments.length > 0 ? (
+                                <Table sx={{ minWidth: 650 }} aria-label="tabella investimenti">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell><strong>Nome Asset</strong></TableCell>
+                                            <TableCell><strong>Quantità</strong></TableCell>
+                                            <TableCell><strong>Prezzo Acquisto</strong></TableCell>
+                                            <TableCell><strong>Prezzo Attuale</strong></TableCell>
+                                            <TableCell><strong>Data Acquisto</strong></TableCell>
+                                            <TableCell align="right"><strong>Valore Totale</strong></TableCell>
+                                            <TableCell align="right"><strong>Guadagno/Perdita</strong></TableCell>
+                                            <TableCell align="center"><strong>Azioni</strong></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {investments.map((investment, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{investment.assetName}</TableCell>
+                                                <TableCell>{investment.quantity}</TableCell>
+                                                <TableCell>€{investment.purchasePrice.toFixed(2)}</TableCell>
+                                                <TableCell>
+                                                    {investment.currentPrice
+                                                        ? `€${investment.currentPrice.toFixed(2)}`
+                                                        : `€${investment.purchasePrice.toFixed(2)}`}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(investment.purchaseDate).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    €{investment.currentTotalValue.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <span
+                                                        style={{
+                                                            color: investment.gainLoss >= 0 ? '#4caf50' : '#f44336',
+                                                            fontWeight: 500
+                                                        }}
+                                                    >
+                                                        {investment.gainLoss >= 0 ? '+' : '-'}€
+                                                        {Math.abs(investment.gainLoss).toFixed(2)}
+                                                        {' ('}
+                                                        {investment.gainLoss >= 0 ? '+' : ''}
+                                                        {investment.gainLossPercentage.toFixed(2)}%)
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <IconButton size="small" color="primary">
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton size="small" color="error">
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <Box sx={{ textAlign: 'center', py: 4 }}>
+                                    <Typography variant="body1" gutterBottom>
+                                        Non hai ancora aggiunto investimenti al tuo portafoglio.
+                                    </Typography>
+                                    <Button 
+                                        variant="contained" 
+                                        color="primary" 
+                                        sx={{ mt: 2 }}
+                                        href="/add-investment"
+                                    >
+                                        Aggiungi il tuo primo investimento
+                                    </Button>
+                                </Box>
+                            )}
+                        </CardContent>
+                    </Card>
+                </>
+            )}
         </Box>
     );
 };

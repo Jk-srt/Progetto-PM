@@ -20,38 +20,38 @@ public class NewsController : ControllerBase
     }
 
     [HttpGet("financial")]
-    public async Task<IActionResult> GetFinancialNewsAsync()
+    public async Task<IActionResult> GetFinancialNewsAsync(
+        [FromQuery] string category = "general",
+        [FromQuery] int count = 30,
+        [FromQuery] string q = "")
     {
-        if (string.IsNullOrEmpty(_apiKey))
-        {
-            _logger.LogError("API Key is missing. Check appsettings.json.");
-            return StatusCode(500, "API Key is missing. Check appsettings.json.");
-        }
+        Console.WriteLine($"[NewsController] Richiesta ricevuta: category={category}, count={count}, q={q}");
 
         var client = _httpClientFactory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Get, $"https://finnhub.io/api/v1/news?category=general&token={_apiKey}");
+        var url = $"https://finnhub.io/api/v1/news?category={category}&token={_apiKey}";
+        if (!string.IsNullOrWhiteSpace(q))
+            url += $"&q={Uri.EscapeDataString(q)}";
 
-        HttpResponseMessage response;
+        Console.WriteLine($"[NewsController] Chiamo API esterna: {url}");
+
         try
         {
-            response = await client.SendAsync(request);
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError($"Request error: {ex.Message}");
-            return StatusCode(500, "Error making request to Finnhub API.");
-        }
+            var response = await client.GetAsync(url);
+            Console.WriteLine($"[NewsController] Risposta API esterna: {response.StatusCode}");
+            var content = await response.Content.ReadAsStringAsync();
 
-        var responseBody = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[NewsController] Errore da Finnhub: {content}");
+                return StatusCode((int)response.StatusCode, content);
+            }
 
-        if (response.IsSuccessStatusCode)
-        {
-            return Content(responseBody, "application/json");
+            return Content(content, "application/json");
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogError($"Error {response.StatusCode}: {responseBody}");
-            return StatusCode((int)response.StatusCode, $"Error: {response.ReasonPhrase} - {responseBody}");
+            Console.WriteLine($"[NewsController] Errore: {ex}");
+            return StatusCode(500, "Errore interno del server");
         }
     }
 }

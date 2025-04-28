@@ -194,7 +194,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
  * @param {number} count - Numero di notizie da ottenere
  * @returns {Promise<Array>} - Array di notizie
  */
-export const fetchMarketNews = async (category = 'general', count = 20) => {
+export const fetchMarketNews = async (category = 'general', count = 20, searchKeyword) => {
   try {
     const news = await fetchWithRateLimit('news', {
       category: category,

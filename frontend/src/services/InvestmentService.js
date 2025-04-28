@@ -4,27 +4,44 @@ const API_URL = 'http://localhost:5000/api/investments';
 class InvestmentService {
 	// recupera tutti gli investimenti
 	getAll() {
-		return axios.get(API_URL);
+		return axios.get(API_URL, {
+			headers: {
+				'userId': localStorage.getItem('userId')  // Add userId header to GET request
+			}
+		});
 	}
 	// recupera un investimento per id
 	get(id) {
-		return axios.get(`${API_URL}/${id}`);
+		return axios.get(`${API_URL}/${id}`, {
+			headers: {
+				'userId': localStorage.getItem('userId')
+			}
+		});
 	}
 	// crea un nuovo investimento
 	create(investment) {
 		return axios.post(API_URL, investment, {
-			headers: { 'Content-Type': 'application/json',
-				'userId': localStorage.getItem('userId') // aggiungi l'header userId
-			 }
+			headers: { 
+				'Content-Type': 'application/json',
+				'userId': localStorage.getItem('userId')
+			}
 		});
 	}
 	// aggiorna un investimento esistente
 	update(id, data) {
-		return axios.put(`${API_URL}/${id}`, data);
+		return axios.put(`${API_URL}/${id}`, data, {
+			headers: {
+				'userId': localStorage.getItem('userId')
+			}
+		});
 	}
 	// elimina un investimento
 	delete(id) {
-		return axios.delete(`${API_URL}/${id}`);
+		return axios.delete(`${API_URL}/${id}`, {
+			headers: {
+				'userId': localStorage.getItem('userId')
+			}
+		});
 	}
 }
 export default new InvestmentService();
