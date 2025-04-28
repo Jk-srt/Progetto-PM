@@ -190,10 +190,10 @@ const PortfolioAnalytics = () => {
                       <TableCell><strong>Nome Asset</strong></TableCell>
                       <TableCell><strong>Quantità</strong></TableCell>
                       <TableCell><strong>Prezzo Acquisto</strong></TableCell>
-                      <TableCell><strong>Prezzo Attuale/1</strong></TableCell>
+                      <TableCell><strong>Valore Attuale</strong></TableCell>
                       <TableCell><strong>Vecchio Valore</strong></TableCell> {/* Nuova colonna */}
                       <TableCell><strong>Data Acquisto</strong></TableCell>
-                      <TableCell align="right"><strong>Valore Attuale</strong></TableCell>
+                      <TableCell align="right"><strong>Totale Attuale</strong></TableCell>
                       <TableCell align="right"><strong>Guadagno/Perdita</strong></TableCell>
                       <TableCell align="center"><strong>Azioni</strong></TableCell>
                     </TableRow>
