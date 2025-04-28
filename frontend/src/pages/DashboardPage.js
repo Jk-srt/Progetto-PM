@@ -274,7 +274,6 @@ const DashboardPage = () => {
     { label: "Analisi Mercato", value: "analitics" },
     { label: "Investimenti", value: "investments" },
     { label: "Notizie", value: "news" },
-    { label: "Assistente", value: "assistente" }
   ];
 
   return (
@@ -306,7 +305,18 @@ const DashboardPage = () => {
           {sidebarTabs.map(tab => (
               <Tab key={tab.value} label={tab.label} value={tab.value} />
           ))}
+          <Tab key='assistente' label='Assistente' value='assistente' />
         </Tabs>
+        <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="error"
+              fullWidth
+              onClick={() => navigate('/logout')}
+            >
+              Logout
+            </Button>
+          </Box>
       </CardContent>
     </Card>
 
@@ -323,13 +333,13 @@ const DashboardPage = () => {
           mb: 3
         }}
       >
-        <Typography variant="h4" fontWeight={700}>
-          {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
-        </Typography>
+        {activeTab !== 'assistente' && ( // Nascondi il titolo per la pagina "Assistente"
+          <Typography variant="h4" fontWeight={700}>
+            {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
+          </Typography>
+        )}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <IconButton>
-            <NotificationsIcon />
-          </IconButton>
+          
           {activeTab === 'transactions' && (
             <Button
               variant="contained"
@@ -348,14 +358,6 @@ const DashboardPage = () => {
               Nuovo Investimento
             </Button>
           )}
-          {/* Bottone Logout sempre visibile */}
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => navigate('/logout')}
-          >
-            Logout
-          </Button>
         </Box>
       </Box>
 

@@ -5884,11 +5884,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+      "projectUniqueName": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
+      "projectPath": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj",
       "packagesPath": "C:\\Users\\feder\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
+      "outputPath": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\feder\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -6001,7 +6001,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

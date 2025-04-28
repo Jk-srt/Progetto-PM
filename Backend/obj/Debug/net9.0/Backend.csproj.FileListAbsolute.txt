@@ -696,3 +696,7 @@ C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.Http.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\YahooFinanceApi.dll
 C:\Users\feder\Desktop\Progetto-PM\Backend\bin\Debug\net9.0\appsettings.json
+C:\Users\feder\OneDrive\Desktop\Progetto PM\Progetto-PM\Backend\bin\Debug\net9.0\CsvHelper.dll
+C:\Users\feder\OneDrive\Desktop\Progetto PM\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.dll
+C:\Users\feder\OneDrive\Desktop\Progetto PM\Progetto-PM\Backend\bin\Debug\net9.0\Flurl.Http.dll
+C:\Users\feder\OneDrive\Desktop\Progetto PM\Progetto-PM\Backend\bin\Debug\net9.0\YahooFinanceApi.dll
