@@ -1,16 +1,15 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import GlobalStyles from '@mui/material/GlobalStyles';
 import { AuthProvider, useAuth } from './context/AuthProvider';
-import{ErrorBoundary} from './components/ErrorBoundary';
-import {LoadingScreen }from './components/LoadingScreen';
-import {ErrorPage} from './pages/ErrorPage';
-import DebugLocation from './components/DebugLocation'; // Assicurati che il percorso sia corretto
-import AddTransactionPage from './pages/AddTransactionPage'; // Assicurati che il percorso sia corretto
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoadingScreen } from './components/LoadingScreen';
+import { ErrorPage } from './pages/ErrorPage';
+import DebugLocation from './components/DebugLocation';
+import AddTransactionPage from './pages/AddTransactionPage';
 import AddInvestmentPage from './pages/AddInvestmentPage';
-import { use } from 'react';
-import { Link } from 'react-router-dom';
 
 // Lazy loading delle pagine
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -44,58 +43,56 @@ const darkTheme = createTheme({
   },
 });
 
+// CSS globale per nascondere la scrollbar verticale mantenendo lo scroll
+const globalScrollbarStyles = {
+  // applica a tutto, inclusi drawer interni
+  '*': {
+    scrollbarWidth: 'none',      // Firefox
+    '&::-webkit-scrollbar': {    // WebKit
+      width: 0,
+      background: 'transparent',
+    },
+  },
+};
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (user) {
-    localStorage.setItem('GoogleUser', JSON.stringify(user));
-    console.log('GoogleUser (saved):', user);
-  }
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // Salva l'utente una volta autenticato
+  localStorage.setItem('GoogleUser', JSON.stringify(user));
   return children;
 };
 
 const RouteManager = () => (
-  <>
-    <Routes>
-      {/* Aggiungi il reindirizzamento della root */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/add-transaction" element={<AddTransactionPage />} />
-      <Route path="/add-investment" element={<AddInvestmentPage />} />
-      <Route path="/news" element={<NewsPage />} />
-      <Route path="/assistant" element={<AssistantPage />} />
-      <Route path="/logout" element={<LogoutPage />} />
-      <Route path="*" element={<ErrorPage />} />
-    </Routes>
-  </>
+  <Routes>
+    <Route path="/" element={<Navigate to="/login" replace />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+    <Route path="/add-transaction" element={<AddTransactionPage />} />
+    <Route path="/add-investment" element={<AddInvestmentPage />} />
+    <Route path="/news" element={<NewsPage />} />
+    <Route path="/assistant" element={<AssistantPage />} />
+    <Route path="/logout" element={<LogoutPage />} />
+    <Route path="*" element={<ErrorPage />} />
+  </Routes>
 );
-
 
 export default function App() {
   return (
     <ThemeProvider theme={darkTheme}>
+      {/* Reset CSS e scrollbar nascoste globali */}
       <CssBaseline />
+      <GlobalStyles styles={globalScrollbarStyles} />
+
       <Router>
         <AuthProvider>
           <ErrorBoundary>
-              <Suspense fallback={<LoadingScreen />}>
-                <RouteManager />
-                <DebugLocation />
-              </Suspense>
+            <Suspense fallback={<LoadingScreen />}>
+              <RouteManager />
+              <DebugLocation />
+            </Suspense>
           </ErrorBoundary>
         </AuthProvider>
       </Router>
