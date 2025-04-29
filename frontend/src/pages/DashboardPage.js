@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -44,7 +44,8 @@ import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
-import AddTransactionPage from './AddTransactionPage'; // componente form esistente
+import AddTransactionPage from './AddTransactionPage';
+import AddInvestmentPage from './AddInvestmentPage'; // Aggiunto form investimento
 import AnaliticsPage from './AnaliticsPage';
 
 // Registra gli elementi Chart.js una sola volta
@@ -81,7 +82,8 @@ const DashboardPage = () => {
   });
   const [userImage, setUserImage] = useState(null);
   const [userName, setUserName] = useState(null);
-  const [openAddTx, setOpenAddTx] = useState(false); // stato per il modal
+  const [openAddTx, setOpenAddTx] = useState(false);
+  const [openAddInv, setOpenAddInv] = useState(false); // stato per dialog nuovo investimento
 
   // Chart refs per cleanup
   const lineChartRef = useRef(null);
@@ -197,7 +199,29 @@ const DashboardPage = () => {
     }
   };
 
-  // Fetch dati come nel file originale
+  // funzione per ricaricare i dati
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      const [transactions, investments, categories] = await Promise.all([
+        fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
+        fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
+        fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json())
+      ]);
+      const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+      setData({ transactions, investments, categories });
+      setPerformanceData(generatePerformanceData(transactions));
+      localStorage.setItem('categories', JSON.stringify(categories));
+      setTotal(totalAmount);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const googleUser = localStorage.getItem("GoogleUser");
     if (googleUser) {
@@ -210,28 +234,7 @@ const DashboardPage = () => {
         console.error("Errore parsing GoogleUser", error);
       }
     }
-    const fetchData = async () => {
-      try {
-        const userId = localStorage.getItem('userId');
-        const [transactions, investments, categories] = await Promise.all([
-          fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
-          fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
-          fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json())
-        ]);
-        const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
-        setData({ transactions, investments, categories });
-        setPerformanceData(generatePerformanceData(transactions));
-        localStorage.setItem('categories', JSON.stringify(categories));
-        setTotal(totalAmount);
-      } catch (error) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchData();
-    
   }, []);
 
   useEffect(() => {
@@ -353,7 +356,7 @@ const DashboardPage = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => navigate('/add-investment')}
+              onClick={() => setOpenAddInv(true)}
             >
               Nuovo Investimento
             </Button>
@@ -517,7 +520,25 @@ const DashboardPage = () => {
         <AddTransactionPage 
           onAdded={() => {
             setOpenAddTx(false);
-            // ... eventualmente ricarica i dati/refresh ...
+            fetchData(); // ricarica dati dopo inserimento
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog per nuovo investimento */}
+    <Dialog
+      open={openAddInv}
+      onClose={() => setOpenAddInv(false)}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Nuovo Investimento</DialogTitle>
+      <DialogContent>
+        <AddInvestmentPage
+          onAdded={() => {
+            setOpenAddInv(false);
+            fetchData(); // ricarica dati dopo inserimento
           }}
         />
       </DialogContent>

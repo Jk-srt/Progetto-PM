@@ -9,7 +9,7 @@ import {
   Grid, CircularProgress, Alert
 } from '@mui/material';
 
-const AddInvestmentPage = () => {
+const AddInvestmentPage = ({onAdded}) => {
   const navigate = useNavigate();
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [investment, setInvestment] = useState({
@@ -92,7 +92,11 @@ const AddInvestmentPage = () => {
       // assicurati che create invii:
       // axios.post('/api/investments', payload, { headers: { userId: … }})
       await InvestmentService.create(payload);
-      navigate('/dashboard');
+      if (onAdded) {
+        onAdded();
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {

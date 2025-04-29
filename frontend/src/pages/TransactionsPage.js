@@ -16,7 +16,10 @@ import {
   Snackbar,
   Alert,
   Fab,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
 import {
   ArrowUpward as ArrowUpwardIcon,
@@ -28,6 +31,7 @@ import {
 import { getTransactions, updateTransaction, deleteTransaction } from "../services/transactionService";
 import EditTransactionDialog from "../components/EditTransactionDialog";
 import DeleteConfirmDialog from "../components/DeleteConfirmDialog";
+import AddTransactionPage from "./AddTransactionPage"; // percorso corretto nel folder pages
 
 export default function TransactionsPage({ transactions: propTransactions = [], categories = [], onTransactionsChange }) {
   const [transactions, setTransactions] = useState(propTransactions);
@@ -41,6 +45,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
     message: '',
     severity: 'success'
   });
+  const [openAddTx, setOpenAddTx] = useState(false); // stato per il dialog nuova transazione
   const navigate = useNavigate();
 
   // Se le transazioni vengono passate come prop, usa quelle
@@ -172,14 +177,23 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
         <Typography variant="h4" gutterBottom>
           Storico Transazioni
         </Typography>
-        <Button 
-          variant="contained" 
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleAddClick}
+        
+        <Dialog
+          open={openAddTx}
+          onClose={() => setOpenAddTx(false)}
+          fullWidth
+          maxWidth="sm"
         >
-          Nuova Transazione
-        </Button>
+          <DialogTitle>Nuova Transazione</DialogTitle>
+          <DialogContent>
+            <AddTransactionPage 
+              onAdded={() => {
+                setOpenAddTx(false);
+                loadTransactions(); // ricarica dati dopo aggiunta
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Cards riepilogo */}
