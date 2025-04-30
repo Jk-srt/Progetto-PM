@@ -1,0 +1,26 @@
+{
+  "executable": "FinanceManager",
+  "splashscreen": {
+    "imageFile": ""
+  },
+  "name": "Financial Management",
+  "author": "Il tuo nome",
+  "singleInstance": true,
+  "environment": "Production",
+  "build": {
+    "appId": "com.finance.manager",
+    "productName": "Financial Management",
+    "copyright": "Copyright © 2024",
+    "buildVersion": "1.0.0",
+    "compression": "maximum",
+    "directories": {
+      "output": "../../bin/Desktop"
+    },
+    "win": {
+      "icon": "wwwroot/images/icon.ico",
+      "target": "portable"
+    },
+    "npmRebuild": false,
+    "nodeGypRebuild": false
+  }
+}
