@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Security.Claims;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurazione Firebase
@@ -50,40 +47,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var firebaseUid = context.Principal?.FindFirst("user_id")?.Value;
-                if (!string.IsNullOrEmpty(firebaseUid))
-                {
-                    var dbContext = context.HttpContext.RequestServices
-                        .GetRequiredService<AppDbContext>();
-                    
-                    var user = await dbContext.Users
-                        .FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
-                    
-                    if (user == null)
-                    {
-                        user = new User
-                        {
-                            FirebaseUid = firebaseUid,
-                            Email = context.Principal.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty,
-                            Name = context.Principal.FindFirst("name")?.Value 
-                                ?? $"Utente {firebaseUid}"
-                        };
-                        dbContext.Users.Add(user);
-                        await dbContext.SaveChangesAsync();
-                    }
-                    
-                    context.HttpContext.Items["User"] = user;
-                }
-            }
-        };
     });
 
-// Configurazione CORS
+// Configurazione CORS aggiornata
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentPolicy", policy =>
@@ -124,8 +90,6 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-    
-    c.OperationFilter<SwaggerAuthFilter>();
 });
 
 builder.Services.AddHttpClient();
@@ -145,14 +109,7 @@ app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => 
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance API V1");
-        c.ConfigObject.AdditionalItems["syntaxHighlight"] = new Dictionary<string, object>
-        {
-            ["activated"] = false
-        };
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
