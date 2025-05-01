@@ -1,7 +1,5 @@
 using Backend.Data;
 using Backend.Models;
-using ElectronNET.API;
-using ElectronNET.API.Entities;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,13 +11,10 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurazione Electron
-builder.WebHost.UseElectron(args);
-builder.Services.AddElectron();
-
 // Configurazione Firebase
 var firebaseProjectId = builder.Configuration["Firebase:ProjectId"] 
     ?? throw new InvalidOperationException("Firebase ProjectId non configurato");
+
 var firebaseCredentialPath = builder.Configuration["Firebase:CredentialPath"]
     ?? "firebase-service-account.json";
 
@@ -91,10 +86,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Configurazione CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ElectronPolicy", policy => 
-        policy.AllowAnyOrigin()
+    options.AddPolicy("DevelopmentPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+
+    options.AddPolicy("ProductionPolicy", policy =>
+    {
+        policy.WithOrigins("https://tuodominio.com")
+            .AllowAnyHeader()
+            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .AllowCredentials();
+    });
+    
+    options.AddPolicy("AllowFrontend",
+        policy => policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 // Configurazione Swagger
@@ -122,7 +135,10 @@ var app = builder.Build();
 
 // Middleware pipeline
 app.UseRouting();
-app.UseCors("ElectronPolicy");
+
+// Ordine corretto middleware
+app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -140,77 +156,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.MapControllers();
 
-// Avvio finestra Electron
-if (HybridSupport.IsElectronActive)
-{
-    await CreateElectronWindow(app);
-}
-
 app.Run();
-
-async Task CreateElectronWindow(WebApplication app)
-{
-    var window = await Electron.WindowManager.CreateWindowAsync(new BrowserWindowOptions
-    {
-        Width = 1280,
-        Height = 800,
-        WebPreferences = new WebPreferences
-        {
-            WebSecurity = false,
-            NodeIntegration = true,
-            ContextIsolation = false
-        },
-        Show = false
-    });
-    
-    window.OnReadyToShow += () => window.Show();
-    window.WebContents.OnCrashed += () => Electron.App.Relaunch();
-    window.OnClosed += () => 
-    {
-        Electron.App.Quit();
-        app.StopAsync().Wait();
-    };
-    
-    await window.WebContents.Session.ClearStorageData();
-    
-    if (app.Environment.IsDevelopment())
-    {
-        window.WebContents.OpenDevTools();
-    }
-}
-
-public class SwaggerAuthFilter : IOperationFilter
-{
-    public void Apply(OpenApiOperation operation, OperationFilterContext context)
-    {
-        var authAttributes = context.MethodInfo
-            .GetCustomAttributes(true)
-            .OfType<AuthorizeAttribute>()
-            .Distinct();
-
-        if (authAttributes.Any())
-        {
-            operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
-            operation.Responses.TryAdd("403", new OpenApiResponse { Description = "Forbidden" });
-
-            var jwtScheme = new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference 
-                { 
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer" 
-                }
-            };
-
-            operation.Security = new List<OpenApiSecurityRequirement>
-            {
-                new OpenApiSecurityRequirement
-                {
-                    [jwtScheme] = new string[] {}
-                }
-            };
-        }
-    }
-}

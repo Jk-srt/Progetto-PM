@@ -7,7 +7,7 @@
  * @returns {Promise<{ labels: Date[], datasets: { data: { x: Date, y: number }[] }[] }>}
  */
 export async function fetchHistoricalData(symbol, timeframe) {
-    const url = new URL(`api/alpha-proxy/historical-data`, window.location.origin);
+    const url = new URL(`http://localhost:5000/api/alpha-proxy/historical-data`, window.location.origin);
     url.searchParams.append('symbol', symbol);
     url.searchParams.append('timeframe', timeframe);
   
