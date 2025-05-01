@@ -25,27 +25,20 @@ namespace Backend.Controllers
         [HttpPost("firebase")]
         public async Task<IActionResult> FirebaseLogin()
         {
-            System.Console.WriteLine("Dentro al metodo FirebaseLogin");
             try
             {
                 var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                if (string.IsNullOrEmpty(token))
-                {
-                    return BadRequest("Token non fornito");
-                }
-
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
                 string firebaseUid = decodedToken.Uid;
-                string? email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
-
+        
                 if (user == null)
                 {
                     user = new User
                     {
                         FirebaseUid = firebaseUid,
-                        Email = email,
+                        Email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null,
                         CreatedAt = DateTime.UtcNow,
                         LastLogin = DateTime.UtcNow,
                         IsActive = true
@@ -55,60 +48,17 @@ namespace Backend.Controllers
                 else
                 {
                     user.LastLogin = DateTime.UtcNow;
-                    if (email != null && user.Email != email)
-                    {
-                        user.Email = email;
-                    }
                 }
 
                 await _context.SaveChangesAsync();
-
-                return Ok(new 
-                {
-                    userId = user.UserId,
-                    email = user.Email,
-                    message = "Login effettuato con successo"
-                });
-            }
-            catch (FirebaseAuthException ex)
-            {
-                return Unauthorized(new { message = $"Token non valido: {ex.Message}" });
+                return Ok(new { userId = user.UserId });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Si è verificato un errore: {ex.Message}" });
+                return StatusCode(500, new { message = $"Errore: {ex.Message}" });
             }
         }
-        
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
-        {
-            try
-            {
-                // Rimuovere la creazione utente Firebase
-                var user = new User
-                {
-                    Email = model.Email,
-                    CreatedAt = DateTime.UtcNow,
-                    LastLogin = DateTime.UtcNow,
-                    IsActive = true
-                };
-        
-                await _context.Users.AddAsync(user);
-                await _context.SaveChangesAsync();
 
-                return Ok(new 
-                {
-                    userId = user.UserId,
-                    email = user.Email,
-                    message = "Registrazione effettuata con successo"
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Si è verificato un errore: {ex.Message}" });
-            }
-        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)

@@ -86,20 +86,10 @@ export const AuthProvider = ({ children }) => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const idToken = await userCredential.user.getIdToken();
 
-            // 2. Registra nel backend
-            await axios.post('http://localhost:5000/api/auth/register', {
-                email,
-                displayName
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${idToken}`
-                }
-            });
-
-            // 3. Aggiorna stato
+            // 2. Registra nel backend usando l'endpoint Firebase
             const backendUser = await registerWithBackend(idToken);
-            localStorage.setItem('userId', backendUser.userId);
 
+            localStorage.setItem('userId', backendUser.userId);
             navigate('/dashboard');
         } catch (error) {
             if (error.code === 'auth/email-already-in-use') {
@@ -109,6 +99,7 @@ export const AuthProvider = ({ children }) => {
             throw error;
         }
     };
+
 
     const loginWithEmailPassword = async (email, password) => {
         try {
