@@ -199,7 +199,7 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [symbol, pollingInterval, isInitialLoadRef.current]);
+  }, [symbol, pollingInterval]);
   
   // Opzioni del grafico ottimizzate
   const chartOptions = useMemo(() => ({
