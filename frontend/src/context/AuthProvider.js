@@ -158,7 +158,8 @@ export const AuthProvider = ({ children }) => {
             loginWithEmailPassword,
             logout
         }}>
-            {!loading && !redirectLoading && children}  // attende entrambi
+            {/* attende entrambi */}
+            {!loading && !redirectLoading && children}
         </AuthContext.Provider>
     );
 };
