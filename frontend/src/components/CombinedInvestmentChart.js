@@ -12,7 +12,6 @@ import {
   TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import FinnhubService from '../services/FinnhubService';
 import { it } from 'date-fns/locale';
 import { fetchRealTimePrice } from '../services/FinnhubService';
 import { fetchHistoricalData } from '../services/YahooFinanceService';
@@ -200,7 +199,7 @@ const CombinedInvestmentChart = ({ symbol, investmentName }) => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [symbol, pollingInterval, isInitialLoadRef.current]);
+  }, [symbol, pollingInterval]);
   
   // Opzioni del grafico ottimizzate
   const chartOptions = useMemo(() => ({

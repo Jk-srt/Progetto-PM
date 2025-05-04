@@ -5,7 +5,7 @@ import CombinedInvestmentChart from '../components/CombinedInvestmentChart';
 import { fetchListingStatus } from '../services/YahooFinanceService';
 
 const AnaliticsPage = () => {
-    const [investments, setInvestments] = useState([]);
+    const [investments] = useState([]);
   const theme = useTheme();
   const [selectedOption, setSelectedOption] = useState(null);
 

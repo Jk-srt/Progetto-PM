@@ -5,7 +5,7 @@ import InvestmentService from '../services/InvestmentService';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, TextField,
-  Button, FormControl, InputLabel, Select, MenuItem,
+  Button,
   Grid, CircularProgress, Alert
 } from '@mui/material';
 

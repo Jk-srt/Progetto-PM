@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -9,7 +9,6 @@ import {
   Typography,
   Divider,
   Button,
-  IconButton,
   Box,
   Tabs,
   Tab,
@@ -25,7 +24,6 @@ import {
   TrendingUp as TrendingUpIcon,
   ShoppingCart as ShoppingCartIcon,
   Savings as SavingsIcon,
-  Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
   Add as AddIcon
 } from '@mui/icons-material';
@@ -310,9 +308,9 @@ const DashboardPage = () => {
     try {
       const userId = localStorage.getItem('userId');
       const [transactions, investments, categories] = await Promise.all([
-        fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
-        fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
-        fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json())
+        fetch('https://backproject.azurewebsites.net/api/transactions', { headers: { userId } }).then(res => res.json()),
+        fetch('https://backproject.azurewebsites.net/api/investments', { headers: { userId } }).then(res => res.json()),
+        fetch('https://backproject.azurewebsites.net/api/categories', { headers: { userId } }).then(res => res.json())
       ]);
       const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
       setData({ transactions, investments, categories });
@@ -340,6 +338,8 @@ const DashboardPage = () => {
       }
     }
     fetchData();
+    // disabilita il warning per la dipendenza mancante fetchData
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

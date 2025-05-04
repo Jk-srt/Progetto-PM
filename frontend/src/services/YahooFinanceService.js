@@ -1,6 +1,6 @@
 import Holidays from 'date-holidays';
 const hd = new Holidays('US');
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://backproject.azurewebsites.net';
 
 export async function fetchHistoricalData(symbol, timeframe) {
   console.log('Fetching historical data for symbol:', symbol, 'and timeframe:', timeframe);

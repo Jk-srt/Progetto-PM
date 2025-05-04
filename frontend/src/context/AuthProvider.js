@@ -10,7 +10,6 @@ import {
 } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
-import axios from 'axios';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA4kTnlAVRxHmr5MdRH0MWrknyT-z3w7ag",
@@ -40,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
     const registerWithBackend = async (token) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/firebase', {
+            const response = await fetch('https://backproject.azurewebsites.net/api/auth/firebase', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

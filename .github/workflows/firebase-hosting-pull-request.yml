@@ -1,0 +1,30 @@
+name: Deploy to Firebase Hosting on PR
+on: pull_request
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+jobs:
+  build_and_preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Step 1: Install dependencies in frontend directory
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      # Step 2: Build the project in frontend directory
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+
+      # Step 3: Deploy with correct entry point
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINANCE_MANAGEMENT_7C778 }}
+          projectId: finance-management-7c778
+          entryPoint: ./frontend  # Specifica la cartella del frontend

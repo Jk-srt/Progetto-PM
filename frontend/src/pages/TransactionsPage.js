@@ -12,7 +12,6 @@ import {
   CardContent,
   Typography,
   IconButton,
-  Button,
   Snackbar,
   Alert,
   Fab,
@@ -56,6 +55,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
       // Altrimenti, carica le transazioni dal server
       loadTransactions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propTransactions]);
 
   const loadTransactions = async () => {

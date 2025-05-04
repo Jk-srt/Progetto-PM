@@ -50,31 +50,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // Configurazione CORS aggiornata
+// Configurazione CORS aggiornata
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("DevelopmentPolicy", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(
+                "https://finance-management-7c778.web.app",  // Nuovo dominio Firebase
+                "https://finance-management-7c778.firebaseapp.com",  // Dominio legacy Firebase
+                "https://backproject.azurewebsites.net"      // Backend stesso (se necessario)
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .WithExposedHeaders("WWW-Authenticate");  // Per errori dettagliati
     });
-
-    options.AddPolicy("ProductionPolicy", policy =>
-    {
-        policy.WithOrigins("https://tuodominio.com")
-            .AllowAnyHeader()
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .AllowCredentials();
-    });
-    
-    options.AddPolicy("AllowFrontend",
-        policy => policy
-            .WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
 });
+
 
 // Configurazione Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -98,13 +90,15 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 // Middleware pipeline
+
 app.UseRouting();
 
-// Ordine corretto middleware
-app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
+// Applica CORS prima di autenticazione/authorization
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 
 if (app.Environment.IsDevelopment())
 {
