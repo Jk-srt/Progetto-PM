@@ -54,7 +54,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("https://finance-management-7c778.firebaseapp.com/")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -64,7 +64,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "https://backproject.azurewebsites.net",
-            "http://localhost:3000"      // <-- aggiunto per consentire le chiamate dal tuo front in sviluppo
+            "https://finance-management-7c778.firebaseapp.com/"      // <-- aggiunto per consentire le chiamate dal tuo front in sviluppo
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
