@@ -257,7 +257,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
                   <TableCell><strong>Data</strong></TableCell>
                   <TableCell><strong>Descrizione</strong></TableCell>
                   <TableCell><strong>Categoria</strong></TableCell>
-                  <TableCell><strong>Metodo</strong></TableCell>
+                  <TableCell><strong>Tipo di Pagamento</strong></TableCell>
                   <TableCell align="right"><strong>Importo</strong></TableCell>
                   <TableCell align="center"><strong>Azioni</strong></TableCell>
                 </TableRow>
@@ -270,7 +270,8 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
                     </TableCell>
                     <TableCell>{transaction.description}</TableCell>
                     <TableCell>{transaction.category?.name || 'N/A'}</TableCell>
-                    <TableCell>{transaction.method || 'N/A'}</TableCell>
+                    <TableCell>{transaction.type === 0 ? 'Entrata' : transaction.type === 1 ? 'Uscita' : transaction.type === 2 
+                        ? 'Transferimento' : 'N/A'} </TableCell>
                     <TableCell align="right">
                       <span
                           style={{

@@ -38,7 +38,8 @@ import {
   LineElement,
   ArcElement,
   Tooltip,
-  Legend
+  Legend,
+  TimeScale  // Aggiungi TimeScale
 } from 'chart.js';
 import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
@@ -48,7 +49,7 @@ import AddTransactionPage from './AddTransactionPage';
 import AddInvestmentPage from './AddInvestmentPage'; // Aggiunto form investimento
 import AnaliticsPage from './AnaliticsPage';
 
-// Registra gli elementi Chart.js una sola volta
+// Aggiorna la registrazione dei componenti
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -56,7 +57,8 @@ ChartJS.register(
     LineElement,
     ArcElement,
     Tooltip,
-    Legend
+    Legend,
+    TimeScale  // Registra TimeScale
 );
 
 const DashboardPage = () => {
@@ -71,6 +73,8 @@ const DashboardPage = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [timeRange, setTimeRange] = useState('1m');
+  const [timeGranularity, setTimeGranularity] = useState('day');
   const [performanceData, setPerformanceData] = useState({
     labels: [],
     datasets: [{
@@ -103,44 +107,117 @@ const DashboardPage = () => {
     };
   }, []);
 
-  // Funzione per generare dati performance
-  const generatePerformanceData = (transactions) => {
+  // Funzione migliorata per generare i dati delle performance
+  // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
+  const generatePerformanceData = (transactions, range = '1m', granularity = 'day') => {
     if (!transactions || transactions.length === 0) {
       return {
         labels: [],
         datasets: [{
-          label: 'Rendimento',
+          label: 'Patrimonio',
           data: [],
           borderColor: theme.palette.primary.main,
           tension: 0.4
         }]
       };
     }
-    const monthlySums = {};
-    transactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-      if (!monthlySums[monthYear]) monthlySums[monthYear] = 0;
-      monthlySums[monthYear] += transaction.amount;
-    });
-    const monthlyData = Object.entries(monthlySums)
-        .map(([key, value]) => {
-          const [month, year] = key.split('/');
-          return {
-            date: new Date(parseInt(year), parseInt(month) - 1, 1),
-            amount: value
-          };
-        })
-        .sort((a, b) => a.date - b.date);
 
+    // Ordina le transazioni per data
+    const sortedTransactions = [...transactions].sort((a, b) =>
+        new Date(a.date) - new Date(b.date)
+    );
+
+    // Determina l'intervallo di date per il grafico
+    const now = new Date();
+    let startDate = new Date();
+
+    switch(range) {
+      case '1w': // 1 settimana
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '1m': // 1 mese
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case '6m': // 6 mesi
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1y': // 1 anno
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        startDate.setMonth(now.getMonth() - 1); // Predefinito: 1 mese
+    }
+
+    // Calcola il saldo iniziale (somma di tutte le transazioni prima della data di inizio)
+    const initialBalance = sortedTransactions
+        .filter(tx => new Date(tx.date) < startDate)
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+    // Genera punti data basati sulla granularità
+    const datePoints = [];
+    const dateIterator = new Date(startDate);
+
+    while (dateIterator <= now) {
+      datePoints.push(new Date(dateIterator));
+
+      if (granularity === 'day') {
+        dateIterator.setDate(dateIterator.getDate() + 1);
+      } else if (granularity === 'week') {
+        dateIterator.setDate(dateIterator.getDate() + 7);
+      } else { // month
+        dateIterator.setMonth(dateIterator.getMonth() + 1);
+      }
+    }
+
+    // Calcola il saldo per ogni punto data
+    let balance = initialBalance;
+    const balanceData = [];
+
+    for (let i = 0; i < datePoints.length; i++) {
+      const currentDate = datePoints[i];
+      const nextDate = i < datePoints.length - 1 ? datePoints[i + 1] : new Date(now.getTime() + 86400000);
+
+      // Trova le transazioni avvenute tra la data corrente e quella successiva
+      const periodTransactions = sortedTransactions.filter(tx => {
+        const txDate = new Date(tx.date);
+        return txDate >= currentDate && txDate < nextDate;
+      });
+
+      // Aggiungi le transazioni al saldo
+      const periodSum = periodTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+      balance += periodSum;
+
+      balanceData.push({
+        date: currentDate,
+        balance
+      });
+    }
+
+    // Formatta le etichette in base alla granularità
     const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-    const labels = monthlyData.map(item => `${monthNames[item.date.getMonth()]} ${item.date.getFullYear()}`);
-    const data = monthlyData.map(item => item.amount);
+
+    const labels = balanceData.map(item => {
+      const date = item.date;
+
+      if (granularity === 'day') {
+        return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+      } else if (granularity === 'week') {
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        return `Sett ${weekNum}`;
+      } else { // month
+        return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+      }
+    });
+
+    // Estrai i valori di saldo per il grafico
+    const data = balanceData.map(item => item.balance);
 
     return {
       labels,
       datasets: [{
-        label: 'Rendimento',
+        label: 'Patrimonio',
         data,
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.light,
@@ -179,22 +256,50 @@ const DashboardPage = () => {
   // Chart.js options
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
         backgroundColor: theme.palette.background.paper,
         titleColor: theme.palette.text.primary,
-        bodyColor: theme.palette.text.secondary
+        bodyColor: theme.palette.text.secondary,
+        callbacks: {
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += '€' + context.parsed.y.toFixed(2);
+            }
+            return label;
+          }
+        }
       }
     },
     scales: {
       x: {
-        ticks: { color: theme.palette.text.secondary },
+        type: 'time',
+        time: {
+          unit: timeGranularity === 'day' ? 'day' :
+              timeGranularity === 'week' ? 'week' : 'month',
+          displayFormats: {
+            day: 'd MMM',
+            week: 'Sett W',
+            month: 'MMM yyyy'
+          }
+        },
+        ticks: {
+          color: theme.palette.text.secondary,
+          maxRotation: 45,
+          minRotation: 0
+        },
         grid: { color: theme.palette.divider }
       },
       y: {
         ticks: { color: theme.palette.text.secondary },
-        grid: { color: theme.palette.divider }
+        grid: { color: theme.palette.divider },
+        beginAtZero: false
       }
     }
   };
@@ -415,18 +520,119 @@ const DashboardPage = () => {
                   <Grid container spacing={3} sx={{ mb: 3 }}>
                     <Grid item xs={12} lg={8}>
                       <Card>
-                        <CardHeader title="Andamento Patrimonio" />
-                        <CardContent sx={{ height: 300 }}>
-                          <Line
-                              ref={(ref) => {
-                                if (ref && ref.chartInstance) {
-                                  lineChartRef.current = ref.chartInstance;
-                                }
-                              }}
-                              data={performanceData}
-                              options={chartOptions}
-                              height={300}
-                          />
+                        <CardHeader
+                            title="Andamento Patrimonio"
+                            action={
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                  Periodo:
+                                </Typography>
+                                <Button
+                                    variant={timeRange === '1w' ? 'contained' : 'outlined'}
+                                    size="small"
+                                    onClick={() => setTimeRange('1w')}
+                                    sx={{ mr: 0.5, minWidth: 'auto', px: 1 }}
+                                >
+                                  1S
+                                </Button>
+                                <Button
+                                    variant={timeRange === '1m' ? 'contained' : 'outlined'}
+                                    size="small"
+                                    onClick={() => setTimeRange('1m')}
+                                    sx={{ mr: 0.5, minWidth: 'auto', px: 1 }}
+                                >
+                                  1M
+                                </Button>
+                                <Button
+                                    variant={timeRange === '6m' ? 'contained' : 'outlined'}
+                                    size="small"
+                                    onClick={() => setTimeRange('6m')}
+                                    sx={{ mr: 0.5, minWidth: 'auto', px: 1 }}
+                                >
+                                  6M
+                                </Button>
+                                <Button
+                                    variant={timeRange === '1y' ? 'contained' : 'outlined'}
+                                    size="small"
+                                    onClick={() => setTimeRange('1y')}
+                                    sx={{ minWidth: 'auto', px: 1 }}
+                                >
+                                  1A
+                                </Button>
+                              </Box>
+                            }
+                        />
+                        <CardContent sx={{ height: 300, position: 'relative' }}>
+                          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start' }}>
+                            <Button
+                                variant={timeGranularity === 'day' ? 'contained' : 'outlined'}
+                                size="small"
+                                onClick={() => setTimeGranularity('day')}
+                                sx={{ mr: 1 }}
+                            >
+                              Giorni
+                            </Button>
+                            <Button
+                                variant={timeGranularity === 'week' ? 'contained' : 'outlined'}
+                                size="small"
+                                onClick={() => setTimeGranularity('week')}
+                                sx={{ mr: 1 }}
+                            >
+                              Settimane
+                            </Button>
+                            <Button
+                                variant={timeGranularity === 'month' ? 'contained' : 'outlined'}
+                                size="small"
+                                onClick={() => setTimeGranularity('month')}
+                            >
+                              Mesi
+                            </Button>
+                          </Box>
+                          <div style={{ position: 'absolute', width: '100%', height: 'calc(100% - 48px)', bottom: 0 }}>
+                            <Line
+                                ref={(ref) => {
+                                  if (ref && ref.chartInstance) {
+                                    lineChartRef.current = ref.chartInstance;
+                                  }
+                                }}
+                                data={performanceData}
+                                options={{
+                                  responsive: true,
+                                  maintainAspectRatio: false,
+                                  plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                      backgroundColor: theme.palette.background.paper,
+                                      titleColor: theme.palette.text.primary,
+                                      bodyColor: theme.palette.text.secondary,
+                                      callbacks: {
+                                        label: function(context) {
+                                          let label = context.dataset.label || '';
+                                          if (label) {
+                                            label += ': ';
+                                          }
+                                          if (context.parsed.y !== null) {
+                                            label += '€' + context.parsed.y.toFixed(2);
+                                          }
+                                          return label;
+                                        }
+                                      }
+                                    }
+                                  },
+                                  scales: {
+                                    x: {
+                                      ticks: { color: theme.palette.text.secondary },
+                                      grid: { color: theme.palette.divider }
+                                    },
+                                    y: {
+                                      ticks: { color: theme.palette.text.secondary },
+                                      grid: { color: theme.palette.divider },
+                                      beginAtZero: false
+                                    }
+                                  }
+                                }}
+                            />
+                          </div>
                         </CardContent>
                       </Card>
                     </Grid>
