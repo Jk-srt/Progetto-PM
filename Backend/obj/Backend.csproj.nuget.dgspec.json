@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj": {}
+    "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj": {
+    "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj",
+        "projectUniqueName": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
         "projectName": "Backend",
-        "projectPath": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\Backend.csproj",
+        "projectPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\Backend.csproj",
         "packagesPath": "C:\\Users\\feder\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\feder\\OneDrive\\Desktop\\Progetto PM\\Progetto-PM\\Backend\\obj\\",
+        "outputPath": "C:\\Users\\feder\\Desktop\\Progetto-PM\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\feder\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -52,10 +52,6 @@
               "target": "Package",
               "version": "[9.0.3, )"
             },
-            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
-              "target": "Package",
-              "version": "[9.0.3, )"
-            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.3, )"
@@ -69,20 +65,6 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[9.0.3, )"
-            },
-            "Microsoft.EntityFrameworkCore.SqlServer": {
-              "target": "Package",
-              "version": "[9.0.3, )"
-            },
-            "Microsoft.EntityFrameworkCore.Tools": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[8.0.4, )"
-            },
-            "Microsoft.Extensions.Configuration.Json": {
-              "target": "Package",
-              "version": "[7.0.0, )"
             },
             "Microsoft.Extensions.Identity.Stores": {
               "target": "Package",
@@ -124,7 +106,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
