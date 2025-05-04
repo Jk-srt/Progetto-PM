@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
             }
         };
         processRedirect();
-    }, []);
+    }, [navigate]);
 
     const registerWithBackend = async (token) => {
         try {
