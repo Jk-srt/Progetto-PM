@@ -317,10 +317,12 @@ export const fetchBasicFinancials = async (symbol, metric = 'all') => {
   }
 };
 
-export default {
+const finnhubService = {
   fetchMarketNews,
   fetchCompanyNews,
   fetchRealTimePrice,
   fetchCompanyProfile,
   fetchBasicFinancials
 };
+
+export default finnhubService;

@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AsyncSelect from 'react-select/async';
-import { fetchListingStatus } from '../services/YahooFinanceService';
 import { fetchRealTimePrice } from '../services/FinnhubService';
-import CombinedInvestmentChart from './CombinedInvestmentChart';
 import InvestmentService from '../services/InvestmentService';
 import {
   Card,
@@ -11,7 +8,6 @@ import {
   Typography,
   Box,
   Grid,
-  Paper,
   useTheme,
   Table,
   TableBody,
@@ -26,8 +22,7 @@ import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
 const PortfolioAnalytics = () => {
@@ -37,7 +32,6 @@ const PortfolioAnalytics = () => {
   const [totalCurrentValue, setTotalCurrentValue] = useState(0);
   const [totalGainLoss, setTotalGainLoss] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedOption, setSelectedOption] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {

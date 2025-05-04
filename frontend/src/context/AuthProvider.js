@@ -10,7 +10,6 @@ import {
 } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
-import axios from 'axios';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA4kTnlAVRxHmr5MdRH0MWrknyT-z3w7ag",

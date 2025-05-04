@@ -44,4 +44,7 @@ class InvestmentService {
 		});
 	}
 }
-export default new InvestmentService();
+
+const investmentService = new InvestmentService();
+
+export default investmentService;

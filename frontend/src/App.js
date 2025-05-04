@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
@@ -7,7 +7,6 @@ import { AuthProvider, useAuth } from './context/AuthProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingScreen } from './components/LoadingScreen';
 import { ErrorPage } from './pages/ErrorPage';
-import DebugLocation from './components/DebugLocation';
 import AddTransactionPage from './pages/AddTransactionPage';
 import AddInvestmentPage from './pages/AddInvestmentPage';
 
@@ -91,7 +90,6 @@ export default function App() {
           <ErrorBoundary>
             <Suspense fallback={<LoadingScreen />}>
               <RouteManager />
-              <DebugLocation />
             </Suspense>
           </ErrorBoundary>
         </AuthProvider>
