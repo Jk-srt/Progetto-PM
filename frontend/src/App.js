@@ -56,7 +56,13 @@ const globalScrollbarStyles = {
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
+  const token = localStorage.getItem('token');
+  console.log("App auth state:", { loading, user, token });
+
+  if (loading) {
+    return <div>Caricamento autenticazione...</div>;
+  }
+
   if (!user) return <Navigate to="/login" replace />;
 
   // Salva l'utente una volta autenticato

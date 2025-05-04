@@ -28,10 +28,13 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [redirectLoading, setRedirectLoading] = useState(true);  // nuovo stato
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log("AuthProvider mounted, inizializzo listener auth");
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            console.log("onAuthStateChanged → currentUser:", currentUser);
             setUser(currentUser);
             setLoading(false);
         });
@@ -40,19 +43,25 @@ export const AuthProvider = ({ children }) => {
 
     // Gestione risultato del redirect Google
     useEffect(() => {
+        console.log("useEffect redirect Google → elaborazione risultato");
         const processRedirect = async () => {
             try {
                 const result = await getRedirectResult(auth);
+                console.log("getRedirectResult → result:", result);
                 if (result) {
                     const idToken = await result.user.getIdToken();
+                    console.log("Token da redirect:", idToken);
                     localStorage.setItem('token', idToken);
                     const backendResponse = await registerWithBackend(idToken);
+                    console.log("registerWithBackend response:", backendResponse);
                     localStorage.setItem('userId', backendResponse.userId);
                     navigate('/dashboard');
                 }
             } catch (error) {
                 console.error("Errore nel redirect Google:", error);
                 navigate('/login');
+            } finally {
+                setRedirectLoading(false);      // rilascia il blocco
             }
         };
         processRedirect();
@@ -82,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const loginWithGoogle = async () => {
+        console.log("loginWithGoogle → avvio signInWithRedirect");
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
     };
@@ -148,7 +158,7 @@ export const AuthProvider = ({ children }) => {
             loginWithEmailPassword,
             logout
         }}>
-            {!loading && children}
+            {!loading && !redirectLoading && children}  // attende entrambi
         </AuthContext.Provider>
     );
 };
