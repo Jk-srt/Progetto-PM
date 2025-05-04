@@ -2,12 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
     getAuth,
     onAuthStateChanged,
-    signInWithRedirect,
+    signInWithPopup,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signOut,
-    getRedirectResult
+    signOut 
 } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
@@ -28,37 +27,15 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [redirectLoading, setRedirectLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("AuthProvider: onAuthStateChanged + getRedirectResult");
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            console.log("onAuthStateChanged →", currentUser);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             setLoading(false);
-
-            if (currentUser && redirectLoading) {
-                try {
-                    const result = await getRedirectResult(auth);
-                    console.log("getRedirectResult →", result);
-                    if (result?.user) {
-                        const idToken = await result.user.getIdToken();
-                        localStorage.setItem('token', idToken);
-                        const backendResponse = await registerWithBackend(idToken);
-                        localStorage.setItem('userId', backendResponse.userId);
-                        navigate('/dashboard');
-                    }
-                } catch (error) {
-                    console.error("Errore nel redirect Google:", error);
-                    navigate('/login');
-                } finally {
-                    setRedirectLoading(false);
-                }
-            }
         });
         return () => unsubscribe();
-    }, [navigate, redirectLoading]);
+    }, []);
 
     const registerWithBackend = async (token) => {
         try {
@@ -84,9 +61,22 @@ export const AuthProvider = ({ children }) => {
     };
 
     const loginWithGoogle = async () => {
-        console.log("loginWithGoogle → avvio signInWithRedirect");
         const provider = new GoogleAuthProvider();
-        await signInWithRedirect(auth, provider);
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const idToken = await result.user.getIdToken();
+            localStorage.setItem('token', idToken);
+
+            const backendResponse = await registerWithBackend(idToken);
+            localStorage.setItem('userId', backendResponse.userId);
+            
+
+            navigate('/dashboard');
+            return result.user;
+        } catch (error) {
+            console.error("Errore durante il login con Google:", error);
+            alert(error.message);
+        }
     };
 
     const registerWithEmailPassword = async (email, password, displayName) => {
@@ -123,7 +113,7 @@ export const AuthProvider = ({ children }) => {
             return userCredential.user;
         } catch (error) {
             console.error("Errore durante il login:", error);
-            navigate('/login');
+            alert(error.message);
         }
     };
 
@@ -151,8 +141,7 @@ export const AuthProvider = ({ children }) => {
             loginWithEmailPassword,
             logout
         }}>
-            {/* attende entrambi */}
-            {!loading && !redirectLoading && children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };
