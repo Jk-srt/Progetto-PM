@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -9,6 +9,7 @@ import {
   Typography,
   Divider,
   Button,
+  IconButton,
   Box,
   Tabs,
   Tab,
@@ -24,6 +25,7 @@ import {
   TrendingUp as TrendingUpIcon,
   ShoppingCart as ShoppingCartIcon,
   Savings as SavingsIcon,
+  Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
   Add as AddIcon
 } from '@mui/icons-material';
@@ -338,8 +340,6 @@ const DashboardPage = () => {
       }
     }
     fetchData();
-    // disabilita il warning per la dipendenza mancante fetchData
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
