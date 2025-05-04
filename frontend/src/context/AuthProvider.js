@@ -28,44 +28,37 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [redirectLoading, setRedirectLoading] = useState(true);  // nuovo stato
+    const [redirectLoading, setRedirectLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("AuthProvider mounted, inizializzo listener auth");
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            console.log("onAuthStateChanged → currentUser:", currentUser);
+        console.log("AuthProvider: onAuthStateChanged + getRedirectResult");
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            console.log("onAuthStateChanged →", currentUser);
             setUser(currentUser);
             setLoading(false);
+
+            if (currentUser && redirectLoading) {
+                try {
+                    const result = await getRedirectResult(auth);
+                    console.log("getRedirectResult →", result);
+                    if (result?.user) {
+                        const idToken = await result.user.getIdToken();
+                        localStorage.setItem('token', idToken);
+                        const backendResponse = await registerWithBackend(idToken);
+                        localStorage.setItem('userId', backendResponse.userId);
+                        navigate('/dashboard');
+                    }
+                } catch (error) {
+                    console.error("Errore nel redirect Google:", error);
+                    navigate('/login');
+                } finally {
+                    setRedirectLoading(false);
+                }
+            }
         });
         return () => unsubscribe();
-    }, []);
-
-    // Gestione risultato del redirect Google
-    useEffect(() => {
-        console.log("useEffect redirect Google → elaborazione risultato");
-        const processRedirect = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                console.log("getRedirectResult → result:", result);
-                if (result) {
-                    const idToken = await result.user.getIdToken();
-                    console.log("Token da redirect:", idToken);
-                    localStorage.setItem('token', idToken);
-                    const backendResponse = await registerWithBackend(idToken);
-                    console.log("registerWithBackend response:", backendResponse);
-                    localStorage.setItem('userId', backendResponse.userId);
-                    navigate('/dashboard');
-                }
-            } catch (error) {
-                console.error("Errore nel redirect Google:", error);
-                navigate('/login');
-            } finally {
-                setRedirectLoading(false);      // rilascia il blocco
-            }
-        };
-        processRedirect();
-    }, [navigate]);
+    }, [navigate, redirectLoading]);
 
     const registerWithBackend = async (token) => {
         try {
