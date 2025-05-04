@@ -55,25 +55,21 @@ builder.Services.AddCors(options =>
     options.AddPolicy("DevelopmentPolicy", policy =>
     {
         policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 
     options.AddPolicy("ProductionPolicy", policy =>
     {
-        policy.WithOrigins("https://tuodominio.com")
-            .AllowAnyHeader()
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .AllowCredentials();
+        policy.WithOrigins(
+            "https://backproject.azurewebsites.net",
+            "http://localhost:3000"      // <-- aggiunto per consentire le chiamate dal tuo front in sviluppo
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
-    
-    options.AddPolicy("AllowFrontend",
-        policy => policy
-            .WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
 });
 
 // Configurazione Swagger
@@ -100,9 +96,11 @@ var app = builder.Build();
 // Middleware pipeline
 app.UseRouting();
 
-// Ordine corretto middleware
-app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentPolicy" : "ProductionPolicy");
-app.UseCors("AllowFrontend");
+// applica la policy giusta in base all’ambiente
+app.UseCors(app.Environment.IsDevelopment()
+    ? "DevelopmentPolicy"
+    : "ProductionPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

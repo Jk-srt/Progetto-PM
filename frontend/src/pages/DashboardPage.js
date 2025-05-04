@@ -205,9 +205,9 @@ const DashboardPage = () => {
     try {
       const userId = localStorage.getItem('userId');
       const [transactions, investments, categories] = await Promise.all([
-        fetch('http://localhost:5000/api/transactions', { headers: { userId } }).then(res => res.json()),
-        fetch('http://localhost:5000/api/investments', { headers: { userId } }).then(res => res.json()),
-        fetch('http://localhost:5000/api/categories', { headers: { userId } }).then(res => res.json())
+        fetch('https://backproject.azurewebsites.net/api/transactions', { headers: { userId } }).then(res => res.json()),
+        fetch('https://backproject.azurewebsites.net/api/investments', { headers: { userId } }).then(res => res.json()),
+        fetch('https://backproject.azurewebsites.net/api/categories', { headers: { userId } }).then(res => res.json())
       ]);
       const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
       setData({ transactions, investments, categories });

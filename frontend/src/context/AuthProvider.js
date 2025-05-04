@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
     const registerWithBackend = async (token) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/firebase', {
+            const response = await fetch('https://backproject.azurewebsites.net/api/auth/firebase', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

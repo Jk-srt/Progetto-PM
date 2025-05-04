@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_URL = 'http://localhost:5000/api/investments';
+const API_URL = 'https://backproject.azurewebsites.net/api/investments';
 
 class InvestmentService {
 	// recupera tutti gli investimenti

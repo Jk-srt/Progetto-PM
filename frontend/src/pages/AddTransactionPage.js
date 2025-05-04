@@ -60,7 +60,7 @@ const AddTransactionPage = ({ onAdded }) => {
     console.log('userId',localStorage.getItem('userId')); 
     console.log(transaction); // Debug: verifica i dati della transazione
     try {
-      const response = await fetch('http://localhost:5000/api/transactions', {
+      const response = await fetch('https://backproject.azurewebsites.net/api/transactions', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',

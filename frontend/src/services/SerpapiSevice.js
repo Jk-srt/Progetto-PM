@@ -43,7 +43,7 @@ export const fetchHistoricalData = async (symbol, timeframe) => {
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(
-          `http://localhost:5000/api/serp-proxy/historical-data?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`,
+          `https://backproject.azurewebsites.net/api/serp-proxy/historical-data?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`,
           {
               signal: controller.signal,
               headers: {

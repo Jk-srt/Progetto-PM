@@ -1,5 +1,5 @@
 // services/transactionService.js
-const API_URL = 'http://localhost:5000/api/transactions'; // Changed from '/api/transactions' to include the full URL
+const API_URL = 'https://backproject.azurewebsites.net/api/transactions'; // Changed from '/api/transactions' to include the full URL
 
 export const getTransactions = async () => {
   const response = await fetch(API_URL, {
