@@ -9,7 +9,6 @@ import {
   Typography,
   Divider,
   Button,
-  IconButton,
   Box,
   Tabs,
   Tab,
@@ -25,7 +24,6 @@ import {
   TrendingUp as TrendingUpIcon,
   ShoppingCart as ShoppingCartIcon,
   Savings as SavingsIcon,
-  Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
   Add as AddIcon
 } from '@mui/icons-material';
@@ -109,7 +107,7 @@ const DashboardPage = () => {
 
   // Funzione migliorata per generare i dati delle performance
   // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
-  const generatePerformanceData = (transactions, range = '1m', granularity = 'day') => {
+  const generatePerformanceData = useCallback((transactions, range = '1m', granularity = 'day') => {
     if (!transactions || transactions.length === 0) {
       return {
         labels: [],
@@ -227,7 +225,7 @@ const DashboardPage = () => {
         pointBackgroundColor: theme.palette.primary.main
       }]
     };
-  };
+  }, [theme]);
 
   // Allocazione portafoglio dinamica in base a transazioni e categorie
   const portfolioAllocationData = {
@@ -253,59 +251,9 @@ const DashboardPage = () => {
     }]
   };
 
-  // Chart.js options
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: theme.palette.background.paper,
-        titleColor: theme.palette.text.primary,
-        bodyColor: theme.palette.text.secondary,
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += '€' + context.parsed.y.toFixed(2);
-            }
-            return label;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: timeGranularity === 'day' ? 'day' :
-              timeGranularity === 'week' ? 'week' : 'month',
-          displayFormats: {
-            day: 'd MMM',
-            week: 'Sett W',
-            month: 'MMM yyyy'
-          }
-        },
-        ticks: {
-          color: theme.palette.text.secondary,
-          maxRotation: 45,
-          minRotation: 0
-        },
-        grid: { color: theme.palette.divider }
-      },
-      y: {
-        ticks: { color: theme.palette.text.secondary },
-        grid: { color: theme.palette.divider },
-        beginAtZero: false
-      }
-    }
-  };
-
   // funzione per ricaricare i dati
-  const fetchData = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
@@ -325,7 +273,7 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [generatePerformanceData]);
 
   useEffect(() => {
     const googleUser = localStorage.getItem("GoogleUser");
@@ -340,7 +288,7 @@ const DashboardPage = () => {
       }
     }
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     

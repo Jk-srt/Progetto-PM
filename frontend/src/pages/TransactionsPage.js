@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -12,7 +12,6 @@ import {
   CardContent,
   Typography,
   IconButton,
-  Button,
   Snackbar,
   Alert,
   Fab,
@@ -48,17 +47,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
   const [openAddTx, setOpenAddTx] = useState(false); // stato per il dialog nuova transazione
   const navigate = useNavigate();
 
-  // Se le transazioni vengono passate come prop, usa quelle
-  useEffect(() => {
-    if (propTransactions.length > 0) {
-      setTransactions(propTransactions);
-    } else {
-      // Altrimenti, carica le transazioni dal server
-      loadTransactions();
-    }
-  }, [propTransactions]);
-
-  const loadTransactions = async () => {
+  async function loadTransactions() {
     try {
       setLoading(true);
       const data = await getTransactions();
@@ -68,7 +57,16 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  // Se le transazioni vengono passate come prop, usa quelle
+  useEffect(() => {
+    if (propTransactions.length > 0) {
+      setTransactions(propTransactions);
+    } else {
+      loadTransactions();
+    }
+  }, [propTransactions, loadTransactions]);
 
   // Calcola totali
   const totalEntrate = transactions
