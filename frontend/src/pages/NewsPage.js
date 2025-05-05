@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Button, Badge, Form } from 'react-bootstrap';
 import { fetchMarketNews } from '../services/FinnhubService';
+import './NewsPage.css';  // aggiunto import CSS
 
 const NewsPage = () => {
     const [news, setNews] = useState([]);
@@ -109,7 +110,7 @@ const NewsPage = () => {
                         {news.slice(0, newsCount).map((article, index) => (
                             <Col key={index} md={4} className="mb-4">
                                 <Card
-                                    className="h-100 shadow-sm"
+                                    className="h-100 shadow-sm news-card"         // aggiunta classe news-card
                                     onClick={() => window.open(article.url, '_blank')} // Open news in a new tab
                                     style={{ cursor: 'pointer' }}
                                 >
@@ -117,6 +118,7 @@ const NewsPage = () => {
                                         <Card.Img
                                             variant="top"
                                             src={article.image}
+                                            className="news-image"         // aggiunta classe news-image
                                             onError={(e) => e.target.style.display = 'none'}
                                         />
                                     )}
