@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { fetchRealTimePrice } from '../services/FinnhubService';
-import InvestmentService from '../services/InvestmentService';
 import {
   Card,
   CardHeader,
