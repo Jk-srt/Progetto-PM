@@ -39,17 +39,18 @@ import {
   ArcElement,
   Tooltip,
   Legend,
-  TimeScale  // Aggiungi TimeScale
+  TimeScale
 } from 'chart.js';
 import Transactions from './TransactionsPage';
 import NewsPage from './NewsPage';
 import AssistantPage from './AssistantPage';
 import PortfolioAnalytics from '../components/PortfolioAnalytics';
 import AddTransactionPage from './AddTransactionPage';
-import AddInvestmentPage from './AddInvestmentPage'; // Aggiunto form investimento
+import AddInvestmentPage from './AddInvestmentPage';
 import AnaliticsPage from './AnaliticsPage';
+import EditInvestmentDialog from '../components/EditInvestmentDialog'; // Import dialog
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog'; // Import delete dialog
 
-// Aggiorna la registrazione dei componenti
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -58,7 +59,7 @@ ChartJS.register(
     ArcElement,
     Tooltip,
     Legend,
-    TimeScale  // Registra TimeScale
+    TimeScale
 );
 
 const DashboardPage = () => {
@@ -87,13 +88,15 @@ const DashboardPage = () => {
   const [userImage, setUserImage] = useState(null);
   const [userName, setUserName] = useState(null);
   const [openAddTx, setOpenAddTx] = useState(false);
-  const [openAddInv, setOpenAddInv] = useState(false); // stato per dialog nuovo investimento
+  const [openAddInv, setOpenAddInv] = useState(false);
 
-  // Chart refs per cleanup
+  const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const [isEditInvestmentDialogOpen, setIsEditInvestmentDialogOpen] = useState(false);
+  const [isDeleteInvestmentDialogOpen, setIsDeleteInvestmentDialogOpen] = useState(false);
+
   const lineChartRef = useRef(null);
   const pieChartRef = useRef(null);
 
-  // Cleanup charts on unmount
   useEffect(() => {
     return () => {
       if (lineChartRef.current) {
@@ -107,8 +110,6 @@ const DashboardPage = () => {
     };
   }, []);
 
-  // Funzione migliorata per generare i dati delle performance
-  // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
   const generatePerformanceData = (transactions, range = '1m', granularity = 'day') => {
     if (!transactions || transactions.length === 0) {
       return {
@@ -122,103 +123,67 @@ const DashboardPage = () => {
       };
     }
 
-    // Ordina le transazioni per data
-    const sortedTransactions = [...transactions].sort((a, b) =>
-        new Date(a.date) - new Date(b.date)
-    );
-
-    // Determina l'intervallo di date per il grafico
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     const now = new Date();
-    let startDate = new Date();
-
+    let startDate = new Date(now);
     switch(range) {
-      case '1w': // 1 settimana
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '1m': // 1 mese
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case '6m': // 6 mesi
-        startDate.setMonth(now.getMonth() - 6);
-        break;
-      case '1y': // 1 anno
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-      default:
-        startDate.setMonth(now.getMonth() - 1); // Predefinito: 1 mese
+      case '1w': startDate.setDate(now.getDate() - 7); break;
+      case '1m': startDate.setMonth(now.getMonth() - 1); break;
+      case '6m': startDate.setMonth(now.getMonth() - 6); break;
+      case '1y': startDate.setFullYear(now.getFullYear() - 1); break;
+      default: startDate.setMonth(now.getMonth() - 1);
     }
 
-    // Calcola il saldo iniziale (somma di tutte le transazioni prima della data di inizio)
-    const initialBalance = sortedTransactions
-        .filter(tx => new Date(tx.date) < startDate)
-        .reduce((sum, tx) => sum + tx.amount, 0);
+    const filteredTx = sortedTransactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      return txDate >= startDate && txDate <= now;
+    });
 
-    // Genera punti data basati sulla granularità
-    const datePoints = [];
-    const dateIterator = new Date(startDate);
-
-    while (dateIterator <= now) {
-      datePoints.push(new Date(dateIterator));
-
-      if (granularity === 'day') {
-        dateIterator.setDate(dateIterator.getDate() + 1);
-      } else if (granularity === 'week') {
-        dateIterator.setDate(dateIterator.getDate() + 7);
-      } else { // month
-        dateIterator.setMonth(dateIterator.getMonth() + 1);
-      }
+    let txToUse = filteredTx;
+    if (txToUse.length === 0 && sortedTransactions.length > 0) {
+      txToUse = [sortedTransactions[0], sortedTransactions[sortedTransactions.length - 1]];
     }
 
-    // Calcola il saldo per ogni punto data
-    let balance = initialBalance;
+    let runningBalance = 0;
     const balanceData = [];
-
-    for (let i = 0; i < datePoints.length; i++) {
-      const currentDate = datePoints[i];
-      const nextDate = i < datePoints.length - 1 ? datePoints[i + 1] : new Date(now.getTime() + 86400000);
-
-      // Trova le transazioni avvenute tra la data corrente e quella successiva
-      const periodTransactions = sortedTransactions.filter(tx => {
-        const txDate = new Date(tx.date);
-        return txDate >= currentDate && txDate < nextDate;
-      });
-
-      // Aggiungi le transazioni al saldo
-      const periodSum = periodTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-      balance += periodSum;
-
-      balanceData.push({
-        date: currentDate,
-        balance
-      });
-    }
-
-    // Formatta le etichette in base alla granularità
-    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-
-    const labels = balanceData.map(item => {
-      const date = item.date;
-
-      if (granularity === 'day') {
-        return `${date.getDate()} ${monthNames[date.getMonth()]}`;
-      } else if (granularity === 'week') {
-        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-        const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-        return `Sett ${weekNum}`;
-      } else { // month
-        return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    sortedTransactions.forEach(tx => {
+      const txDate = new Date(tx.date);
+      if (txDate < startDate) {
+        runningBalance += tx.amount;
       }
     });
 
-    // Estrai i valori di saldo per il grafico
-    const data = balanceData.map(item => item.balance);
+    txToUse.forEach(tx => {
+      runningBalance += tx.amount;
+      balanceData.push({
+        date: new Date(tx.date),
+        balance: runningBalance
+      });
+    });
+
+    const maxPoints = 15;
+    let sampledData = balanceData;
+    if (balanceData.length > maxPoints) {
+      const step = Math.ceil(balanceData.length / maxPoints);
+      sampledData = balanceData.filter((_, idx) => idx % step === 0);
+      if (sampledData[sampledData.length - 1] !== balanceData[balanceData.length - 1]) {
+        sampledData.push(balanceData[balanceData.length - 1]);
+      }
+    }
+
+    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+    const labels = sampledData.map(item => {
+      const date = item.date;
+      if (granularity === 'day') return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+      if (granularity === 'week') return `Sett ${Math.ceil(date.getDate()/7)}`;
+      return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    });
 
     return {
       labels,
       datasets: [{
         label: 'Patrimonio',
-        data,
+        data: sampledData.map(d => d.balance),
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.light,
         tension: 0.4,
@@ -229,31 +194,62 @@ const DashboardPage = () => {
     };
   };
 
-  // Allocazione portafoglio dinamica in base a transazioni e categorie
-  const portfolioAllocationData = {
-    labels: data.categories.map(cat => cat.name),
-    datasets: [{
-      data: data.categories.map(cat =>
-        data.transactions
-          .filter(tx => tx.category?.id === cat.id)
-          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
-      ),
-      backgroundColor: data.categories.map((_, idx) => {
-        const palette = [
-          theme.palette.primary.main,
-          theme.palette.success.main,
-          theme.palette.info.main,
-          theme.palette.warning.main,
-          theme.palette.error.main
-        ];
-        return palette[idx % palette.length];
-      }),
-      borderColor: theme.palette.background.paper,
-      borderWidth: 2
-    }]
-  };
+  const portfolioAllocationData = React.useMemo(() => {
+    if (!data.investments || data.investments.length === 0) {
+      return {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: [],
+          borderColor: theme.palette.background.paper,
+          borderWidth: 2
+        }]
+      };
+    }
 
-  // Chart.js options
+    // Group investments by asset name and calculate total CURRENT value for each
+    const assetMap = {};
+    data.investments.forEach(inv => {
+      const assetName = inv.assetName || inv.AssetName;
+      const quantity = parseFloat(inv.quantity || inv.Quantity);
+      const currentPrice = parseFloat(inv.currentPrice || inv.CurrentPrice);
+      const totalCurrentValue = quantity * currentPrice; // Using current price instead of purchase price
+
+      if (!assetMap[assetName]) {
+        assetMap[assetName] = {
+          name: assetName,
+          totalValue: 0
+        };
+      }
+      assetMap[assetName].totalValue += totalCurrentValue;
+    });
+
+    const sorted = Object.values(assetMap).sort((a, b) => b.totalValue - a.totalValue);
+
+    const palette = [
+      theme.palette.primary.main,
+      theme.palette.success.main,
+      theme.palette.info.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+      '#9c27b0', // purple
+      '#795548', // brown
+      '#607d8b', // blue-gray
+      '#00bcd4', // cyan
+      '#4caf50'  // green
+    ];
+
+    return {
+      labels: sorted.map(c => c.name),
+      datasets: [{
+        data: sorted.map(c => c.totalValue),
+        backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
+        borderColor: theme.palette.background.paper,
+        borderWidth: 2
+      }]
+    };
+  }, [data.investments, theme]);
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -304,7 +300,6 @@ const DashboardPage = () => {
     }
   };
 
-  // funzione per ricaricare i dati
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -334,7 +329,7 @@ const DashboardPage = () => {
         const user = JSON.parse(googleUser);
         if (user.photoURL) setUserImage(user.photoURL);
         const name = user.displayName || user.email.split('@')[0];
-        setUserName(name);   // <--- aggiunto
+        setUserName(name);
       } catch (error) {
         console.error("Errore parsing GoogleUser", error);
       }
@@ -343,11 +338,177 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    
-  }, []);
-  
+    setPerformanceData(generatePerformanceData(data.transactions, timeRange, timeGranularity));
+  }, [data.transactions, timeRange, timeGranularity]);
 
-  // Cards statistiche
+  const generateProfitPerformanceData = (investments, range = '1m', granularity = 'day') => {
+    if (!investments || investments.length === 0) return { labels: [], datasets: [] };
+
+    // Calculate profit metrics for each investment
+    const processedInvestments = investments.map(inv => {
+      const quantity = parseFloat(inv.quantity || inv.Quantity);
+      const purchasePrice = parseFloat(inv.purchasePrice || inv.PurchasePrice);
+      const currentPrice = parseFloat(inv.currentPrice || inv.CurrentPrice);
+      
+      // Calculate investment metrics
+      const initialValue = quantity * purchasePrice;
+      const currentValue = quantity * currentPrice;
+      const profit = currentValue - initialValue;
+      const profitPercentage = initialValue > 0 ? (profit / initialValue) * 100 : 0;
+      
+      return {
+        ...inv,
+        purchaseDate: inv.purchaseDate || inv.PurchaseDate,
+        initialValue,
+        currentValue,
+        profit,
+        profitPercentage
+      };
+    });
+
+    // Sort by purchase date
+    const sortedInvestments = [...processedInvestments].sort(
+      (a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate)
+    );
+
+    // Generate labels from purchase dates
+    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+    const labels = sortedInvestments.map(inv => {
+      const date = new Date(inv.purchaseDate);
+      return `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    });
+
+    // Profit data
+    const profitData = sortedInvestments.map(inv => inv.profit);
+    
+    // Profit percentage data
+    const profitPercentageData = sortedInvestments.map(inv => inv.profitPercentage);
+    
+    // Asset names for tooltips
+    const assetNames = sortedInvestments.map(inv => inv.assetName || inv.AssetName);
+
+    return {
+      labels,
+      assetNames, // Store asset names for tooltip usage
+      datasets: [
+        {
+          label: 'Profitto (€)',
+          data: profitData,
+          borderColor: theme.palette.success.main,
+          backgroundColor: `${theme.palette.success.main}33`,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: theme.palette.success.main,
+          pointBorderColor: theme.palette.background.paper,
+          pointBorderWidth: 2,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Percentuale (%)',
+          data: profitPercentageData,
+          borderColor: theme.palette.info.main,
+          backgroundColor: `${theme.palette.info.main}33`,
+          borderDash: [5, 5],
+          tension: 0.4,
+          fill: false,
+          pointRadius: 4,
+          pointBackgroundColor: theme.palette.info.main,
+          pointBorderColor: theme.palette.background.paper,
+          pointBorderWidth: 2,
+          yAxisID: 'y1'
+        }
+      ]
+    };
+  };
+
+  const handleEditInvestment = (investment) => {
+    setSelectedInvestment(investment);
+    setIsEditInvestmentDialogOpen(true);
+  };
+
+  const handleDeleteInvestment = (investment) => {
+    setSelectedInvestment(investment);
+    setIsDeleteInvestmentDialogOpen(true);
+  };
+
+  const handleSaveInvestment = async (updatedInvestment) => {
+    try {
+      // Note: updatedInvestment should already be in PascalCase from the EditInvestmentDialog
+      const response = await fetch(`https://backproject.azurewebsites.net/api/investments/${updatedInvestment.InvestmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          userId: localStorage.getItem('userId')
+        },
+        body: JSON.stringify(updatedInvestment)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update investment.');
+      }
+
+      const updated = await response.json();
+      
+      // Convert PascalCase from API to camelCase for frontend
+      const camelCaseInvestment = {
+        investmentId: updated.InvestmentId || updated.investmentId,
+        assetName: updated.AssetName || updated.assetName,
+        quantity: updated.Quantity || updated.quantity,
+        purchasePrice: updated.PurchasePrice || updated.purchasePrice,
+        currentPrice: updated.CurrentPrice || updated.currentPrice,
+        purchaseDate: updated.PurchaseDate || updated.purchaseDate,
+        action: updated.Action || updated.action,
+        userId: updated.UserId || updated.userId
+      };
+      
+      setData((prevData) => ({
+        ...prevData,
+        investments: prevData.investments.map((inv) =>
+          inv.investmentId === camelCaseInvestment.investmentId ? camelCaseInvestment : inv
+        )
+      }));
+      setIsEditInvestmentDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleConfirmDeleteInvestment = async () => {
+    try {
+      // Get the investment ID using proper casing (could be InvestmentId or investmentId)
+      const investmentId = selectedInvestment.InvestmentId || selectedInvestment.investmentId;
+      
+      const response = await fetch(`https://backproject.azurewebsites.net/api/investments/${investmentId}`, {
+        method: 'DELETE',
+        headers: {
+          userId: localStorage.getItem('userId')
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error deleting investment:", errorText);
+        throw new Error(`Failed to delete investment: ${errorText || response.statusText}`);
+      }
+
+      setData((prevData) => ({
+        ...prevData,
+        investments: prevData.investments.filter(
+          (inv) => {
+            const currentId = inv.InvestmentId || inv.investmentId;
+            return currentId !== investmentId;
+          }
+        )
+      }));
+      
+      setIsDeleteInvestmentDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert(`Error deleting investment: ${error.message}`);
+    }
+  };
+
   const stats = [
     {
       title: "Patrimonio Totale",
@@ -358,13 +519,13 @@ const DashboardPage = () => {
     {
       title: "Transazioni Totali",
       value: data.transactions.length,
-      icon: <TrendingUpIcon />,
+      icon: <SavingsIcon />,
       color: theme.palette.success.main
     },
     {
       title: "Investimenti Attivi",
       value: data.investments.length,
-      icon: <SavingsIcon />,
+      icon: <TrendingUpIcon />,
       color: theme.palette.info.main
     },
     {
@@ -375,7 +536,6 @@ const DashboardPage = () => {
     }
   ];
 
-  // Sidebar Tabs
   const sidebarTabs = [
     { label: "Dashboard", value: "dashboard" },
     { label: "Transazioni", value: "transactions" },
@@ -387,9 +547,8 @@ const DashboardPage = () => {
   return (
   <Container 
     maxWidth="xl" 
-    sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}  // altezza fissa viewport
+    sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}
   >
-    {/* Sidebar */}
     <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -400,7 +559,6 @@ const DashboardPage = () => {
           )}
           <div>
             <Typography variant="h6">{userName}</Typography>
-            <Typography variant="body2" color="text.secondary">Profilo</Typography>
           </div>
         </Box>
         <Divider sx={{ my: 2 }} />
@@ -428,11 +586,9 @@ const DashboardPage = () => {
       </CardContent>
     </Card>
 
-    {/* Main Content */}
     <Box 
-      sx={{ flexGrow: 1, height: '100vh', pb: 5, overflowY: 'auto' }}  // scroll interno
+      sx={{ flexGrow: 1, height: '100vh', pb: 5, overflowY: 'auto' }}
     >
-      {/* Header */}
       <Box
         sx={{
           display: 'flex',
@@ -441,7 +597,7 @@ const DashboardPage = () => {
           mb: 3
         }}
       >
-        {activeTab !== 'assistente' && ( // Nascondi il titolo per la pagina "Assistente"
+        {activeTab !== 'assistente' && (
           <Typography variant="h4" fontWeight={700}>
             {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
           </Typography>
@@ -469,7 +625,6 @@ const DashboardPage = () => {
         </Box>
       </Box>
 
-      {/* Loading/Error State */}
       {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
             <CircularProgress />
@@ -481,12 +636,10 @@ const DashboardPage = () => {
           </Box>
       )}
 
-      {/* Contenuto dinamico */}
       {!loading && !error && (
           <>
             {activeTab === 'dashboard' && (
                 <>
-                  {/* Stats Cards */}
                   <Grid container spacing={3} sx={{ mb: 3 }}>
                     {stats.map((stat, index) => (
                         <Grid item xs={12} sm={6} lg={3} key={index}>
@@ -516,17 +669,15 @@ const DashboardPage = () => {
                     ))}
                   </Grid>
 
-                  {/* Charts Row */}
                   <Grid container spacing={3} sx={{ mb: 3 }}>
                     <Grid item xs={12} lg={8}>
                       <Card>
                         <CardHeader
                             title="Andamento Patrimonio"
+                            sx={{ backgroundColor: theme.palette.primary.dark, color: theme.palette.primary.contrastText }}
+                            titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
                             action={
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                  Periodo:
-                                </Typography>
                                 <Button
                                     variant={timeRange === '1w' ? 'contained' : 'outlined'}
                                     size="small"
@@ -563,31 +714,6 @@ const DashboardPage = () => {
                             }
                         />
                         <CardContent sx={{ height: 300, position: 'relative' }}>
-                          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start' }}>
-                            <Button
-                                variant={timeGranularity === 'day' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('day')}
-                                sx={{ mr: 1 }}
-                            >
-                              Giorni
-                            </Button>
-                            <Button
-                                variant={timeGranularity === 'week' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('week')}
-                                sx={{ mr: 1 }}
-                            >
-                              Settimane
-                            </Button>
-                            <Button
-                                variant={timeGranularity === 'month' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('month')}
-                            >
-                              Mesi
-                            </Button>
-                          </Box>
                           <div style={{ position: 'absolute', width: '100%', height: 'calc(100% - 48px)', bottom: 0 }}>
                             <Line
                                 ref={(ref) => {
@@ -636,26 +762,52 @@ const DashboardPage = () => {
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid item xs={12} lg={4}>
+
+                    <Grid item xs={12} md={6}>
                       <Card>
-                        <CardHeader title="Allocazione Portafoglio" />
-                        <CardContent sx={{ height: 300 }}>
+                        <CardHeader 
+                          title="Allocazione Portfolio" 
+                          titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
+                          sx={{ 
+                            backgroundColor: theme.palette.info.dark, 
+                            color: theme.palette.info.contrastText 
+                          }}
+                        />
+                        <CardContent>
                           <Pie
-                              ref={(ref) => {
-                                if (ref && ref.chartInstance) {
-                                  pieChartRef.current = ref.chartInstance;
+                            ref={(ref) => {
+                              if (ref && ref.chartInstance) {
+                                pieChartRef.current = ref.chartInstance;
+                              }
+                            }}
+                            data={portfolioAllocationData}
+                            options={{
+                              plugins: {
+                                legend: {
+                                  display: true,
+                                  position: 'bottom',
+                                  labels: { boxWidth: 12 }
+                                },
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      const label = context.label || '';
+                                      const value = context.raw;
+                                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                      return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                                    }
+                                  }
                                 }
-                              }}
-                              data={portfolioAllocationData}
-                              options={{ plugins: { legend: { display: true, position: 'bottom' } } }}
-                              height={300}
+                              }
+                            }}
+                            height={300}
                           />
                         </CardContent>
                       </Card>
                     </Grid>
                   </Grid>
-
-                  {/* Recent Transactions Table */}
+                  
                   <Card>
                     <CardHeader
                         title="Ultime Transazioni"
@@ -754,3 +906,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

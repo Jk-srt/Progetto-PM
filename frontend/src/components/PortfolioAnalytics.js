@@ -16,7 +16,9 @@ import {
   TableRow,
   LinearProgress,
   IconButton,
-  Button
+  Button,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
   ArrowUpward as ArrowUpwardIcon,
@@ -24,8 +26,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import EditInvestmentDialog from './EditInvestmentDialog';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
 
-const PortfolioAnalytics = () => {
+const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
   const theme = useTheme();
   const [investments, setInvestments] = useState([]);
   const [totalInvested, setTotalInvested] = useState(0);
@@ -34,13 +38,38 @@ const PortfolioAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Stati per le operazioni di modifica ed eliminazione
+  const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [operationLoading, setOperationLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
   useEffect(() => {
-    const fetchInvestments = async () => {
+    const processInvestments = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await InvestmentService.getAll();
-        const investmentsData = response.data || [];
+        let investmentsData = data;
+
+        if (!investmentsData || investmentsData.length === 0) {
+          const userId = localStorage.getItem('userId');
+          const response = await fetch('https://backproject.azurewebsites.net/api/investments', {
+            headers: {
+              userId
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch investments: ${response.status}`);
+          }
+          
+          investmentsData = await response.json();
+        }
 
         let invested = 0;
         let currentValue = 0;
@@ -50,14 +79,15 @@ const PortfolioAnalytics = () => {
           try {
             console.log('Fetching quote for:', inv.assetName);
             const quote = await fetchRealTimePrice(inv.assetName);
-            priceNow = quote?.price;
+            priceNow = quote?.price || inv.currentPrice || inv.purchasePrice;
           } catch (error) {
             console.error('Error fetching quote:', error);
-            priceNow = inv.purchasePrice;
+            priceNow = inv.currentPrice || inv.purchasePrice;
           }
 
           // Correct calculation of purchase value and current value
-          const costoAcquisto = inv.purchasePrice / inv.quantity;
+          const purchaseValue = Math.abs(inv.purchasePrice);
+          const costoAcquisto = purchaseValue / inv.quantity;
           const totaleOdierno = inv.quantity * priceNow;
 
           // Assign corrected properties
@@ -66,7 +96,7 @@ const PortfolioAnalytics = () => {
           inv.currentTotalValue = totaleOdierno;
           inv.gainLoss = totaleOdierno - costoAcquisto * inv.quantity;
           inv.gainLossPercentage = costoAcquisto > 0
-            ? (inv.gainLoss / costoAcquisto) * 100
+            ? (inv.gainLoss / (costoAcquisto * inv.quantity)) * 100
             : 0;
           inv.oldStockValue = costoAcquisto; // Aggiunto vecchio valore dello stock
 
@@ -79,15 +109,171 @@ const PortfolioAnalytics = () => {
         setTotalCurrentValue(currentValue);
         setTotalGainLoss(currentValue - invested);
       } catch (error) {
-        console.error('Error fetching investments:', error);
+        console.error('Error processing investments:', error);
         setError('Errore nel caricamento degli investimenti. Assicurati di essere loggato.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInvestments();
-  }, []);
+    processInvestments();
+  }, [data]);
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Funzione per aprire il dialog di modifica
+  const handleEditClick = (investment) => {
+    console.log("Opening edit dialog for investment:", investment);
+    setSelectedInvestment(investment);
+    setEditDialogOpen(true);
+  };
+
+  // Funzione per aprire il dialog di eliminazione
+  const handleDeleteClick = (investment) => {
+    console.log("Opening delete dialog for investment:", investment);
+    setSelectedInvestment(investment);
+    setDeleteDialogOpen(true);
+  };
+
+  // Funzione per aggiornare un investimento
+  const handleUpdateInvestment = async (updatedInvestment) => {
+    console.log("Updating investment:", updatedInvestment);
+    setOperationLoading(true);
+
+    try {
+      const userId = localStorage.getItem('userId');
+      
+      console.log("Sending PUT request to API:", `https://backproject.azurewebsites.net/api/investments/${updatedInvestment.InvestmentId}`);
+      
+      // Ensure the purchaseDate is properly formatted if it's a Date object
+      if (updatedInvestment.PurchaseDate instanceof Date) {
+        updatedInvestment.PurchaseDate = updatedInvestment.PurchaseDate.toISOString();
+      }
+      
+      const response = await fetch(`https://backproject.azurewebsites.net/api/investments/${updatedInvestment.InvestmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'userId': userId
+        },
+        body: JSON.stringify(updatedInvestment)
+      });
+
+      console.log("API response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error updating investment:", errorText);
+        throw new Error(`Failed to update investment: ${errorText || response.statusText}`);
+      }
+
+      const responseData = await response.json();
+      console.log("Updated investment data:", responseData);
+
+      // Convert responseData from PascalCase to camelCase for frontend use
+      const camelCaseResponse = {
+        investmentId: responseData.InvestmentId || responseData.investmentId,
+        purchaseDate: responseData.PurchaseDate || responseData.purchaseDate,
+        assetName: responseData.AssetName || responseData.assetName,
+        quantity: responseData.Quantity || responseData.quantity,
+        purchasePrice: responseData.PurchasePrice || responseData.purchasePrice,
+        currentPrice: responseData.CurrentPrice || responseData.currentPrice,
+        action: responseData.Action || responseData.action,
+        userId: responseData.UserId || responseData.userId
+      };
+
+      // Update local state with the updated investment data
+      setInvestments(prev => 
+        prev.map(inv => 
+          inv.investmentId === camelCaseResponse.investmentId ? {
+            ...inv,
+            ...camelCaseResponse
+          } : inv
+        )
+      );
+
+      // Close dialog and show success message
+      setEditDialogOpen(false);
+      setSnackbar({
+        open: true,
+        message: 'Investimento aggiornato con successo',
+        severity: 'success'
+      });
+      
+      // Notify parent component if necessary
+      if (onEdit) {
+        onEdit(camelCaseResponse);
+      }
+    } catch (error) {
+      console.error("Failed to update investment:", error);
+      setSnackbar({
+        open: true,
+        message: `Errore nell'aggiornamento: ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setOperationLoading(false);
+    }
+  };
+
+  // Funzione di eliminazione
+  const handleDeleteInvestment = async () => {
+    if (!selectedInvestment) {
+      console.warn("No investment selected for deletion");
+      return;
+    }
+    
+    console.log("Deleting investment:", selectedInvestment);
+    setOperationLoading(true);
+    
+    try {
+      const userId = localStorage.getItem('userId');
+      
+      console.log("Sending DELETE request to API:", `https://backproject.azurewebsites.net/api/investments/${selectedInvestment.investmentId}`);
+      
+      const response = await fetch(`https://backproject.azurewebsites.net/api/investments/${selectedInvestment.investmentId}`, {
+        method: 'DELETE',
+        headers: {
+          'userId': userId
+        }
+      });
+      
+      console.log("API response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error deleting investment:", errorText);
+        throw new Error(`Failed to delete investment: ${errorText || response.statusText}`);
+      }
+      
+      // Update local state by removing the deleted investment
+      setInvestments(prev => prev.filter(inv => inv.investmentId !== selectedInvestment.investmentId));
+      
+      // Close dialog and show success message
+      setDeleteDialogOpen(false);
+      setSnackbar({
+        open: true,
+        message: 'Investimento eliminato con successo',
+        severity: 'success'
+      });
+      
+      // Notify parent component if necessary
+      if (onDelete) {
+        onDelete(selectedInvestment);
+      }
+    } catch (error) {
+      console.error("Failed to delete investment:", error);
+      setSnackbar({
+        open: true,
+        message: `Errore nell'eliminazione: ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setOperationLoading(false);
+    }
+  };
 
   return (
     <Box sx={{
@@ -108,9 +294,9 @@ const PortfolioAnalytics = () => {
         </Box>
       ) : (
         <>
-        <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
-          Capitale 
-        </Typography>
+          <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
+            Capitale 
+          </Typography>
           {/* Summary Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             
@@ -164,7 +350,6 @@ const PortfolioAnalytics = () => {
             </Grid>
           </Grid>
 
-          {/* Investments Table */}
           <Card sx={{
             borderRadius: '16px',
             backgroundColor: theme.palette.background.paper,
@@ -189,7 +374,7 @@ const PortfolioAnalytics = () => {
                       <TableCell><strong>Quantità</strong></TableCell>
                       <TableCell><strong>Prezzo Acquisto</strong></TableCell>
                       <TableCell><strong>Valore Attuale</strong></TableCell>
-                      <TableCell><strong>Vecchio Valore</strong></TableCell> {/* Nuova colonna */}
+                      <TableCell><strong>Valore di acquisto</strong></TableCell>
                       <TableCell><strong>Data Acquisto</strong></TableCell>
                       <TableCell align="right"><strong>Totale Attuale</strong></TableCell>
                       <TableCell align="right"><strong>Guadagno/Perdita</strong></TableCell>
@@ -197,15 +382,15 @@ const PortfolioAnalytics = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {investments.map((investment, index) => (
-                      <TableRow key={index}>
+                    {investments.map((investment) => (
+                      <TableRow key={investment.investmentId}>
                         <TableCell>{investment.assetName}</TableCell>
                         <TableCell>{investment.quantity}</TableCell>
                         <TableCell>€{investment.purchasePrice.toFixed(2)}</TableCell>
                         <TableCell>€{investment.currentPrice.toFixed(2)}</TableCell>
                         <TableCell>€{investment.oldStockValue.toFixed(2)}</TableCell> {/* Nuova cella */}
                         <TableCell>{new Date(investment.purchaseDate).toLocaleDateString()}</TableCell>
-                        <TableCell align="right">€{investment.currentTotalValue.toFixed(2)}</TableCell>
+                        <TableCell align="right">€{investment.currentTotalValue ? investment.currentTotalValue.toFixed(2) : 'N/A'}</TableCell>
                         <TableCell align="right">
                           <span
                             style={{
@@ -214,17 +399,25 @@ const PortfolioAnalytics = () => {
                             }}
                           >
                             {investment.gainLoss >= 0 ? '+' : '-'}€
-                            {Math.abs(investment.gainLoss).toFixed(2)}
+                            {Math.abs(investment.gainLoss || 0).toFixed(2)}
                             {' ('}
                             {investment.gainLoss >= 0 ? '+' : ''}
-                            {investment.gainLossPercentage.toFixed(2)}%)
+                            {(investment.gainLossPercentage || 0).toFixed(2)}%)
                           </span>
                         </TableCell>
                         <TableCell align="center">
-                          <IconButton size="small" color="primary">
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => handleEditClick(investment)}
+                          >
                             <EditIcon />
                           </IconButton>
-                          <IconButton size="small" color="error">
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteClick(investment)}
+                          >
                             <DeleteIcon />
                           </IconButton>
                         </TableCell>
@@ -249,6 +442,41 @@ const PortfolioAnalytics = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Edit Investment Dialog */}
+          <EditInvestmentDialog
+            open={editDialogOpen}
+            onClose={() => setEditDialogOpen(false)}
+            investment={selectedInvestment}
+            onSave={handleUpdateInvestment}
+            loading={operationLoading}
+          />
+
+          {/* Delete Confirm Dialog */}
+          <DeleteConfirmDialog
+            open={deleteDialogOpen}
+            onClose={() => setDeleteDialogOpen(false)}
+            onConfirm={handleDeleteInvestment}
+            title="Conferma eliminazione"
+            content={`Sei sicuro di voler eliminare l'investimento in ${selectedInvestment?.assetName || 'questo asset'}? Questa azione non può essere annullata.`}
+            loading={operationLoading}
+          />
+          
+          {/* Snackbar notifications */}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Alert 
+              onClose={handleSnackbarClose} 
+              severity={snackbar.severity} 
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </>
       )}
     </Box>
@@ -256,3 +484,4 @@ const PortfolioAnalytics = () => {
 };
 
 export default PortfolioAnalytics;
+
