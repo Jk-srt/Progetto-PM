@@ -1,9 +1,9 @@
 import { API_URL } from "../config";
 
-export const getTransactions = async () => {
+export const getCategories = async () => {
   const userId = localStorage.getItem('userId');
   try {
-    const response = await fetch(`${API_URL}/transactions`, {
+    const response = await fetch(`${API_URL}/categories`, {
       headers: {
         userId
       }
@@ -15,22 +15,22 @@ export const getTransactions = async () => {
     
     return await response.json();
   } catch (error) {
-    console.error("Error fetching transactions:", error);
+    console.error("Error fetching categories:", error);
     throw error;
   }
 };
 
-export const addTransaction = async (transactionData) => {
+export const createCategory = async (categoryData) => {
   const userId = localStorage.getItem('userId');
   try {
-    const response = await fetch(`${API_URL}/transactions`, {
+    const response = await fetch(`${API_URL}/categories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         userId
       },
       body: JSON.stringify({
-        ...transactionData,
+        ...categoryData,
         userId
       })
     });
@@ -42,21 +42,21 @@ export const addTransaction = async (transactionData) => {
     
     return await response.json();
   } catch (error) {
-    console.error("Error adding transaction:", error);
+    console.error("Error creating category:", error);
     throw error;
   }
 };
 
-export const updateTransaction = async (transactionId, transactionData) => {
+export const updateCategory = async (categoryId, categoryData) => {
   const userId = localStorage.getItem('userId');
   try {
-    const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+    const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         userId
       },
-      body: JSON.stringify(transactionData)
+      body: JSON.stringify(categoryData)
     });
     
     if (!response.ok) {
@@ -66,15 +66,15 @@ export const updateTransaction = async (transactionId, transactionData) => {
     
     return await response.json();
   } catch (error) {
-    console.error("Error updating transaction:", error);
+    console.error("Error updating category:", error);
     throw error;
   }
 };
 
-export const deleteTransaction = async (transactionId) => {
+export const deleteCategory = async (categoryId) => {
   const userId = localStorage.getItem('userId');
   try {
-    const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+    const response = await fetch(`${API_URL}/categories/${categoryId}`, {
       method: 'DELETE',
       headers: {
         userId
@@ -88,7 +88,7 @@ export const deleteTransaction = async (transactionId) => {
     
     return true;
   } catch (error) {
-    console.error("Error deleting transaction:", error);
+    console.error("Error deleting category:", error);
     throw error;
   }
 };

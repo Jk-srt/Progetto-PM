@@ -357,12 +357,6 @@ useEffect(() => {
       value: data.investments.length,
       icon: <TrendingUpIcon />,
       color: theme.palette.info.main
-    },
-    {
-      title: "Categorie",
-      value: data.categories.length,
-      icon: <ShoppingCartIcon />,
-      color: theme.palette.warning.main
     }
   ];
 
