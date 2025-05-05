@@ -1,5 +1,6 @@
 .news-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #625a5a;
 }
 .news-card:hover {
   transform: translateY(-6px);
