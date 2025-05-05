@@ -1,0 +1,12 @@
+.news-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.news-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.news-image {
+  height: 180px;
+  object-fit: cover;
+}
