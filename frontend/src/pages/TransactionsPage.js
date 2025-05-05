@@ -47,7 +47,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
   const [openAddTx, setOpenAddTx] = useState(false); // stato per il dialog nuova transazione
   const navigate = useNavigate();
 
-  async function loadTransactions() {
+  const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getTransactions();
@@ -57,7 +57,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   // Se le transazioni vengono passate come prop, usa quelle
   useEffect(() => {
