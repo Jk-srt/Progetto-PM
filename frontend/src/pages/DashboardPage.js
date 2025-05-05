@@ -24,7 +24,6 @@ import {
 import {
   Wallet as WalletIcon,
   TrendingUp as TrendingUpIcon,
-  ShoppingCart as ShoppingCartIcon,
   Savings as SavingsIcon,
   AccountCircle as AccountCircleIcon,
   Add as AddIcon,

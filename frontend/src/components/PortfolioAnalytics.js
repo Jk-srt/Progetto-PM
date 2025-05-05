@@ -19,15 +19,26 @@ import {
   Snackbar,
   Alert,
   Tooltip,
-  CircularProgress
+  CircularProgress,
+  TextField,
+  InputAdornment,
+  Paper,
+  Divider,
+  Chip,
+  Collapse
 } from '@mui/material';
 import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  DateRange as DateRangeIcon
 } from '@mui/icons-material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import EditInvestmentDialog from './EditInvestmentDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 
@@ -51,6 +62,14 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
     message: '',
     severity: 'success'
   });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState(null);
+  const [filterEndDate, setFilterEndDate] = useState(null);
+  const [filteredInvestments, setFilteredInvestments] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
   const processInvestments = async (investmentsData) => {
     try {
@@ -122,6 +141,27 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
     processInvestments(data);
   }, [data]);
 
+  useEffect(() => {
+    // Simple filter by assetName, purchaseDate, and price range
+    const filtered = investments.filter(inv => {
+      const nameMatch =
+        !searchQuery ||
+        inv.assetName?.toLowerCase().includes(searchQuery.toLowerCase());
+      const purchaseDate = new Date(inv.purchaseDate);
+      const inRangeStart = !filterStartDate || purchaseDate >= filterStartDate;
+      const inRangeEnd = !filterEndDate || purchaseDate <= filterEndDate;
+      const priceOk = () => {
+        if (!minPrice && !maxPrice) return true;
+        const p = inv.currentPrice || 0;
+        const aboveMin = !minPrice || p >= parseFloat(minPrice);
+        const belowMax = !maxPrice || p <= parseFloat(maxPrice);
+        return aboveMin && belowMax;
+      };
+      return nameMatch && inRangeStart && inRangeEnd && priceOk();
+    });
+    setFilteredInvestments(filtered);
+  }, [investments, searchQuery, filterStartDate, filterEndDate, minPrice, maxPrice]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     setSnackbar({
@@ -162,6 +202,14 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setFilterStartDate(null);
+    setFilterEndDate(null);
+    setMinPrice('');
+    setMaxPrice('');
   };
 
   // Funzione per aprire il dialog di modifica
@@ -354,6 +402,89 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
             </Tooltip>
           </Box>
           
+          <Button variant="text" onClick={() => setShowFilters(prev => !prev)}>
+            {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
+          </Button>
+          <Collapse in={showFilters}>
+            <Paper sx={{ p: 2, mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Cerca per nome asset..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchQuery && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setSearchQuery('')}
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+
+              <Divider sx={{ mb: 2 }}>
+                <Chip label="Filtra per data di acquisto" icon={<DateRangeIcon />} />
+              </Divider>
+
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Data iniziale"
+                    value={filterStartDate}
+                    onChange={setFilterStartDate}
+                    renderInput={(params) => <TextField {...params} size="small" fullWidth />}
+                  />
+                  <DatePicker
+                    label="Data finale"
+                    value={filterEndDate}
+                    onChange={setFilterEndDate}
+                    renderInput={(params) => <TextField {...params} size="small" fullWidth />}
+                  />
+                </LocalizationProvider>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="Prezzo Minimo"
+                  size="small"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label="Prezzo Massimo"
+                  size="small"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  fullWidth
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleResetFilters}
+                  sx={{ mr: 1 }}
+                >
+                  Reset filters
+                </Button>
+              </Box>
+            </Paper>
+          </Collapse>
+
           {/* Summary Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             
@@ -434,7 +565,7 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
               }
             />
             <CardContent>
-              {investments.length > 0 ? (
+              {filteredInvestments.length > 0 ? (
                 <Table sx={{ minWidth: 650 }} aria-label="tabella investimenti">
                   <TableHead>
                     <TableRow>
@@ -450,7 +581,7 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {investments.map((investment) => (
+                    {filteredInvestments.map((investment) => (
                       <TableRow key={investment.investmentId}>
                         <TableCell>{investment.assetName}</TableCell>
                         <TableCell>{investment.quantity}</TableCell>
@@ -496,16 +627,8 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="body1" gutterBottom>
-                    Non hai ancora aggiunto investimenti al tuo portafoglio.
+                    Nessun risultato per i filtri attuali.
                   </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ mt: 2 }}
-                    href="/add-investment"
-                  >
-                    Aggiungi il tuo primo investimento
-                  </Button>
                 </Box>
               )}
             </CardContent>
@@ -552,3 +675,4 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
 };
 
 export default PortfolioAnalytics;
+
