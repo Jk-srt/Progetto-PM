@@ -18,16 +18,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import itLocale from 'date-fns/locale/it';
 
-// Helper function to convert camelCase to PascalCase
-const toPascalCase = (obj) => {
-    const result = {};
-    Object.keys(obj).forEach(key => {
-        // Convert first character to uppercase
-        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-        result[pascalKey] = obj[key];
-    });
-    return result;
-};
 
 const EditInvestmentDialog = ({
     open,

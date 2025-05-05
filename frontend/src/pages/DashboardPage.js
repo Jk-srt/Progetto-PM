@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -9,7 +9,6 @@ import {
   Typography,
   Divider,
   Button,
-  IconButton,
   Box,
   Tabs,
   Tab,
@@ -18,16 +17,18 @@ import {
   Avatar,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Wallet as WalletIcon,
   TrendingUp as TrendingUpIcon,
   ShoppingCart as ShoppingCartIcon,
   Savings as SavingsIcon,
-  Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -37,7 +38,7 @@ import {
   PointElement,
   LineElement,
   ArcElement,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   TimeScale
 } from 'chart.js';
@@ -48,19 +49,17 @@ import PortfolioAnalytics from '../components/PortfolioAnalytics';
 import AddTransactionPage from './AddTransactionPage';
 import AddInvestmentPage from './AddInvestmentPage';
 import AnaliticsPage from './AnaliticsPage';
-import EditInvestmentDialog from '../components/EditInvestmentDialog'; // Import dialog
-import DeleteConfirmDialog from '../components/DeleteConfirmDialog'; // Import delete dialog
+import {fetchRealTimePrice} from "../services/FinnhubService";
 
-// Aggiorna la registrazione dei componenti
 ChartJS.register(
     CategoryScale,
     LinearScale,
     PointElement,
     LineElement,
     ArcElement,
-    Tooltip,
+    ChartTooltip,
     Legend,
-    TimeScale  // Registra TimeScale
+    TimeScale
 );
 
 const DashboardPage = () => {
@@ -76,7 +75,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [timeRange, setTimeRange] = useState('1m');
-  const [timeGranularity, setTimeGranularity] = useState('day');
+  const [timeGranularity] = useState('day');
   const [performanceData, setPerformanceData] = useState({
     labels: [],
     datasets: [{
@@ -89,9 +88,10 @@ const DashboardPage = () => {
   const [userImage, setUserImage] = useState(null);
   const [userName, setUserName] = useState(null);
   const [openAddTx, setOpenAddTx] = useState(false);
-  const [openAddInv, setOpenAddInv] = useState(false); // stato per dialog nuovo investimento
+  const [openAddInv, setOpenAddInv] = useState(false);
 
-  // Chart refs per cleanup
+  const [refreshingPortfolio, setRefreshingPortfolio] = useState(false);
+
   const lineChartRef = useRef(null);
   const pieChartRef = useRef(null);
 
@@ -111,7 +111,7 @@ const DashboardPage = () => {
 
   // Funzione migliorata per generare i dati delle performance
   // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
-  const generatePerformanceData = (transactions, range = '1m', granularity = 'day') => {
+  const generatePerformanceData = React.useCallback((transactions, range = '1m', granularity = 'day') => {
     if (!transactions || transactions.length === 0) {
       return {
         labels: [],
@@ -123,104 +123,69 @@ const DashboardPage = () => {
         }]
       };
     }
-
-    // Ordina le transazioni per data
-    const sortedTransactions = [...transactions].sort((a, b) =>
-        new Date(a.date) - new Date(b.date)
-    );
-
-    // Determina l'intervallo di date per il grafico
+  
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     const now = new Date();
-    let startDate = new Date();
-
+    let startDate = new Date(now);
     switch(range) {
-      case '1w': // 1 settimana
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '1m': // 1 mese
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case '6m': // 6 mesi
-        startDate.setMonth(now.getMonth() - 6);
-        break;
-      case '1y': // 1 anno
-        startDate.setFullYear(now.getFullYear() - 1);
-        break;
-      default:
-        startDate.setMonth(now.getMonth() - 1); // Predefinito: 1 mese
+      case '1w': startDate.setDate(now.getDate() - 7); break;
+      case '1m': startDate.setMonth(now.getMonth() - 1); break;
+      case '6m': startDate.setMonth(now.getMonth() - 6); break;
+      case '1y': startDate.setFullYear(now.getFullYear() - 1); break;
+      default: startDate.setMonth(now.getMonth() - 1);
     }
-
-    // Calcola il saldo iniziale (somma di tutte le transazioni prima della data di inizio)
-    const initialBalance = sortedTransactions
-        .filter(tx => new Date(tx.date) < startDate)
-        .reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Genera punti data basati sulla granularità
-    const datePoints = [];
-    const dateIterator = new Date(startDate);
-
-    while (dateIterator <= now) {
-      datePoints.push(new Date(dateIterator));
-
-      if (granularity === 'day') {
-        dateIterator.setDate(dateIterator.getDate() + 1);
-      } else if (granularity === 'week') {
-        dateIterator.setDate(dateIterator.getDate() + 7);
-      } else { // month
-        dateIterator.setMonth(dateIterator.getMonth() + 1);
-      }
+  
+    const filteredTx = sortedTransactions.filter(tx => {
+      const txDate = new Date(tx.date);
+      return txDate >= startDate && txDate <= now;
+    });
+  
+    let txToUse = filteredTx;
+    if (txToUse.length === 0 && sortedTransactions.length > 0) {
+      txToUse = [sortedTransactions[0], sortedTransactions[sortedTransactions.length - 1]];
     }
-
-    // Calcola il saldo per ogni punto data
-    let balance = initialBalance;
+  
+    let runningBalance = 0;
     const balanceData = [];
-
-    for (let i = 0; i < datePoints.length; i++) {
-      const currentDate = datePoints[i];
-      const nextDate = i < datePoints.length - 1 ? datePoints[i + 1] : new Date(now.getTime() + 86400000);
-
-      // Trova le transazioni avvenute tra la data corrente e quella successiva
-      const periodTransactions = sortedTransactions.filter(tx => {
-        const txDate = new Date(tx.date);
-        return txDate >= currentDate && txDate < nextDate;
-      });
-
-      // Aggiungi le transazioni al saldo
-      const periodSum = periodTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-      balance += periodSum;
-
-      balanceData.push({
-        date: currentDate,
-        balance
-      });
-    }
-
-    // Formatta le etichette in base alla granularità
-    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-
-    const labels = balanceData.map(item => {
-      const date = item.date;
-
-      if (granularity === 'day') {
-        return `${date.getDate()} ${monthNames[date.getMonth()]}`;
-      } else if (granularity === 'week') {
-        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-        const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-        return `Sett ${weekNum}`;
-      } else { // month
-        return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    sortedTransactions.forEach(tx => {
+      const txDate = new Date(tx.date);
+      if (txDate < startDate) {
+        runningBalance += tx.amount;
       }
     });
-
-    // Estrai i valori di saldo per il grafico
-    const data = balanceData.map(item => item.balance);
-
+  
+    txToUse.forEach(tx => {
+      runningBalance += tx.amount;
+      balanceData.push({
+        date: new Date(tx.date),
+        balance: runningBalance
+      });
+    });
+  
+    const maxPoints = 15;
+    let sampledData = balanceData;
+    if (balanceData.length > maxPoints) {
+      const step = Math.ceil(balanceData.length / maxPoints);
+      sampledData = balanceData.filter((_, idx) => idx % step === 0);
+      if (sampledData[sampledData.length - 1] !== balanceData[balanceData.length - 1]) {
+        sampledData.push(balanceData[balanceData.length - 1]);
+      }
+    }
+  
+    // Formatta le etichette in base alla granularità
+    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+    const labels = sampledData.map(item => {
+      const date = item.date;
+      if (granularity === 'day') return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+      if (granularity === 'week') return `Sett ${Math.ceil(date.getDate()/7)}`;
+      return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    });
+  
     return {
       labels,
       datasets: [{
         label: 'Patrimonio',
-        data,
+        data: sampledData.map(d => d.balance),
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.light,
         tension: 0.4,
@@ -229,84 +194,112 @@ const DashboardPage = () => {
         pointBackgroundColor: theme.palette.primary.main
       }]
     };
-  };
+  }, [theme]);
 
-  // Allocazione portafoglio dinamica in base a transazioni e categorie
-  const portfolioAllocationData = {
-    labels: data.categories.map(cat => cat.name),
-    datasets: [{
-      data: data.categories.map(cat =>
-        data.transactions
-          .filter(tx => tx.category?.id === cat.id)
-          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
-      ),
-      backgroundColor: data.categories.map((_, idx) => {
-        const palette = [
-          theme.palette.primary.main,
-          theme.palette.success.main,
-          theme.palette.info.main,
-          theme.palette.warning.main,
-          theme.palette.error.main
-        ];
-        return palette[idx % palette.length];
-      }),
-      borderColor: theme.palette.background.paper,
-      borderWidth: 2
-    }]
-  };
+  const portfolioAllocationData = React.useMemo(() => {
+    if (!data.investments || data.investments.length === 0) {
+      return {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: [],
+          borderColor: theme.palette.background.paper,
+          borderWidth: 2
+        }]
+      };
+    }
 
-  // Chart.js options
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: theme.palette.background.paper,
-        titleColor: theme.palette.text.primary,
-        bodyColor: theme.palette.text.secondary,
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += '€' + context.parsed.y.toFixed(2);
-            }
-            return label;
-          }
+    // Group investments by asset name and calculate total CURRENT value for each
+    const assetMap = {};
+    data.investments.forEach(inv => {
+      const assetName = inv.assetName || inv.AssetName;
+      const quantity = parseFloat(inv.quantity || inv.Quantity);
+      const currentPrice = parseFloat(inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice);
+      const totalCurrentValue = quantity * currentPrice;
+
+      if (!assetMap[assetName]) {
+        assetMap[assetName] = {
+          name: assetName,
+          totalValue: 0
+        };
+      }
+      assetMap[assetName].totalValue += totalCurrentValue;
+    });
+
+    const sorted = Object.values(assetMap).sort((a, b) => b.totalValue - a.totalValue);
+
+    const palette = [
+      theme.palette.primary.main,
+      theme.palette.success.main,
+      theme.palette.info.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+      '#9c27b0', // purple
+      '#795548', // brown
+      '#607d8b', // blue-gray
+      '#00bcd4', // cyan
+      '#4caf50'  // green
+    ];
+
+    return {
+      labels: sorted.map(c => c.name),
+      datasets: [{
+        data: sorted.map(c => c.totalValue),
+        backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
+        borderColor: theme.palette.background.paper,
+        borderWidth: 2
+      }]
+    };
+  }, [data.investments, theme]);
+
+  // New function to refresh portfolio allocation data
+  const refreshPortfolioAllocation = async () => {
+    setRefreshingPortfolio(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      const investmentsResponse = await fetch('https://backproject.azurewebsites.net/api/investments', { 
+        headers: { userId } 
+      });
+      
+      if (!investmentsResponse.ok) {
+        throw new Error(`Failed to fetch investments: ${investmentsResponse.status}`);
+      }
+      
+      const investments = await investmentsResponse.json();
+      
+      // Calculate current values for investments
+      const updatedInvestments = await Promise.all(investments.map(async (inv) => {
+        try {
+          // Try to get real-time price if possible
+          const quote = await fetchRealTimePrice(inv.assetName || inv.AssetName);
+          const currentPrice = quote?.price || inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice;
+          
+          return {
+            ...inv,
+            currentPrice: currentPrice,
+            CurrentPrice: currentPrice // Include both case styles for compatibility
+          };
+        } catch (error) {
+          console.warn(`Couldn't fetch real-time price for ${inv.assetName || inv.AssetName}:`, error);
+          // Fallback to stored current price
+          return inv;
         }
-      }
-    },
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: timeGranularity === 'day' ? 'day' :
-              timeGranularity === 'week' ? 'week' : 'month',
-          displayFormats: {
-            day: 'd MMM',
-            week: 'Sett W',
-            month: 'MMM yyyy'
-          }
-        },
-        ticks: {
-          color: theme.palette.text.secondary,
-          maxRotation: 45,
-          minRotation: 0
-        },
-        grid: { color: theme.palette.divider }
-      },
-      y: {
-        ticks: { color: theme.palette.text.secondary },
-        grid: { color: theme.palette.divider },
-        beginAtZero: false
-      }
+      }));
+      
+      setData(prevData => ({
+        ...prevData,
+        investments: updatedInvestments
+      }));
+      
+      console.log("Portfolio allocation data refreshed successfully:", updatedInvestments);
+    } catch (error) {
+      console.error("Error refreshing portfolio allocation data:", error);
+    } finally {
+      setRefreshingPortfolio(false);
     }
   };
 
-  // funzione per ricaricare i dati
+// funzione per ricaricare i dati
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -336,20 +329,16 @@ const DashboardPage = () => {
         const user = JSON.parse(googleUser);
         if (user.photoURL) setUserImage(user.photoURL);
         const name = user.displayName || user.email.split('@')[0];
-        setUserName(name);   // <--- aggiunto
+        setUserName(name);
       } catch (error) {
         console.error("Errore parsing GoogleUser", error);
       }
     }
-    fetchData();
   }, []);
 
-  useEffect(() => {
-    
-  }, []);
-  
-
-  // Cards statistiche
+useEffect(() => {
+  setPerformanceData(generatePerformanceData(data.transactions, timeRange, timeGranularity));
+}, [data.transactions, timeRange, timeGranularity, generatePerformanceData]);
   const stats = [
     {
       title: "Patrimonio Totale",
@@ -360,13 +349,13 @@ const DashboardPage = () => {
     {
       title: "Transazioni Totali",
       value: data.transactions.length,
-      icon: <TrendingUpIcon />,
+      icon: <SavingsIcon />,
       color: theme.palette.success.main
     },
     {
       title: "Investimenti Attivi",
       value: data.investments.length,
-      icon: <SavingsIcon />,
+      icon: <TrendingUpIcon />,
       color: theme.palette.info.main
     },
     {
@@ -389,7 +378,7 @@ const DashboardPage = () => {
   return (
   <Container 
     maxWidth="xl" 
-    sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}  // altezza fissa viewport
+    sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}
   >
     {/* Sidebar */}
     <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
@@ -402,7 +391,6 @@ const DashboardPage = () => {
           )}
           <div>
             <Typography variant="h6">{userName}</Typography>
-            <Typography variant="body2" color="text.secondary">Profilo</Typography>
           </div>
         </Box>
         <Divider sx={{ my: 2 }} />
@@ -432,7 +420,7 @@ const DashboardPage = () => {
 
     {/* Main Content */}
     <Box 
-      sx={{ flexGrow: 1, height: '100vh', pb: 5, overflowY: 'auto' }}  // scroll interno
+      sx={{ flexGrow: 1, height: '100vh', pb: 5, overflowY: 'auto' }}
     >
       {/* Header */}
       <Box
@@ -443,12 +431,24 @@ const DashboardPage = () => {
           mb: 3
         }}
       >
-        {activeTab !== 'assistente' && ( // Nascondi il titolo per la pagina "Assistente"
+        {activeTab !== 'assistente' && (
           <Typography variant="h4" fontWeight={700}>
             {sidebarTabs.find(t => t.value === activeTab)?.label || "Dashboard"}
           </Typography>
         )}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Tooltip title="Ricarica dati">
+            <IconButton 
+              onClick={fetchData} 
+              color="primary" 
+              sx={{ 
+                backgroundColor: theme.palette.primary.light + '20',
+                '&:hover': { backgroundColor: theme.palette.primary.light + '40' }
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
           
           {activeTab === 'transactions' && (
             <Button
@@ -524,11 +524,10 @@ const DashboardPage = () => {
                       <Card>
                         <CardHeader
                             title="Andamento Patrimonio"
+                            sx={{ backgroundColor: theme.palette.primary.dark, color: theme.palette.primary.contrastText }}
+                            titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
                             action={
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                  Periodo:
-                                </Typography>
                                 <Button
                                     variant={timeRange === '1w' ? 'contained' : 'outlined'}
                                     size="small"
@@ -565,31 +564,6 @@ const DashboardPage = () => {
                             }
                         />
                         <CardContent sx={{ height: 300, position: 'relative' }}>
-                          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start' }}>
-                            <Button
-                                variant={timeGranularity === 'day' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('day')}
-                                sx={{ mr: 1 }}
-                            >
-                              Giorni
-                            </Button>
-                            <Button
-                                variant={timeGranularity === 'week' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('week')}
-                                sx={{ mr: 1 }}
-                            >
-                              Settimane
-                            </Button>
-                            <Button
-                                variant={timeGranularity === 'month' ? 'contained' : 'outlined'}
-                                size="small"
-                                onClick={() => setTimeGranularity('month')}
-                            >
-                              Mesi
-                            </Button>
-                          </Box>
                           <div style={{ position: 'absolute', width: '100%', height: 'calc(100% - 48px)', bottom: 0 }}>
                             <Line
                                 ref={(ref) => {
@@ -638,26 +612,96 @@ const DashboardPage = () => {
                         </CardContent>
                       </Card>
                     </Grid>
+
                     <Grid item xs={12} lg={4}>
                       <Card>
-                        <CardHeader title="Allocazione Portafoglio" />
-                        <CardContent sx={{ height: 300 }}>
-                          <Pie
+                        <CardHeader 
+                          title="Allocazione Portfolio" 
+                          titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
+                          sx={{ 
+                            backgroundColor: theme.palette.info.dark, 
+                            color: theme.palette.info.contrastText 
+                          }}
+                          action={
+                            <Tooltip title="Ricarica dati allocazione">
+                              <IconButton 
+                                onClick={refreshPortfolioAllocation} 
+                                disabled={refreshingPortfolio}
+                                size="small"
+                                sx={{ color: theme.palette.info.contrastText }}
+                              >
+                                {refreshingPortfolio ? 
+                                  <CircularProgress size={20} color="inherit" /> : 
+                                  <RefreshIcon />
+                                }
+                              </IconButton>
+                            </Tooltip>
+                          }
+                        />
+                        <CardContent sx={{ height: 300, position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                          {data.investments && data.investments.length > 0 ? (
+                            <Pie
                               ref={(ref) => {
                                 if (ref && ref.chartInstance) {
                                   pieChartRef.current = ref.chartInstance;
                                 }
                               }}
                               data={portfolioAllocationData}
-                              options={{ plugins: { legend: { display: true, position: 'bottom' } } }}
-                              height={300}
-                          />
+                              options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                  legend: {
+                                    display: true,
+                                    position: 'right',
+                                    labels: { 
+                                      boxWidth: 12,
+                                      font: {
+                                        size: 11
+                                      }
+                                    }
+                                  },
+                                  tooltip: {
+                                    callbacks: {
+                                      label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
+                            />
+                          ) : refreshingPortfolio ? (
+                            <Box sx={{ textAlign: 'center' }}>
+                              <CircularProgress size={40} />
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                                Caricamento dati...
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Nessun dato di investimento disponibile
+                              </Typography>
+                              <Button 
+                                variant="outlined" 
+                                size="small"
+                                startIcon={<RefreshIcon />}
+                                onClick={refreshPortfolioAllocation}
+                              >
+                                Ricarica dati
+                              </Button>
+                            </Box>
+                          )}
                         </CardContent>
                       </Card>
                     </Grid>
                   </Grid>
-
-                  {/* Recent Transactions Table */}
+                  
                   <Card>
                     <CardHeader
                         title="Ultime Transazioni"
@@ -756,3 +800,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

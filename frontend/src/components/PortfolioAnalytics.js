@@ -18,13 +18,16 @@ import {
   IconButton,
   Button,
   Snackbar,
-  Alert
+  Alert,
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import EditInvestmentDialog from './EditInvestmentDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
@@ -43,81 +46,120 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [operationLoading, setOperationLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
 
-  useEffect(() => {
-    const processInvestments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        let investmentsData = data;
-
-        if (!investmentsData || investmentsData.length === 0) {
-          const userId = localStorage.getItem('userId');
-          const response = await fetch('https://backproject.azurewebsites.net/api/investments', {
-            headers: {
-              userId
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch investments: ${response.status}`);
+  const processInvestments = async (investmentsData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!investmentsData || investmentsData.length === 0) {
+        const userId = localStorage.getItem('userId');
+        const response = await fetch('https://backproject.azurewebsites.net/api/investments', {
+          headers: {
+            userId
           }
-          
-          investmentsData = await response.json();
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch investments: ${response.status}`);
         }
-
-        let invested = 0;
-        let currentValue = 0;
-
-        for (const inv of investmentsData) {
-          let priceNow;
-          try {
-            console.log('Fetching quote for:', inv.assetName);
-            const quote = await fetchRealTimePrice(inv.assetName);
-            priceNow = quote?.price || inv.currentPrice || inv.purchasePrice;
-          } catch (error) {
-            console.error('Error fetching quote:', error);
-            priceNow = inv.currentPrice || inv.purchasePrice;
-          }
-
-          // Correct calculation of purchase value and current value
-          const purchaseValue = Math.abs(inv.purchasePrice);
-          const costoAcquisto = purchaseValue / inv.quantity;
-          const totaleOdierno = inv.quantity * priceNow;
-
-          // Assign corrected properties
-          inv.currentPrice = priceNow;
-          inv.purchaseValue = costoAcquisto;
-          inv.currentTotalValue = totaleOdierno;
-          inv.gainLoss = totaleOdierno - costoAcquisto * inv.quantity;
-          inv.gainLossPercentage = costoAcquisto > 0
-            ? (inv.gainLoss / (costoAcquisto * inv.quantity)) * 100
-            : 0;
-          inv.oldStockValue = costoAcquisto; // Aggiunto vecchio valore dello stock
-
-          invested += costoAcquisto * inv.quantity;
-          currentValue += totaleOdierno;
-        }
-
-        setInvestments(investmentsData);
-        setTotalInvested(invested);
-        setTotalCurrentValue(currentValue);
-        setTotalGainLoss(currentValue - invested);
-      } catch (error) {
-        console.error('Error processing investments:', error);
-        setError('Errore nel caricamento degli investimenti. Assicurati di essere loggato.');
-      } finally {
-        setLoading(false);
+        
+        investmentsData = await response.json();
       }
-    };
 
-    processInvestments();
+      let invested = 0;
+      let currentValue = 0;
+
+      for (const inv of investmentsData) {
+        let priceNow;
+        try {
+          console.log('Fetching quote for:', inv.assetName);
+          const quote = await fetchRealTimePrice(inv.assetName);
+          priceNow = quote?.price || inv.currentPrice || inv.purchasePrice;
+        } catch (error) {
+          console.error('Error fetching quote:', error);
+          priceNow = inv.currentPrice || inv.purchasePrice;
+        }
+
+        // Correct calculation of purchase value and current value
+        const purchaseValue = Math.abs(inv.purchasePrice);
+        const costoAcquisto = purchaseValue / inv.quantity;
+        const totaleOdierno = inv.quantity * priceNow;
+
+        // Assign corrected properties
+        inv.currentPrice = priceNow;
+        inv.purchaseValue = costoAcquisto;
+        inv.currentTotalValue = totaleOdierno;
+        inv.gainLoss = totaleOdierno - costoAcquisto * inv.quantity;
+        inv.gainLossPercentage = costoAcquisto > 0
+          ? (inv.gainLoss / (costoAcquisto * inv.quantity)) * 100
+          : 0;
+        inv.oldStockValue = costoAcquisto; // Aggiunto vecchio valore dello stock
+
+        invested += costoAcquisto * inv.quantity;
+        currentValue += totaleOdierno;
+      }
+
+      setInvestments(investmentsData);
+      setTotalInvested(invested);
+      setTotalCurrentValue(currentValue);
+      setTotalGainLoss(currentValue - invested);
+    } catch (error) {
+      console.error('Error processing investments:', error);
+      setError('Errore nel caricamento degli investimenti. Assicurati di essere loggato.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    processInvestments(data);
   }, [data]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setSnackbar({
+      open: true,
+      message: 'Aggiornamento dati in corso...',
+      severity: 'info'
+    });
+    
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await fetch('https://backproject.azurewebsites.net/api/investments', {
+        headers: {
+          userId
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch investments: ${response.status}`);
+      }
+      
+      const freshData = await response.json();
+      await processInvestments(freshData);
+      
+      setSnackbar({
+        open: true,
+        message: 'Dati aggiornati con successo',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      setSnackbar({
+        open: true,
+        message: `Errore nell'aggiornamento: ${error.message}`,
+        severity: 'error'
+      });
+    }
+  };
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
@@ -294,9 +336,25 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
         </Box>
       ) : (
         <>
-          <Typography variant="h4" sx={{ mb: 2, fontWeight: 600 }}>
-            Capitale 
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600 }}>
+              Capitale 
+            </Typography>
+            <Tooltip title="Aggiorna dati investimenti">
+              <IconButton 
+                onClick={handleRefresh} 
+                disabled={refreshing}
+                color="primary"
+                sx={{ 
+                  backgroundColor: theme.palette.primary.light + '20',
+                  '&:hover': { backgroundColor: theme.palette.primary.light + '40' }
+                }}
+              >
+                {refreshing ? <CircularProgress size={24} /> : <RefreshIcon />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          
           {/* Summary Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             
@@ -363,6 +421,17 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
                 }}>
                   I tuoi investimenti
                 </Typography>
+              }
+              action={
+                <Tooltip title="Aggiorna dati investimenti">
+                  <IconButton 
+                    onClick={handleRefresh} 
+                    disabled={refreshing}
+                    color="primary"
+                  >
+                    {refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
+                  </IconButton>
+                </Tooltip>
               }
             />
             <CardContent>
@@ -484,4 +553,3 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
 };
 
 export default PortfolioAnalytics;
-
