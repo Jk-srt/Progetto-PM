@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Finance Management",
+  "name": "Finance Management App",
+  "description": "A finance management application to track your expenses and income.",
   "icons": [
     {
       "src": "favicon.ico",
