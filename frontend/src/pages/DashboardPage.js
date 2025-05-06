@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
   Container,
   Grid,
   Card,
@@ -106,6 +111,11 @@ const DashboardPage = () => {
         pieChartRef.current = null;
       }
     };
+  }, []);
+
+  // Add useEffect to fetch data on component mount
+  useEffect(() => {
+    fetchData();
   }, []);
 
   // Funzione migliorata per generare i dati delle performance
@@ -308,13 +318,19 @@ const DashboardPage = () => {
         fetch('https://backproject.azurewebsites.net/api/investments', { headers: { userId } }).then(res => res.json()),
         fetch('https://backproject.azurewebsites.net/api/categories', { headers: { userId } }).then(res => res.json())
       ]);
+      
       const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
       setData({ transactions, investments, categories });
       setPerformanceData(generatePerformanceData(transactions));
       localStorage.setItem('categories', JSON.stringify(categories));
       setTotal(totalAmount);
       setError(false);
-    } catch {
+      
+      // After loading initial data, also refresh portfolio allocation with current prices
+      // This ensures all assets are properly loaded with updated price information
+      await refreshPortfolioAllocation();
+    } catch (error) {
+      console.error("Error fetching data:", error);
       setError(true);
     } finally {
       setLoading(false);
@@ -363,8 +379,8 @@ useEffect(() => {
   const sidebarTabs = [
     { label: "Dashboard", value: "dashboard" },
     { label: "Transazioni", value: "transactions" },
-    { label: "Analisi Mercato", value: "analitics" },
     { label: "Investimenti", value: "investments" },
+    { label: "Analisi Mercato", value: "analitics" },
     { label: "Notizie", value: "news" },
   ];
 
@@ -484,30 +500,40 @@ useEffect(() => {
                   {/* Stats Cards */}
                   <Grid container spacing={3} sx={{ mb: 3 }}>
                     {stats.map((stat, index) => (
-                        <Grid item xs={12} sm={6} lg={3} key={index}>
-                          <Card sx={{ height: '100%', borderLeft: `6px solid ${stat.color}` }}>
-                            <CardContent>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                  <Typography variant="body2" color="text.secondary">{stat.title}</Typography>
-                                  <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
-                                </div>
-                                <Box sx={{
-                                  bgcolor: stat.color + '22',
-                                  color: stat.color,
-                                  borderRadius: '50%',
-                                  width: 44,
-                                  height: 44,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}>
-                                  {stat.icon}
-                                </Box>
+                      <Grid item xs={12} sm={6} lg={3} key={index}>
+                        <Card 
+                          sx={{ 
+                            height: '100%', 
+                            borderLeft: `6px solid ${stat.color}`,
+                            cursor: stat.title === "Transazioni Totali" || stat.title === "Investimenti Attivi" ? 'pointer' : 'default'
+                          }}
+                          onClick={() => {
+                            if (stat.title === "Transazioni Totali") setActiveTab('transactions');
+                            if (stat.title === "Investimenti Attivi") setActiveTab('investments');
+                          }}
+                        >
+                          <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <Typography variant="body2" color="text.secondary">{stat.title}</Typography>
+                                <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
+                              </div>
+                              <Box sx={{
+                                bgcolor: stat.color + '22',
+                                color: stat.color,
+                                borderRadius: '50%',
+                                width: 44,
+                                height: 44,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                {stat.icon}
                               </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     ))}
                   </Grid>
 
@@ -694,43 +720,92 @@ useEffect(() => {
                       </Card>
                     </Grid>
                   </Grid>
-                  
-                  <Card>
-                    <CardHeader
-                        title="Ultime Transazioni"
-                        action={
-                          <Button onClick={() => setActiveTab('transactions')}>Vedi tutte</Button>
-                        }
-                    />
-                    <Box sx={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                        <tr>
-                          <th style={{ padding: 8, textAlign: 'left' }}>Data</th>
-                          <th style={{ padding: 8, textAlign: 'left' }}>Descrizione</th>
-                          <th style={{ padding: 8, textAlign: 'left' }}>Categoria</th>
-                          <th style={{ padding: 8, textAlign: 'right' }}>Importo</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {data.transactions.slice(0, 8).map((transaction, idx) => (
-                            <tr key={idx}>
-                              <td style={{ padding: 8 }}>{new Date(transaction.date).toLocaleDateString()}</td>
-                              <td style={{ padding: 8 }}>{transaction.description}</td>
-                              <td style={{ padding: 8 }}>{transaction.category?.name || 'N/A'}</td>
-                              <td style={{
-                                padding: 8,
-                                textAlign: 'right',
-                                color: transaction.amount < 0 ? theme.palette.error.main : theme.palette.success.main
-                              }}>
-                                {transaction.amount < 0 ? '-' : '+'}€{Math.abs(transaction.amount).toFixed(2)}
-                              </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                      </table>
-                    </Box>
-                  </Card>
+
+                  <Grid container spacing={4} sx={{ mt: 3 }}>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ p: 2 }}>
+                        <CardHeader
+                            title={<Typography variant="h5" sx={{ fontWeight: 700 }}>Ultime Transazioni</Typography>}
+                            action={
+                              <Button size="large" sx={{ fontSize: '1.1rem', px: 2 }} color="primary" onClick={() => setActiveTab('transactions')}>
+                                Vedi tutte
+                              </Button>
+                            }
+                            sx={{ pb: 1 }}
+                        />
+                        <Divider />
+                        <CardContent sx={{ p: 2 }}>
+                          <Table size="medium">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Data</TableCell>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Descrizione</TableCell>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Categoria</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Importo</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            {/* Ultime Transazioni */}
+                            <TableBody>
+                              {data.transactions
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))  // Sort by date (newest first)
+                                .slice(0, 4)
+                                .map((transaction, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                                    <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{transaction.description}</TableCell>
+                                    <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{transaction.category?.name || 'N/A'}</TableCell>
+                                    <TableCell align="right" sx={{ fontSize: '1.08rem', py: 2, fontWeight: 600, color: transaction.amount >= 0 ? 'success.main' : 'error.main' }}>
+                                      {transaction.amount < 0 ? '-' : '+'}€{Math.abs(transaction.amount).toFixed(2)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ p: 2 }}>
+                        <CardHeader
+                            title={<Typography variant="h5" sx={{ fontWeight: 700 }}>Ultimi Investimenti</Typography>}
+                            action={
+                              <Button size="large" sx={{ fontSize: '1.1rem', px: 2 }} color="primary" onClick={() => setActiveTab('investments')}>
+                                Vedi tutti
+                              </Button>
+                            }
+                            sx={{ pb: 1 }}
+                        />
+                        <Divider />
+                        <CardContent sx={{ p: 2 }}>
+                          <Table size="medium">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Data</TableCell>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Asset</TableCell>
+                                <TableCell sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Quantità</TableCell>
+                                <TableCell align="right" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>Valore</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {data.investments
+                                  .sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate))
+                                  .slice(0, 4)
+                                  .map((investment, idx) => (
+                                      <TableRow key={idx}>
+                                        <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{new Date(investment.purchaseDate).toLocaleDateString()}</TableCell>
+                                        <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{investment.assetName}</TableCell>
+                                        <TableCell sx={{ fontSize: '1.08rem', py: 2 }}>{investment.quantity}</TableCell>
+                                        <TableCell align="right" sx={{ fontSize: '1.08rem', py: 2, fontWeight: 600 }}>
+                                          €{(investment.currentPrice * investment.quantity).toFixed(2)}
+                                        </TableCell>
+                                      </TableRow>
+                                  ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
                 </>
             )}
 
