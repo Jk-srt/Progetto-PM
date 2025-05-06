@@ -5,7 +5,6 @@ import {
   TextField, 
   Button, 
   FormControl, 
-  InputLabel, 
   Select, 
   MenuItem, 
   Grid,
@@ -13,12 +12,7 @@ import {
   Paper,
   CircularProgress,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Alert,
-  IconButton,
   useTheme,
   Snackbar,
   ToggleButtonGroup,
@@ -28,16 +22,14 @@ import {
 } from '@mui/material';
 import {
   Save as SaveIcon,
-  Add as AddIcon,
   Close as CloseIcon,
   ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
-  SwapHoriz as SwapHorizIcon
+  ArrowDownward as ArrowDownwardIcon
 } from '@mui/icons-material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { addTransaction } from '../services/transactionService';
-import { createCategory, getCategories } from '../services/categoryService';
+import { getCategories } from '../services/categoryService';
 
 const AddTransactionPage = ({ onAdded }) => {
   const theme = useTheme();
@@ -58,14 +50,6 @@ const AddTransactionPage = ({ onAdded }) => {
     severity: 'success'
   });
   
-  // New category dialog state
-  const [newCategoryDialog, setNewCategoryDialog] = useState({
-    open: false,
-    name: '',
-    loading: false,
-    error: null
-  });
-
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
@@ -150,82 +134,6 @@ const AddTransactionPage = ({ onAdded }) => {
         ...prevData,
         type: parseInt(newType),
         amount: Math.abs(parseFloat(prevData.amount) || 0)
-      }));
-    }
-  };
-  
-  // Handle opening the new category dialog
-  const handleOpenNewCategoryDialog = () => {
-    setNewCategoryDialog(prev => ({
-      ...prev,
-      open: true,
-      name: '',
-      error: null
-    }));
-  };
-  
-  // Handle closing the new category dialog
-  const handleCloseNewCategoryDialog = () => {
-    setNewCategoryDialog(prev => ({
-      ...prev,
-      open: false
-    }));
-  };
-  
-  // Handle new category name change
-  const handleNewCategoryNameChange = (e) => {
-    setNewCategoryDialog(prev => ({
-      ...prev,
-      name: e.target.value,
-      error: null
-    }));
-  };
-  
-  // Handle creating a new category
-  const handleCreateCategory = async () => {
-    // Validate category name
-    if (!newCategoryDialog.name.trim()) {
-      setNewCategoryDialog(prev => ({
-        ...prev,
-        error: 'Il nome della categoria è richiesto'
-      }));
-      return;
-    }
-    
-    try {
-      setNewCategoryDialog(prev => ({
-        ...prev,
-        loading: true,
-        error: null
-      }));
-      
-      const newCategory = await createCategory({
-        name: newCategoryDialog.name.trim()
-      });
-      
-      // Update categories list
-      setCategories(prev => [...prev, newCategory]);
-      
-      // Select the new category
-      setFormData(prev => ({
-        ...prev,
-        categoryId: newCategory.categoryId
-      }));
-      
-      // Close dialog
-      setNewCategoryDialog(prev => ({
-        ...prev,
-        open: false,
-        loading: false
-      }));
-      
-      showSnackbar('Categoria creata con successo', 'success');
-    } catch (error) {
-      console.error('Error creating category:', error);
-      setNewCategoryDialog(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Errore nella creazione della categoria: ' + (error.message || 'Riprova più tardi')
       }));
     }
   };

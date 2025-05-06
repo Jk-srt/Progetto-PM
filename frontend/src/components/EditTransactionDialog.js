@@ -10,24 +10,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText,
   Grid,
   CircularProgress,
   Box,
   Typography,
-  Divider,
   InputAdornment,
   ToggleButtonGroup,
   ToggleButton,
   useTheme,
-  IconButton,
-  Alert,
-  Paper
+  Alert
 } from '@mui/material';
 import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
-  SwapHoriz as SwapHorizIcon,
   Save as SaveIcon,
   Close as CloseIcon,
   Add as AddIcon
@@ -163,16 +158,6 @@ const EditTransactionDialog = ({
         amount: formData.type === 1 ? -numericAmount : numericAmount
       });
     }
-  };
-
-  // Handler per aprire il dialogo di nuova categoria
-  const handleOpenNewCategoryDialog = () => {
-    setNewCategoryDialog(prev => ({
-      ...prev,
-      open: true,
-      name: '',
-      error: null
-    }));
   };
   
   // Handler per chiudere il dialogo di nuova categoria

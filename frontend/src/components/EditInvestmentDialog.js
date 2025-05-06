@@ -6,11 +6,6 @@ import {
     DialogActions,
     TextField,
     Button,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    FormHelperText,
     Grid,
     CircularProgress
 } from '@mui/material';
@@ -100,15 +95,6 @@ const EditInvestmentDialog = ({
             })
             .catch(() => setAssetInfo(null));
     }, [selectedAsset, formData.purchaseDate]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-        // Reset validation error for this field
-        if (errors[name]) {
-            setErrors({ ...errors, [name]: '' });
-        }
-    };
 
     const handleDateChange = (newDate) => {
         setFormData({ ...formData, purchaseDate: newDate });
