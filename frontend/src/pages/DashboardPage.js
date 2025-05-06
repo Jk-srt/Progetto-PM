@@ -32,7 +32,12 @@ import {
   Savings as SavingsIcon,
   AccountCircle as AccountCircleIcon,
   Add as AddIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Dashboard as DashboardIcon,
+  BarChart as BarChartIcon,
+  Article as ArticleIcon,
+  Chat as ChatIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -66,7 +71,7 @@ ChartJS.register(
     TimeScale
 );
 
-const DashboardPage = () => {
+export default function DashboardPage() {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -373,13 +378,14 @@ useEffect(() => {
     }
   ];
 
-  // Sidebar Tabs
+  // Sidebar Tabs con icone
   const sidebarTabs = [
-    { label: "Dashboard", value: "dashboard" },
-    { label: "Transazioni", value: "transactions" },
-    { label: "Investimenti", value: "investments" },
-    { label: "Analisi Mercato", value: "analitics" },
-    { label: "Notizie", value: "news" },
+    { label: "Dashboard",   value: "dashboard",   icon: <DashboardIcon /> },
+    { label: "Transazioni",  value: "transactions",icon: <SavingsIcon /> },
+    { label: "Investimenti", value: "investments", icon: <TrendingUpIcon /> },
+    { label: "Analisi Mercato", value: "analitics",icon: <BarChartIcon /> },
+    { label: "Notizie",      value: "news",        icon: <ArticleIcon /> },
+    { label: "Assistente",   value: "assistente",  icon: <ChatIcon /> }
   ];
 
   return (
@@ -408,20 +414,25 @@ useEffect(() => {
             sx={{ width: '100%' }}
         >
           {sidebarTabs.map(tab => (
-              <Tab key={tab.value} label={tab.label} value={tab.value} />
+              <Tab
+                key={tab.value}
+                value={tab.value}
+                label={tab.label}
+                icon={tab.icon}
+                iconPosition="start"
+                sx={{ alignItems: 'center' }}
+              />
           ))}
-          <Tab key='assistente' label='Assistente' value='assistente' />
+          {/* Logout come elemento simile a tab */}
+          <Tab
+            value="logout"
+            label="Logout"
+            icon={<LogoutIcon />}
+            iconPosition="start"
+            sx={{ alignItems: 'center', color: theme.palette.error.main }}
+            onClick={() => navigate('/logout')}
+          />
         </Tabs>
-        <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="error"
-              fullWidth
-              onClick={() => navigate('/logout')}
-            >
-              Logout
-            </Button>
-          </Box>
       </CardContent>
     </Card>
 
@@ -863,7 +874,5 @@ useEffect(() => {
     </Dialog>
   </Container>
   );
-};
-
-export default DashboardPage;
+}
 
