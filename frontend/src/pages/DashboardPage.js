@@ -99,27 +99,109 @@ const DashboardPage = () => {
   const lineChartRef = useRef(null);
   const pieChartRef = useRef(null);
 
-  // Cleanup charts on unmount
-  useEffect(() => {
-    return () => {
-      if (lineChartRef.current) {
-        lineChartRef.current.destroy();
-        lineChartRef.current = null;
+  const portfolioAllocationData = React.useMemo(() => {
+    if (!data.investments || data.investments.length === 0) {
+      return {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: [],
+          borderColor: theme.palette.background.paper,
+          borderWidth: 2
+        }]
+      };
+    }
+
+    // Group investments by asset name and calculate total CURRENT value for each
+    const assetMap = {};
+    data.investments.forEach(inv => {
+      const assetName = inv.assetName || inv.AssetName;
+      const quantity = parseFloat(inv.quantity || inv.Quantity);
+      const currentPrice = parseFloat(inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice);
+      const totalCurrentValue = quantity * currentPrice;
+
+      if (!assetMap[assetName]) {
+        assetMap[assetName] = {
+          name: assetName,
+          totalValue: 0
+        };
       }
-      if (pieChartRef.current) {
-        pieChartRef.current.destroy();
-        pieChartRef.current = null;
-      }
+      assetMap[assetName].totalValue += totalCurrentValue;
+    });
+
+    const sorted = Object.values(assetMap).sort((a, b) => b.totalValue - a.totalValue);
+
+    const palette = [
+      theme.palette.primary.main,
+      theme.palette.success.main,
+      theme.palette.info.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+      '#9c27b0', // purple
+      '#795548', // brown
+      '#607d8b', // blue-gray
+      '#00bcd4', // cyan
+      '#4caf50'  // green
+    ];
+
+    return {
+      labels: sorted.map(c => c.name),
+      datasets: [{
+        data: sorted.map(c => c.totalValue),
+        backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
+        borderColor: theme.palette.background.paper,
+        borderWidth: 2
+      }]
     };
+  }, [data.investments, theme]);
+
+  const refreshPortfolioAllocation = React.useCallback(async () => {
+    setRefreshingPortfolio(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      const investmentsResponse = await fetch('https://backproject.azurewebsites.net/api/investments', { 
+        headers: { userId } 
+      });
+      
+      if (!investmentsResponse.ok) {
+        throw new Error(`Failed to fetch investments: ${investmentsResponse.status}`);
+      }
+      
+      const investments = await investmentsResponse.json();
+      
+      // Calculate current values for investments
+      const updatedInvestments = await Promise.all(investments.map(async (inv) => {
+        try {
+          // Try to get real-time price if possible
+          const quote = await fetchRealTimePrice(inv.assetName || inv.AssetName);
+          const currentPrice = quote?.price || inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice;
+          
+          return {
+            ...inv,
+            currentPrice: currentPrice,
+            CurrentPrice: currentPrice // Include both case styles for compatibility
+          };
+        } catch (error) {
+          console.warn(`Couldn't fetch real-time price for ${inv.assetName || inv.AssetName}:`, error);
+          // Fallback to stored current price
+          return inv;
+        }
+      }));
+      
+      setData(prevData => ({
+        ...prevData,
+        investments: updatedInvestments
+      }));
+      
+      console.log("Portfolio allocation data refreshed successfully:", updatedInvestments);
+    } catch (error) {
+      console.error("Error refreshing portfolio allocation data:", error);
+    } finally {
+      setRefreshingPortfolio(false);
+    }
   }, []);
 
-  // Add useEffect to fetch data on component mount
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);  // incluso fetchData per soddisfare react-hooks/exhaustive-deps
-
   // Funzione migliorata per generare i dati delle performance
-  // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
   const generatePerformanceData = React.useCallback((transactions, range = '1m', granularity = 'day') => {
     if (!transactions || transactions.length === 0) {
       return {
@@ -205,111 +287,8 @@ const DashboardPage = () => {
     };
   }, [theme]);
 
-  const portfolioAllocationData = React.useMemo(() => {
-    if (!data.investments || data.investments.length === 0) {
-      return {
-        labels: [],
-        datasets: [{
-          data: [],
-          backgroundColor: [],
-          borderColor: theme.palette.background.paper,
-          borderWidth: 2
-        }]
-      };
-    }
-
-    // Group investments by asset name and calculate total CURRENT value for each
-    const assetMap = {};
-    data.investments.forEach(inv => {
-      const assetName = inv.assetName || inv.AssetName;
-      const quantity = parseFloat(inv.quantity || inv.Quantity);
-      const currentPrice = parseFloat(inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice);
-      const totalCurrentValue = quantity * currentPrice;
-
-      if (!assetMap[assetName]) {
-        assetMap[assetName] = {
-          name: assetName,
-          totalValue: 0
-        };
-      }
-      assetMap[assetName].totalValue += totalCurrentValue;
-    });
-
-    const sorted = Object.values(assetMap).sort((a, b) => b.totalValue - a.totalValue);
-
-    const palette = [
-      theme.palette.primary.main,
-      theme.palette.success.main,
-      theme.palette.info.main,
-      theme.palette.warning.main,
-      theme.palette.error.main,
-      '#9c27b0', // purple
-      '#795548', // brown
-      '#607d8b', // blue-gray
-      '#00bcd4', // cyan
-      '#4caf50'  // green
-    ];
-
-    return {
-      labels: sorted.map(c => c.name),
-      datasets: [{
-        data: sorted.map(c => c.totalValue),
-        backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
-        borderColor: theme.palette.background.paper,
-        borderWidth: 2
-      }]
-    };
-  }, [data.investments, theme]);
-
-  // New function to refresh portfolio allocation data
-  const refreshPortfolioAllocation = async () => {
-    setRefreshingPortfolio(true);
-    try {
-      const userId = localStorage.getItem('userId');
-      const investmentsResponse = await fetch('https://backproject.azurewebsites.net/api/investments', { 
-        headers: { userId } 
-      });
-      
-      if (!investmentsResponse.ok) {
-        throw new Error(`Failed to fetch investments: ${investmentsResponse.status}`);
-      }
-      
-      const investments = await investmentsResponse.json();
-      
-      // Calculate current values for investments
-      const updatedInvestments = await Promise.all(investments.map(async (inv) => {
-        try {
-          // Try to get real-time price if possible
-          const quote = await fetchRealTimePrice(inv.assetName || inv.AssetName);
-          const currentPrice = quote?.price || inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice;
-          
-          return {
-            ...inv,
-            currentPrice: currentPrice,
-            CurrentPrice: currentPrice // Include both case styles for compatibility
-          };
-        } catch (error) {
-          console.warn(`Couldn't fetch real-time price for ${inv.assetName || inv.AssetName}:`, error);
-          // Fallback to stored current price
-          return inv;
-        }
-      }));
-      
-      setData(prevData => ({
-        ...prevData,
-        investments: updatedInvestments
-      }));
-      
-      console.log("Portfolio allocation data refreshed successfully:", updatedInvestments);
-    } catch (error) {
-      console.error("Error refreshing portfolio allocation data:", error);
-    } finally {
-      setRefreshingPortfolio(false);
-    }
-  };
-
-// funzione per ricaricare i dati
-  const fetchData = async () => {
+  // funzione per ricaricare i dati
+  const fetchData = React.useCallback(async () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
@@ -335,7 +314,26 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [generatePerformanceData, refreshPortfolioAllocation]);
+
+  // Add useEffect to fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Cleanup charts on unmount
+  useEffect(() => {
+    return () => {
+      if (lineChartRef.current) {
+        lineChartRef.current.destroy();
+        lineChartRef.current = null;
+      }
+      if (pieChartRef.current) {
+        pieChartRef.current.destroy();
+        pieChartRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const googleUser = localStorage.getItem("GoogleUser");

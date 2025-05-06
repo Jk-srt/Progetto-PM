@@ -40,7 +40,7 @@ const EditInvestmentDialog = ({
 
     const [errors, setErrors] = useState({});
     const [selectedAsset, setSelectedAsset] = useState(null);
-    const [assetInfo, setAssetInfo] = useState(null);
+    const [, setAssetInfo] = useState(null);
     const [unitPrice, setUnitPrice] = useState(0);
 
     // Quando l'investimento cambia (apertura dialogo con nuovo investimento)
