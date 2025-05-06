@@ -39,7 +39,7 @@ const EditInvestmentDialog = ({
     });
 
     const [errors, setErrors] = useState({});
-    const [selectedAsset, setSelectedAsset] = useState(null);
+    const [selectedAsset, setSelectedAsset] = useState(null);// eslint-disable-next-line
     const [assetInfo, setAssetInfo] = useState(null);
     const [unitPrice, setUnitPrice] = useState(0);
 
