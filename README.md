@@ -2,8 +2,6 @@
 
 A modern desktop application for **personal financial management and investments**, developed as a full-stack project (ASP.NET 9 + React 19).
 
-![Dashboard Preview](docs/screenshots/dashboard.png)
-
 ## ✨ Main Features
 
 - **Transaction Management**
@@ -13,7 +11,7 @@ A modern desktop application for **personal financial management and investments
 - **Investment Tracking**
   - Real-time integration with Yahoo Finance and Finnhub
   - Portfolio performance analytics and custom alerts
-  - Track stocks and ETF buy/sell history
+  - Track stocks and buy/sell history
 
 - **Financial News**
   - Integrated live news feed and market analysis
@@ -29,7 +27,6 @@ A modern desktop application for **personal financial management and investments
 - React 19 (JavaScript)
 - Material UI (MUI) + Emotion
 - Chart.js + react-chartjs-2
-- Electron.js (for desktop build, optional)
 
 ### Backend
 - ASP.NET Core 9 (C#)
