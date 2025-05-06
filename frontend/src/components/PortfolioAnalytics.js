@@ -35,7 +35,8 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Clear as ClearIcon,
-  DateRange as DateRangeIcon
+  DateRange as DateRangeIcon,
+  FilterList as FilterListIcon
 } from '@mui/icons-material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -401,10 +402,17 @@ const PortfolioAnalytics = ({ data = [], onEdit, onDelete }) => {
               </IconButton>
             </Tooltip>
           </Box>
-          
-          <Button variant="text" onClick={() => setShowFilters(prev => !prev)}>
-            {showFilters ? 'Nascondi Filtri' : 'Mostra Filtri'}
-          </Button>
+
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+                variant="contained"
+                startIcon={<FilterListIcon />}
+                color={showFilters ? "primary" : "inherit"}
+                onClick={() => setShowFilters(!showFilters)}
+            >
+              Filtri
+            </Button>
+          </Box>
           <Collapse in={showFilters}>
             <Paper sx={{ p: 2, mb: 3 }}>
               <Box sx={{ mb: 2 }}>

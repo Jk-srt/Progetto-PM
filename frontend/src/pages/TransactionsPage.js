@@ -329,14 +329,6 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
           >
             Filtri
           </Button>
-          
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />}
-            onClick={() => setOpenAddTx(true)}
-          >
-            Nuova
-          </Button>
         </Box>
         
         <Dialog

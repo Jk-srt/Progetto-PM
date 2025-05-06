@@ -17,7 +17,8 @@ import {
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import itLocale from 'date-fns/locale/it';
-
+import AsyncSelect from 'react-select/async';
+import { fetchListingStatus, fetchQuoteOnNearestTradingDate } from '../services/YahooFinanceService';
 
 const EditInvestmentDialog = ({
     open,
@@ -38,6 +39,9 @@ const EditInvestmentDialog = ({
     });
 
     const [errors, setErrors] = useState({});
+    const [selectedAsset, setSelectedAsset] = useState(null);
+    const [assetInfo, setAssetInfo] = useState(null);
+    const [unitPrice, setUnitPrice] = useState(0);
 
     // Quando l'investimento cambia (apertura dialogo con nuovo investimento)
     useEffect(() => {
@@ -54,8 +58,48 @@ const EditInvestmentDialog = ({
                 userId: investment.userId || parseInt(localStorage.getItem('userId'))
             });
             setErrors({});
+            // Set the default selected asset
+            setSelectedAsset({
+                label: investment.assetName + ' (...)', // You might format properly
+                value: investment.assetName
+            });
+            setUnitPrice(0);
         }
     }, [investment]);
+
+    // Load asset options
+    const loadOptions = async (inputValue) => {
+        if (!inputValue) return [];
+        try {
+            const list = await fetchListingStatus(inputValue);
+            return list.map(item => ({
+                label: `${item.name} (${item.symbol})`,
+                value: item.symbol,
+                name: item.name,
+                exchange: item.exchange
+            }));
+        } catch {
+            return [];
+        }
+    };
+
+    // Re-fetch the asset price when asset or date changes
+    useEffect(() => {
+        if (!selectedAsset || !formData.purchaseDate) return;
+        setAssetInfo(null);
+        fetchQuoteOnNearestTradingDate(selectedAsset.value, formData.purchaseDate)
+            .then(data => {
+                const price = data.price || 0;
+                setUnitPrice(price);
+                // Recompute the total purchase price
+                setFormData(prev => ({
+                    ...prev,
+                    purchasePrice: (parseFloat(prev.quantity) || 0) * price
+                }));
+                setAssetInfo({ price, ...data });
+            })
+            .catch(() => setAssetInfo(null));
+    }, [selectedAsset, formData.purchaseDate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -72,6 +116,23 @@ const EditInvestmentDialog = ({
         if (errors.purchaseDate) {
             setErrors({ ...errors, purchaseDate: '' });
         }
+    };
+
+    const handleAssetChange = (option) => {
+        setSelectedAsset(option);
+        setFormData(prev => ({
+            ...prev,
+            assetName: option?.value || ''
+        }));
+    };
+
+    const handleQuantityChange = (e) => {
+        const qty = parseFloat(e.target.value) || 0;
+        setFormData({
+            ...formData,
+            quantity: e.target.value,
+            purchasePrice: qty * unitPrice
+        });
     };
 
     const validate = () => {
@@ -99,19 +160,20 @@ const EditInvestmentDialog = ({
     const handleSubmit = () => {
         console.log("Submitting form data:", formData);
         if (validate()) {
-            const numericPrice = parseFloat(formData.purchasePrice);
+            // Use updated purchasePrice from computed
+            const totalPrice = parseFloat(formData.quantity) * unitPrice;
             const numericAction = parseInt(formData.action);
             
             // Create the investment object with camelCase properties for frontend use
             const updatedInvestment = {
                 investmentId: formData.investmentId,
                 quantity: parseFloat(formData.quantity),
-                purchasePrice: numericAction === 1 ? -numericPrice : numericPrice,
+                purchasePrice: numericAction === 1 ? -totalPrice : totalPrice,
                 currentPrice: formData.currentPrice ? parseFloat(formData.currentPrice) : null,
                 purchaseDate: formData.purchaseDate,
                 action: numericAction,
                 userId: parseInt(formData.userId || localStorage.getItem('userId')),
-                assetName: formData.assetName
+                assetName: selectedAsset?.value || formData.assetName
             };
             
             // Convert to PascalCase for backend API
@@ -155,14 +217,13 @@ const EditInvestmentDialog = ({
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Nome Asset"
-                                name="assetName"
-                                value={formData.assetName}
-                                onChange={handleChange}
-                                error={!!errors.assetName}
-                                helperText={errors.assetName}
+                            <AsyncSelect
+                                cacheOptions
+                                defaultOptions
+                                value={selectedAsset}
+                                loadOptions={loadOptions}
+                                onChange={handleAssetChange}
+                                placeholder="Cerca e seleziona un asset..."
                             />
                         </Grid>
                         <Grid item xs={6}>
@@ -172,7 +233,7 @@ const EditInvestmentDialog = ({
                                 name="quantity"
                                 type="number"
                                 value={formData.quantity}
-                                onChange={handleChange}
+                                onChange={handleQuantityChange}
                                 error={!!errors.quantity}
                                 helperText={errors.quantity}
                                 inputProps={{ step: "0.01" }}
@@ -185,7 +246,7 @@ const EditInvestmentDialog = ({
                                 name="purchasePrice"
                                 type="number"
                                 value={formData.purchasePrice}
-                                onChange={handleChange}
+                                disabled
                                 error={!!errors.purchasePrice}
                                 helperText={errors.purchasePrice}
                                 inputProps={{ step: "0.01" }}
@@ -206,19 +267,6 @@ const EditInvestmentDialog = ({
                                 {errors.action && <FormHelperText>{errors.action}</FormHelperText>}
                             </FormControl>
                         </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                fullWidth
-                                label="Prezzo Attuale (opzionale)"
-                                name="currentPrice"
-                                type="number"
-                                value={formData.currentPrice}
-                                onChange={handleChange}
-                                error={!!errors.currentPrice}
-                                helperText={errors.currentPrice}
-                                inputProps={{ step: "0.01" }}
-                            />
-                        </Grid>
                     </Grid>
                 </LocalizationProvider>
             </DialogContent>
@@ -238,3 +286,4 @@ const EditInvestmentDialog = ({
 };
 
 export default EditInvestmentDialog;
+
