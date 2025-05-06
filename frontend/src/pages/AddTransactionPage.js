@@ -357,24 +357,7 @@ const AddTransactionPage = ({ onAdded }) => {
                     <ArrowDownwardIcon sx={{ mr: 1 }} />
                     Uscita
                   </ToggleButton>
-                  <ToggleButton 
-                    value="2" 
-                    aria-label="trasferimento"
-                    sx={{ 
-                      minWidth: '100px',
-                      color: 'info.main',
-                      '&.Mui-selected': {
-                        backgroundColor: 'info.light',
-                        color: 'info.contrastText',
-                        '&:hover': {
-                          backgroundColor: 'info.main',
-                        }
-                      }
-                    }}
-                  >
-                    <SwapHorizIcon sx={{ mr: 1 }} />
-                    Trasferimento
-                  </ToggleButton>
+                  
                 </ToggleButtonGroup>
               </Box>
             </Grid>
@@ -431,31 +414,22 @@ const AddTransactionPage = ({ onAdded }) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth error={!!errors.categoryId}>
-                <InputLabel id="category-label">Categoria</InputLabel>
                 <Select
                   labelId="category-label"
                   name="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
-                  sx={{ borderRadius: 2 }}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <IconButton 
-                        size="small" 
-                        onClick={handleOpenNewCategoryDialog}
-                        sx={{ 
-                          mr: 2,
-                          bgcolor: theme.palette.primary.light + '20',
-                          '&:hover': { bgcolor: theme.palette.primary.light + '40' }
-                        }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  }
+                  displayEmpty
+                  sx={{
+                    borderRadius: 2,
+                    height: '56px', // Match TextField height
+                    '.MuiOutlinedInput-notchedOutline': {
+                      borderRadius: 2
+                    }
+                  }}
                 >
-                  <MenuItem value="">
-                    <em>Nessuna categoria</em>
+                  <MenuItem value="" disabled>
+                    <em>Seleziona una categoria</em>
                   </MenuItem>
                   {categories.map(category => (
                     <MenuItem key={category.categoryId} value={category.categoryId}>
@@ -463,9 +437,7 @@ const AddTransactionPage = ({ onAdded }) => {
                     </MenuItem>
                   ))}
                 </Select>
-                <FormHelperText>
-                  {errors.categoryId || 'Seleziona una categoria o crea una nuova'}
-                </FormHelperText>
+                <FormHelperText>{errors.categoryId || ' '}</FormHelperText>
               </FormControl>
             </Grid>
             
@@ -501,47 +473,6 @@ const AddTransactionPage = ({ onAdded }) => {
           </Grid>
         </form>
       </Paper>
-      
-      {/* New Category Dialog */}
-      <Dialog open={newCategoryDialog.open} onClose={handleCloseNewCategoryDialog}>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <AddIcon sx={{ mr: 1 }} />
-            Crea nuova categoria
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {newCategoryDialog.error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {newCategoryDialog.error}
-            </Alert>
-          )}
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Nome categoria"
-            fullWidth
-            variant="outlined"
-            value={newCategoryDialog.name}
-            onChange={handleNewCategoryNameChange}
-            disabled={newCategoryDialog.loading}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseNewCategoryDialog} disabled={newCategoryDialog.loading}>
-            Annulla
-          </Button>
-          <Button 
-            onClick={handleCreateCategory} 
-            color="primary" 
-            variant="contained"
-            disabled={newCategoryDialog.loading}
-            startIcon={newCategoryDialog.loading ? <CircularProgress size={20} /> : <AddIcon />}
-          >
-            {newCategoryDialog.loading ? 'Creando...' : 'Crea'}
-          </Button>
-        </DialogActions>
-      </Dialog>
       
       {/* Feedback Snackbar */}
       <Snackbar

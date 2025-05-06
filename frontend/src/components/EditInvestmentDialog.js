@@ -252,21 +252,6 @@ const EditInvestmentDialog = ({
                                 inputProps={{ step: "0.01" }}
                             />
                         </Grid>
-                        <Grid item xs={6}>
-                            <FormControl fullWidth error={!!errors.action}>
-                                <InputLabel>Tipo</InputLabel>
-                                <Select
-                                    name="action"
-                                    value={formData.action}
-                                    label="Tipo"
-                                    onChange={handleChange}
-                                >
-                                    <MenuItem value={0}>Acquisto</MenuItem>
-                                    <MenuItem value={1}>Vendita</MenuItem>
-                                </Select>
-                                {errors.action && <FormHelperText>{errors.action}</FormHelperText>}
-                            </FormControl>
-                        </Grid>
                     </Grid>
                 </LocalizationProvider>
             </DialogContent>
