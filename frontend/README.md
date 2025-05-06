@@ -1,70 +1,166 @@
-# Getting Started with Create React App
+# Personal Finance Manager
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Applicazione web per la gestione completa delle finanze personali. Tieni traccia delle tue transazioni, gestisci i tuoi investimenti e monitora la tua situazione finanziaria attraverso una dashboard intuitiva e report dettagliati.
 
-## Available Scripts
+## App Online
 
-In the project directory, you can run:
+L'applicazione è ora disponibile online! Puoi accedervi al seguente indirizzo:
+[https://finance-management-7c778.web.app/](https://finance-management-7c778.web.app/)
 
-### `npm start`
+## Architettura del Sistema
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Il nostro progetto si basa su un'architettura Three-Tier che separa nettamente presentazione, logica di business e persistenza dei dati:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. **Presentation Layer** (Frontend): Interfaccia utente reattiva sviluppata con React
+2. **Business Logic Layer** (Backend): API RESTful sviluppata con ASP.NET Core
+3. **Data Access Layer** (Database): PostgreSQL per la persistenza ottimizzata dei dati
 
-### `npm test`
+### Schema dell'Architettura
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Frontend   │     │    Backend   │     │   Database   │
+│   (React)    │◄────┤  (ASP.NET)   │◄────┤ (PostgreSQL) │
+└──────────────┘     └──────────────┘     └──────────────┘
+        ▲                   ▲
+        │                   │
+        │                   │
+┌──────────────┐     ┌──────────────┐
+│    Auth      │     │  Financial   │
+│   Services   │     │    APIs      │
+└──────────────┘     └──────────────┘
+```
 
-### `npm run build`
+## Tecnologie Utilizzate
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Frontend
+- **Framework**: React 19 (Single Page Application)
+- **UI Library**: Material-UI v5
+- **Grafici**: Chart.js con wrapper React-Chartjs-2
+- **Routing**: React Router v6
+- **Form Management**: React Hook Form
+- **API Client**: Axios
+- **Date Handling**: date-fns
+- **AI Assistant**: Integrazione con Gemini API per suggerimenti finanziari
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend
+- **Framework**: ASP.NET Core 9
+- **API**: RESTful Web API
+- **Database**: PostgreSQL
+- **ORM**: Entity Framework Core
+- **Autenticazione**: 
+  - JWT Bearer Token
+  - Google OAuth 2.0
+  - Email/Password nativa
+- **API Finanziarie**:
+  - Finnhub API per dati di mercato in tempo reale e notizie finanziarie
+  - Yahoo Finance API per dati storici e analisi di lungo periodo
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Hosting e Deployment
+- **Frontend**: Firebase Hosting
+  - Distribuzione globale tramite CDN
+  - Deploy automatici via GitHub Actions
+  - Analytics integrata per monitoraggio utilizzo
+- **Backend**: Azure App Service
+  - Scaling automatico in base al carico
+  - Monitoraggio con Azure Application Insights
+  - Integrazione continua tramite Azure DevOps
+- **Database**: Azure Database per PostgreSQL
+  - Alta disponibilità con replicazione geografica
+  - Backup automatici programmati
+  - Scaling dinamico delle risorse
 
-### `npm run eject`
+### Integrazione e Sicurezza
+- Autenticazione multi-provider (Google + Email/Password)
+- Comunicazione backend-frontend criptata via HTTPS
+- Validazione input lato client e server
+- Rate limiting per prevenire abusi delle API
+- Monitoraggio attivo per potenziali vulnerabilità
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Caratteristiche Principali
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Dashboard
+- Panoramica finanziaria con statistiche chiave
+- Visualizzazione del bilancio corrente
+- Grafico delle entrate/uscite
+- Ultime transazioni e investimenti
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Gestione Transazioni
+- Registrazione di entrate e uscite
+- Categorizzazione personalizzabile delle transazioni
+- Ricerca e filtro avanzati
+- Modifica e eliminazione delle transazioni
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Gestione Investimenti
+- Registrazione e tracciamento degli investimenti
+- Monitoraggio dei prezzi attuali tramite API finanziarie
+- Analisi delle performance degli investimenti
+- Funzionalità di acquisto e vendita di asset
 
-## Learn More
+### Analytics
+- Esplorazione del mercato azionario con dati in tempo reale da Finnhub
+- Grafici dettagliati sull'andamento dei prezzi con dati storici da Yahoo Finance
+- Analisi dell'allocazione del portafoglio
+- Statistiche sulla performance finanziaria
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Assistente AI
+- Suggerimenti personalizzati basati sui tuoi pattern di spesa
+- Risposte a domande sulla gestione finanziaria
+- Analisi predittive sulle tue finanze
+- Powered by Gemini API
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Installazione per sviluppatori
 
-### Code Splitting
+### Prerequisiti
+- Node.js (v18 o superiore)
+- npm (v9 o superiore)
+- .NET 9 SDK
+- PostgreSQL 15+
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Configurazione Frontend
+1. Clona il repository
+2. Naviga nella cartella frontend
+```bash
+cd frontend
+```
+3. Installa le dipendenze
+```bash
+npm install
+```
+4. Configura le variabili d'ambiente
+```bash
+cp .env.example .env.local
+# Modifica le variabili nel file .env.local
+```
+5. Avvia il server di sviluppo
+```bash
+npm start
+```
+L'applicazione sarà disponibile all'indirizzo [http://localhost:3000](http://localhost:3000)
 
-### Analyzing the Bundle Size
+### Configurazione Backend
+1. Naviga nella cartella backend
+```bash
+cd backend
+```
+2. Ripristina i pacchetti NuGet
+```bash
+dotnet restore
+```
+3. Configura il database e le API keys
+```bash
+# Modifica appsettings.Development.json con le tue configurazioni
+```
+4. Esegui l'API
+```bash
+dotnet run
+```
+L'API sarà disponibile all'indirizzo [http://localhost:5000](http://localhost:5000)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Contribuire al Progetto
 
-### Making a Progressive Web App
+Le pull request sono benvenute. Per modifiche importanti, apri prima una issue per discutere cosa vorresti cambiare.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Licenza
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Questo progetto è concesso in licenza con licenza MIT.

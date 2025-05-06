@@ -154,17 +154,6 @@ const LoginPage = () => {
                             margin="normal"
                             required
                             fullWidth
-                            id="displayName"
-                            label="Nome Completo"
-                            name="displayName"
-                            autoComplete="name"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                        />
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
                             id="email"
                             label="Email"
                             name="email"
