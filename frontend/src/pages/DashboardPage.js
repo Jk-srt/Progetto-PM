@@ -116,7 +116,7 @@ const DashboardPage = () => {
   // Add useEffect to fetch data on component mount
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);  // incluso fetchData per soddisfare react-hooks/exhaustive-deps
 
   // Funzione migliorata per generare i dati delle performance
   // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
