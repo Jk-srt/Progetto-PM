@@ -500,17 +500,7 @@ export default function TransactionsPage({ transactions: propTransactions = [], 
                       <Typography variant="body2">Uscite</Typography>
                     </Box>}
                   />
-                  <FormControlLabel 
-                    control={
-                      <Checkbox 
-                        checked={filterTypes.transferimento} 
-                        onChange={(e) => setFilterTypes({...filterTypes, transferimento: e.target.checked})} 
-                        size="small"
-                        sx={{ '& .MuiSvgIcon-root': { fontSize: 20 } }}
-                      />
-                    } 
-                    label={<Typography variant="body2">Trasferimenti</Typography>}
-                  />
+                  
                 </FormGroup>
               </Grid>
               
