@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -117,11 +117,7 @@ export default function DashboardPage() {
       }
     };
   }, []);
-
-  // Add useEffect to fetch data on component mount
-  useEffect(() => {
-    fetchData();
-  }, []);
+  
 
   // Funzione migliorata per generare i dati delle performance
   // Funzione ottimizzata per generare dati di andamento con bilancio cumulativo
@@ -267,27 +263,28 @@ export default function DashboardPage() {
   }, [data.investments, theme]);
 
   // New function to refresh portfolio allocation data
-  const refreshPortfolioAllocation = async () => {
+  // First, wrap refreshPortfolioAllocation in useCallback
+  const refreshPortfolioAllocation = useCallback(async () => {
     setRefreshingPortfolio(true);
     try {
       const userId = localStorage.getItem('userId');
-      const investmentsResponse = await fetch('https://backproject.azurewebsites.net/api/investments', { 
-        headers: { userId } 
+      const investmentsResponse = await fetch('https://backproject.azurewebsites.net/api/investments', {
+        headers: { userId }
       });
-      
+  
       if (!investmentsResponse.ok) {
         throw new Error(`Failed to fetch investments: ${investmentsResponse.status}`);
       }
-      
+  
       const investments = await investmentsResponse.json();
-      
+  
       // Calculate current values for investments
       const updatedInvestments = await Promise.all(investments.map(async (inv) => {
         try {
           // Try to get real-time price if possible
           const quote = await fetchRealTimePrice(inv.assetName || inv.AssetName);
           const currentPrice = quote?.price || inv.currentPrice || inv.CurrentPrice || inv.purchasePrice || inv.PurchasePrice;
-          
+  
           return {
             ...inv,
             currentPrice: currentPrice,
@@ -299,22 +296,22 @@ export default function DashboardPage() {
           return inv;
         }
       }));
-      
+  
       setData(prevData => ({
         ...prevData,
         investments: updatedInvestments
       }));
-      
+  
       console.log("Portfolio allocation data refreshed successfully:", updatedInvestments);
     } catch (error) {
       console.error("Error refreshing portfolio allocation data:", error);
     } finally {
       setRefreshingPortfolio(false);
     }
-  };
-
-// funzione per ricaricare i dati
-  const fetchData = async () => {
+  }, []); // Add any dependencies used inside the function
+  
+  // Then, make sure fetchData includes refreshPortfolioAllocation in its dependencies
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
@@ -323,16 +320,15 @@ export default function DashboardPage() {
         fetch('https://backproject.azurewebsites.net/api/investments', { headers: { userId } }).then(res => res.json()),
         fetch('https://backproject.azurewebsites.net/api/categories', { headers: { userId } }).then(res => res.json())
       ]);
-      
+  
       const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
       setData({ transactions, investments, categories });
       setPerformanceData(generatePerformanceData(transactions));
       localStorage.setItem('categories', JSON.stringify(categories));
       setTotal(totalAmount);
       setError(false);
-      
+  
       // After loading initial data, also refresh portfolio allocation with current prices
-      // This ensures all assets are properly loaded with updated price information
       await refreshPortfolioAllocation();
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -340,7 +336,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [refreshPortfolioAllocation, generatePerformanceData]); // Include all dependencies
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     const googleUser = localStorage.getItem("GoogleUser");
