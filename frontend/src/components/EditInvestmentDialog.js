@@ -40,7 +40,7 @@ const EditInvestmentDialog = ({
 
     const [errors, setErrors] = useState({});
     const [selectedAsset, setSelectedAsset] = useState(null);
-    const [setAssetInfo] = useState(null);
+    const [assetInfo, setAssetInfo] = useState(null);
     const [unitPrice, setUnitPrice] = useState(0);
 
     // Quando l'investimento cambia (apertura dialogo con nuovo investimento)
@@ -98,7 +98,7 @@ const EditInvestmentDialog = ({
                 }));
                 setAssetInfo({ price, ...data });
             })
-            .catch(() => setAssetInfo(null)); // eslint-disable-next-line react-hooks/exhaustive-deps
+            .catch(() => setAssetInfo(null));
     }, [selectedAsset, formData.purchaseDate]);
 
     const handleChange = (e) => {
