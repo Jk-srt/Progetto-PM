@@ -37,7 +37,9 @@ import {
   BarChart as BarChartIcon,
   Article as ArticleIcon,
   Chat as ChatIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon
 } from '@mui/icons-material';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -98,11 +100,15 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState(null);
   const [openAddTx, setOpenAddTx] = useState(false);
   const [openAddInv, setOpenAddInv] = useState(false);
-
   const [refreshingPortfolio, setRefreshingPortfolio] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const lineChartRef = useRef(null);
   const pieChartRef = useRef(null);
+
+  const handleToggleSidebar = () => {
+    setCollapsed(prev => !prev);
+  };
 
   // Cleanup charts on unmount
   useEffect(() => {
@@ -396,44 +402,109 @@ useEffect(() => {
     sx={{ display: 'flex', gap: 3, pt: 3, height: '100vh' }}
   >
     {/* Sidebar */}
-    <Card sx={{ width: 260, flexShrink: 0, bgcolor: 'background.paper', borderRadius: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          {userImage ? (
-            <Avatar src={userImage} sx={{ width: 40, height: 40, mr: 2 }} />
-          ) : (
-            <AccountCircleIcon sx={{ fontSize: 40, mr: 2 }} />
-          )}
-          <div>
-            <Typography variant="h6">{userName}</Typography>
-          </div>
+    <Card sx={{
+      width: collapsed ? 64 : 260,
+      flexShrink: 0,
+      bgcolor: 'background.paper',
+      borderRadius: 3,
+      transition: 'width 0.3s',
+      overflow: 'visible'
+    }}>
+      <CardContent sx={{
+        p: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
+        {/* Toggle Button */}
+        <Box sx={{ mb: 2 }}>
+          <IconButton size="small" onClick={handleToggleSidebar}>
+            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
         </Box>
-        <Divider sx={{ my: 2 }} />
+
+        {/* User Info */}
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mb: 3,
+          justifyContent: 'center'
+        }}>
+          {userImage
+            ? <Avatar src={userImage} sx={{ width: 40, height: 40, mr: collapsed ? 0 : 2 }} />
+            : <AccountCircleIcon sx={{ fontSize: 40, mr: collapsed ? 0 : 2 }} />}
+          {!collapsed && (
+            <Typography variant="h6">{userName}</Typography>
+          )}
+        </Box>
+
+        <Divider sx={{ width: '100%', my: 2 }} />
+
+        {/* Tabs collassabili */}
         <Tabs
-            orientation="vertical"
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{ width: '100%' }}
+          orientation="vertical"
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          TabIndicatorProps={{
+            sx: {
+              left: 'auto',
+              right: 0,
+              width: '4px',
+              bgcolor: theme.palette.primary.main,
+              borderRadius: '4px 0 0 4px'
+            }
+          }}
+          sx={{
+            width: '100%',
+            overflowX: 'visible',
+            '& .MuiTabs-flexContainer': {
+              flexDirection: 'column',
+              justifyContent: collapsed ? 'flex-start' : 'center',
+              alignItems: 'center',
+              overflow: 'visible'
+            }
+          }}
         >
           {sidebarTabs.map(tab => (
+            <Tooltip key={tab.value} title={collapsed ? tab.label : ''} placement="right">
               <Tab
-                key={tab.value}
                 value={tab.value}
-                label={tab.label}
                 icon={tab.icon}
-                iconPosition="start"
-                sx={{ alignItems: 'center' }}
+                iconPosition={collapsed ? 'center' : 'start'}
+                label={!collapsed ? tab.label : ''}
+                sx={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  px: collapsed ? 0 : 2,
+                  py: 1,
+                  minHeight: 48,
+                  '&.Mui-selected': {
+                    borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`
+                  }
+                }}
               />
+            </Tooltip>
           ))}
-          {/* Logout come elemento simile a tab */}
-          <Tab
-            value="logout"
-            label="Logout"
-            icon={<LogoutIcon />}
-            iconPosition="start"
-            sx={{ alignItems: 'center', color: theme.palette.error.main }}
-            onClick={() => navigate('/logout')}
-          />
+          <Tooltip title={collapsed ? 'Logout' : ''} placement="right">
+            <Tab
+              value="logout"
+              icon={<LogoutIcon />}
+              label={!collapsed ? 'Logout' : ''}
+              iconPosition={collapsed ? 'center' : 'start'}
+              sx={{
+                width: '100%',
+                justifyContent: 'center',
+                px: collapsed ? 0 : 2,
+                py: 1,
+                minHeight: 48,
+                '&.Mui-selected': {
+                  borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`
+                },
+                color: theme.palette.error.main
+              }}
+              onClick={() => navigate('/logout')}
+            />
+          </Tooltip>
         </Tabs>
       </CardContent>
     </Card>
