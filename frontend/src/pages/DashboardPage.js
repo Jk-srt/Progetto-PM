@@ -478,8 +478,16 @@ useEffect(() => {
                   px: collapsed ? 0 : 2,
                   py: 1,
                   minHeight: 48,
+                  color: theme.palette.text.secondary,                // colore di default
+                  '& .MuiTab-iconWrapper': {
+                    color: 'inherit'                                  // icona eredita il colore del Tab
+                  },
                   '&.Mui-selected': {
-                    borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`
+                    borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`,
+                    color: theme.palette.primary.main,               // testo azzurro
+                    '& .MuiTab-iconWrapper': {
+                      color: theme.palette.primary.main              // icona azzurra quando selezionato
+                    }
                   }
                 }}
               />
@@ -497,10 +505,17 @@ useEffect(() => {
                 px: collapsed ? 0 : 2,
                 py: 1,
                 minHeight: 48,
-                '&.Mui-selected': {
-                  borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`
+                color: theme.palette.error.main,                    // colore di default logout
+                '& .MuiTab-iconWrapper': {
+                  color: 'inherit'                                  // icona eredita il colore del Tab
                 },
-                color: theme.palette.error.main
+                '&.Mui-selected': {
+                  borderRight: collapsed ? 'none' : `4px solid ${theme.palette.primary.main}`,
+                  color: theme.palette.primary.main,               // testo azzurro
+                  '& .MuiTab-iconWrapper': {
+                    color: theme.palette.primary.main              // icona azzurra quando selezionato
+                  }
+                }
               }}
               onClick={() => navigate('/logout')}
             />
